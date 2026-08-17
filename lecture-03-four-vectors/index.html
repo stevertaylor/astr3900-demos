@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 3 Interactive Demo — Four-vectors, Doppler shift, aberration, and beaming</title>
+<style>
+:root{
+  --bg:#fbfbf8;--ink:#15243c;--blue:#0f6e93;--brown:#8a5a18;--panel:#edf1f6;
+  --grey:#5a6b7b;--grid:#d8dee5;--cone:#c4cbd8;--red:#9e2a2b;--green:#2e6f50;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1320px;margin:auto;padding:26px}
+h1,h2,h3{font-family:Georgia,serif;font-weight:500}h1{margin:0 0 4px;font-size:34px}h2{margin:0 0 12px;font-size:25px}h3{margin:10px 0 8px;font-size:20px}
+p{color:var(--grey);line-height:1.45}.subtitle{margin-top:4px}
+.tabs{display:flex;gap:8px;margin:18px 0}.tabbtn,.modebtn{padding:9px 13px;border-radius:9px;border:1px solid #9ba8b5;background:white;color:var(--ink);cursor:pointer;font-weight:650}.tabbtn.active,.modebtn.active{background:var(--blue);color:white;border-color:var(--blue)}
+.tab{display:none}.tab.active{display:block}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:24px}.dopgrid{display:grid;grid-template-columns:390px 1fr;gap:24px}
+.card{background:var(--panel);border:1px solid #c7d0da;border-radius:16px;padding:18px}.whitecard{background:white;border:1px solid #c7d0da;border-radius:14px;padding:14px}
+.row{margin:14px 0}label{display:flex;justify-content:space-between;gap:12px;font-weight:650}input[type=range]{width:100%}input[type=checkbox]{transform:scale(1.15)}
+.eq{font-family:Georgia,serif;font-size:21px;line-height:1.55}.eq.smallEq{font-size:18px}.big{font-size:26px}.blue{color:var(--blue)}.brown{color:var(--brown)}.red{color:var(--red)}.green{color:var(--green)}
+canvas{width:100%;height:auto;background:white;border-radius:14px;border:1px solid #c7d0da}.checks{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.pill{background:white;border-radius:12px;padding:12px;border:1px solid #c7d0da}.small{font-size:13px;color:var(--grey)}.micro{font-size:12px;color:var(--grey)}.value{font-weight:750;color:var(--brown)}
+.callout{border-left:4px solid var(--blue);padding:10px 12px;background:white;border-radius:8px;margin:12px 0}.warning{border-left-color:var(--brown)}
+.modebar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}.readgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:white;border:1px solid #c7d0da;border-radius:10px;padding:10px}.metric b{display:block;font-size:13px;color:var(--grey);margin-bottom:3px}.metric span{font-size:20px;font-weight:700}
+.legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:6px 0 10px;color:var(--grey);font-size:13px}.swatch{display:inline-block;width:18px;height:4px;border-radius:3px;margin-right:5px;vertical-align:middle}.sw1{background:var(--blue)}.sw2{background:var(--brown)}.sw3{background:var(--red)}
+.full{margin-top:22px}.mathbox{background:white;border:1px solid #c7d0da;border-radius:12px;padding:12px;margin-top:10px}.mathline{margin:4px 0}
+@media(max-width:900px){.grid,.dopgrid{grid-template-columns:1fr}.wrap{padding:16px}.readgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lecture 3 interactive demo</h1>
+  <p class="subtitle">Four-vectors, Lorentz transformations, relativistic Doppler shift, aberration, and beaming · units c = 1</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="vectors">Four-vector explorer</button>
+    <button class="tabbtn" data-tab="doppler">Doppler shift &amp; beaming</button>
+  </div>
+
+  <section id="vectors" class="tab active">
+    <div class="grid">
+      <div class="card">
+        <div><button class="modebtn" id="timelike">Timelike</button><button class="modebtn" id="null">Null</button><button class="modebtn" id="spacelike">Spacelike</button></div>
+        <div class="row"><label>Boost velocity β <span id="bv"></span></label><input id="betaVec" type="range" min="-0.95" max="0.95" step="0.01" value="0.45"></div>
+        <div class="row"><label>a⁰ <span id="a0v"></span></label><input id="a0" type="range" min="-4" max="4" step="0.05" value="2.5"></div>
+        <div class="row"><label>aˣ <span id="axv"></span></label><input id="ax" type="range" min="-4" max="4" step="0.05" value="1"></div>
+        <div class="row"><label><span>Show lowered components</span><input id="lower" type="checkbox" checked></label></div>
+        <div class="eq"><div>a<sup>α</sup> = (<span id="up"></span>)</div><div id="downline" class="brown">a<sub>α</sub> = (<span id="down"></span>)</div><hr><div>a′<sup>α</sup> = (<span id="upp"></span>)</div><div id="downpline" class="brown">a′<sub>α</sub> = (<span id="downp"></span>)</div></div>
+        <div class="checks"><div class="pill"><b>Invariant before</b><div id="n0" class="big blue"></div></div><div class="pill"><b>Invariant after</b><div id="n1" class="big blue"></div></div></div>
+        <p class="small">Metric signature: η<sub>αβ</sub> = diag(−1,+1,+1,+1). Thus a<sub>0</sub> = −a<sup>0</sup> and a<sub>x</sub> = a<sup>x</sup>.</p>
+      </div>
+      <div><canvas id="cv" width="880" height="620"></canvas><p class="small">Each panel shows one coordinate description. The dashed paths are x = ±t. A null vector therefore lies exactly on a dashed light path in both frames.</p></div>
+    </div>
+  </section>
+
+  <section id="doppler" class="tab">
+    <div class="dopgrid">
+      <div class="card">
+        <h2>Doppler shift from a Lorentz transformation</h2>
+        <div class="callout">
+          <b>Frame convention.</b> O is the source rest frame. In O′ the source moves with velocity +β along +x′. We transform photon four-momentum components from O to O′.
+        </div>
+        <div class="row"><label>Source speed β = V/c <span id="dbv" class="value"></span></label><input id="betaD" type="range" min="0" max="0.99" step="0.01" value="0.70"></div>
+        <div class="row"><label>Photon angle in source frame α <span id="alphaV" class="value"></span></label><input id="alpha" type="range" min="0" max="180" step="1" value="60"></div>
+        <div class="mathbox eq smallEq">
+          <div class="mathline">k<sup>α</sup> = ω(1, cos α, sin α, 0)</div>
+          <div class="mathline blue">k′<sup>0</sup> = γ(k<sup>0</sup> + βk<sup>x</sup>)</div>
+          <div class="mathline blue">k′<sup>x</sup> = γ(k<sup>x</sup> + βk<sup>0</sup>), &nbsp; k′<sup>y</sup> = k<sup>y</sup></div>
+          <div class="mathline">⇒ D ≡ ν′/ν = γ(1 + β cos α)</div>
+          <div class="mathline">⇒ cos α′ = (cos α + β)/(1 + β cos α)</div>
+        </div>
+        <div class="readgrid">
+          <div class="metric"><b>Lorentz factor γ</b><span id="gammaV"></span></div>
+          <div class="metric"><b>Aberrated angle α′</b><span id="alphaPV"></span></div>
+          <div class="metric"><b>Doppler factor D = ν′/ν</b><span id="dopplerV"></span></div>
+          <div class="metric"><b>Null check &minus;(k&prime;<sup>0</sup>)<sup>2</sup> + (k&prime;<sup>x</sup>)<sup>2</sup> + (k&prime;<sup>y</sup>)<sup>2</sup></b><span id="nullCheck"></span></div>
+        </div>
+        <p class="small">Equivalent observer-angle form: D = 1/[γ(1−β cos α′)]. For β ≪ 1, D ≈ 1 + β cos α′.</p>
+      </div>
+
+      <div>
+        <canvas id="aberrationCanvas" width="900" height="570"></canvas>
+        <div class="legend"><span><span class="swatch sw1"></span>all photon directions</span><span><span class="swatch sw3"></span>selected photon</span><span><span class="swatch sw2"></span>source velocity in O′</span></div>
+        <p class="small">The same set of rays is drawn in both panels. Equal angular directions in the source-rest slice are Lorentz-transformed into O′. The clustering toward +x′ is relativistic aberration, not a change in the speed of light.</p>
+      </div>
+    </div>
+
+    <div class="full card">
+      <h2>From aberration to Doppler boosting</h2>
+      <p>For an isotropic source, aberration compresses solid angle in the forward direction. Doppler shift and arrival-time effects then strengthen the received beam.</p>
+      <div class="modebar">
+        <button class="modebtn active" data-power="2">Aberration only: photon density ∝ D²</button>
+        <button class="modebtn" data-power="3">Photon arrival rate ∝ D³</button>
+        <button class="modebtn" data-power="4">Bolometric luminosity ∝ D⁴</button>
+      </div>
+      <canvas id="beamCanvas" width="1160" height="500"></canvas>
+      <div class="readgrid" style="margin-top:12px">
+        <div class="metric"><b>Half of source-frame photons lie inside</b><span id="halfCone"></span></div>
+        <div class="metric"><b>Forward / backward luminosity</b><span id="fbRatio"></span></div>
+      </div>
+      <div class="callout warning small">
+        D² is the angular concentration for a single isotropic flash because dΩ′ = dΩ/D². D³ describes the received photon rate per solid angle for continuous emission. Multiplying once more by the photon-energy shift gives the <b>bolometric</b> luminosity per solid angle ∝ D⁴. A monochromatic spectral intensity at fixed observing frequency has a different transformation law.
+      </div>
+    </div>
+  </section>
+<div id="qaResults" style="display:none"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(x,n=3)=>Math.abs(x)<5e-12?(0).toFixed(n):Number(x).toFixed(n);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const deg=x=>x*180/Math.PI, rad=x=>x*Math.PI/180;
+function gamma(b){return 1/Math.sqrt(1-b*b)}
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tabbtn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active'); $(btn.dataset.tab).classList.add('active');
+  if(btn.dataset.tab==='doppler'){updateDoppler();}
+}));
+
+// ---------- Four-vector explorer ----------
+const betaVec=$('betaVec'), a0=$('a0'), ax=$('ax'), cv=$('cv'), ctx=cv.getContext('2d');
+const presetValues={timelike:[2.5,1],null:[2,2],spacelike:[1,2.5]};
+function preset(kind){a0.value=presetValues[kind][0];ax.value=presetValues[kind][1];setActiveVector(kind);updateVector();}
+function setActiveVector(kind){['timelike','null','spacelike'].forEach(k=>$(k).classList.toggle('active',k===kind));}
+['timelike','null','spacelike'].forEach(k=>$(k).onclick=()=>preset(k));
+[betaVec,a0,ax,$('lower')].forEach(e=>e.oninput=()=>{setActiveVector('');updateVector();});
+function classify(norm){const tol=1e-9;if(norm<-tol)return'timelike';if(norm>tol)return'spacelike';return'null'}
+function boostPassive(t,x,b){const g=gamma(b);return[g*(t-b*x),g*(x-b*t)]}
+function updateVector(){
+  const b=+betaVec.value,t=+a0.value,x=+ax.value,[tp,xp]=boostPassive(t,x,b),n=-t*t+x*x,np=-tp*tp+xp*xp;
+  $('bv').textContent=fmt(b);$('a0v').textContent=fmt(t);$('axv').textContent=fmt(x);
+  $('up').textContent=`${fmt(t)}, ${fmt(x)}, 0, 0`;$('down').textContent=`${fmt(-t)}, ${fmt(x)}, 0, 0`;
+  $('upp').textContent=`${fmt(tp)}, ${fmt(xp)}, 0, 0`;$('downp').textContent=`${fmt(-tp)}, ${fmt(xp)}, 0, 0`;
+  $('n0').textContent=fmt(n);$('n1').textContent=fmt(np);
+  $('downline').style.display=$('lower').checked?'block':'none';$('downpline').style.display=$('lower').checked?'block':'none';
+  drawVector(t,x,tp,xp,b,n,np);
+}
+function drawVector(t,x,tp,xp,b,n,np){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  // Both panels share one scale so the boost is visually honest: with a fixed
+  // span, a large boost can send the primed arrow's tip far outside the
+  // panel (confirmed analytically -- for beta,a0,ax at their slider extremes
+  // the boosted components can exceed the fixed span by 5x or more). Compute
+  // the span from whichever vector -- unprimed or primed -- reaches
+  // farthest, with a floor so small vectors still get a sensible default
+  // zoom rather than being blown up to fill the panel.
+  const reach = Math.max(Math.abs(t), Math.abs(x), Math.abs(tp), Math.abs(xp), 0.1);
+  const span = Math.max(4.6, reach * 1.15);
+  drawVectorPanel({x0:30,y0:35,w:400,h:530,title:'unprimed components',t,x,col:'#0f6e93',label:'a',norm:n,span});
+  drawVectorPanel({x0:450,y0:35,w:400,h:530,title:'primed components',t:tp,x:xp,col:'#8a5a18',label:'a′',norm:np,span});
+  ctx.fillStyle='#5a6b7b';ctx.font='15px system-ui';ctx.fillText(`Lorentz boost: t′ = γ(t − βx),  x′ = γ(x − βt),  β = ${fmt(b)}`,30,600);
+  if(span>4.6){ctx.fillStyle='#8a5a18';ctx.font='13px system-ui';ctx.fillText(`axes rescaled to ±${fmt(span,1)} to keep both arrows on screen`,30,618);}
+}
+function drawVectorPanel(p){
+  const {x0,y0,w,h,title,t,x,col,label,norm,span}=p,cx=x0+w/2,cy=y0+h/2,s=Math.min((w-70)/(2*span),(h-90)/(2*span));
+  ctx.fillStyle='#fbfbf8';ctx.strokeStyle='#e0e5eb';ctx.lineWidth=1;roundRect(ctx,x0,y0,w,h,14,true,true);
+  const gridStep=Math.max(1,Math.round(span/4)),nGrid=Math.floor(span/gridStep);
+  ctx.strokeStyle='#d8dee5';ctx.lineWidth=1;for(let i=-nGrid;i<=nGrid;i++){const gx=i*gridStep;line(ctx,cx+gx*s,y0+45,cx+gx*s,y0+h-45);line(ctx,x0+35,cy+gx*s,x0+w-35,cy+gx*s)}
+  ctx.strokeStyle='#5a6b7b';ctx.lineWidth=2;line(ctx,x0+35,cy,x0+w-35,cy);line(ctx,cx,y0+h-45,cx,y0+45);
+  ctx.fillStyle='#5a6b7b';ctx.font='16px system-ui';ctx.fillText('x',x0+w-52,cy-9);ctx.fillText('t',cx+9,y0+62);
+  ctx.setLineDash([8,8]);ctx.strokeStyle='#c4cbd8';ctx.lineWidth=2;line(ctx,cx-span*s,cy+span*s,cx+span*s,cy-span*s);line(ctx,cx-span*s,cy-span*s,cx+span*s,cy+span*s);ctx.setLineDash([]);
+  arrow(ctx,cx,cy,cx+x*s,cy-t*s,col,label,true);ctx.fillStyle='#15243c';ctx.font='18px Georgia';ctx.fillText(title,x0+22,y0+28);
+  ctx.font='700 17px system-ui';ctx.fillStyle=col;ctx.fillText(classify(norm),x0+22,y0+h-18);ctx.font='13px system-ui';ctx.fillStyle='#5a6b7b';ctx.fillText(`a² = ${fmt(norm)}`,x0+w-112,y0+h-18);
+}
+
+// ---------- Doppler, aberration, and beaming ----------
+const betaD=$('betaD'), alpha=$('alpha'), aberrationCanvas=$('aberrationCanvas'), actx=aberrationCanvas.getContext('2d'), beamCanvas=$('beamCanvas'), bctx=beamCanvas.getContext('2d');
+let beamPower=2;
+document.querySelectorAll('[data-power]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('[data-power]').forEach(x=>x.classList.remove('active'));btn.classList.add('active');beamPower=+btn.dataset.power;updateDoppler();
+}));
+[betaD,alpha].forEach(e=>e.addEventListener('input',updateDoppler));
+
+function dopplerFromSourceAngle(b,a){return gamma(b)*(1+b*Math.cos(a));}
+function aberrateAngle(b,a){
+  const g=gamma(b), den=1+b*Math.cos(a);
+  const nx=(Math.cos(a)+b)/den;
+  const ny=Math.sin(a)/(g*den);
+  return Math.atan2(ny,nx);
+}
+function aberrateDirection(b,theta){
+  const g=gamma(b), den=1+b*Math.cos(theta);
+  return {nx:(Math.cos(theta)+b)/den, ny:Math.sin(theta)/(g*den), D:g*den};
+}
+function dopplerFromObserverAngle(b,ap){return 1/(gamma(b)*(1-b*Math.cos(ap)));}
+function updateDoppler(){
+  const b=+betaD.value,a=rad(+alpha.value),g=gamma(b),ap=aberrateAngle(b,a),D=dopplerFromSourceAngle(b,a);
+  const kp0=D, kpx=g*(Math.cos(a)+b), kpy=Math.sin(a), nullval=-kp0*kp0+kpx*kpx+kpy*kpy;
+  $('dbv').textContent=fmt(b,2);$('alphaV').textContent=`${fmt(deg(a),0)}°`;$('gammaV').textContent=fmt(g,3);$('alphaPV').textContent=`${fmt(deg(ap),2)}°`;$('dopplerV').textContent=fmt(D,3);$('nullCheck').textContent=fmt(nullval,8);
+  const half=Math.acos(clamp(b,-1,1));$('halfCone').textContent=`α′ ≤ ${fmt(deg(half),1)}°`;
+  const ratio=Math.pow((1+b)/(1-b),4);$('fbRatio').textContent=ratio<1e5?`${fmt(ratio,1)} : 1`:`${ratio.toExponential(2)} : 1`;
+  drawAberration(b,a,ap,D);drawBeamPattern(b,beamPower);
+}
+function drawAxes2D(c,cx,cy,R,xlab){
+  c.strokeStyle='#cfd6df';c.lineWidth=1;line(c,cx-R,cy,cx+R,cy);line(c,cx,cy-R,cx,cy+R);
+  c.fillStyle='#5a6b7b';c.font='14px system-ui';c.fillText(xlab,cx+R-18,cy-8);c.fillText('y',cx+7,cy-R+17);
+  c.strokeStyle='#e3e7ec';c.beginPath();c.arc(cx,cy,R,0,2*Math.PI);c.stroke();
+}
+function drawAberration(b,a,ap,Dsel){
+  const W=aberrationCanvas.width,H=aberrationCanvas.height;actx.clearRect(0,0,W,H);actx.fillStyle='#fff';actx.fillRect(0,0,W,H);
+  const panels=[{cx:225,cy:295,title:'O: source rest frame',xlab:'x',moving:false},{cx:675,cy:295,title:'O′: source moves +β',xlab:'x′',moving:true}],R=175;
+  panels.forEach(p=>{drawAxes2D(actx,p.cx,p.cy,R,p.xlab);actx.fillStyle='#15243c';actx.font='19px Georgia';actx.fillText(p.title,p.cx-105,35);actx.fillStyle='#15243c';actx.beginPath();actx.arc(p.cx,p.cy,8,0,2*Math.PI);actx.fill();});
+  const N=48;
+  for(let i=0;i<N;i++){
+    const th=2*Math.PI*i/N;let thp=th,D=1;
+    if(panels[1].moving){const q=aberrateDirection(b,th);thp=Math.atan2(q.ny,q.nx);D=q.D;}
+    // rest ray
+    actx.strokeStyle='rgba(15,110,147,0.46)';actx.lineWidth=1.8;line(actx,panels[0].cx,panels[0].cy,panels[0].cx+R*Math.cos(th),panels[0].cy-R*Math.sin(th));
+    // transformed ray: keep every ray equally weighted here so this panel isolates aberration alone
+    actx.strokeStyle='rgba(15,110,147,0.50)';actx.lineWidth=1.8;line(actx,panels[1].cx,panels[1].cy,panels[1].cx+R*Math.cos(thp),panels[1].cy-R*Math.sin(thp));
+  }
+  // selected photon
+  actx.strokeStyle='#9e2a2b';actx.lineWidth=5;line(actx,panels[0].cx,panels[0].cy,panels[0].cx+R*Math.cos(a),panels[0].cy-R*Math.sin(a));
+  line(actx,panels[1].cx,panels[1].cy,panels[1].cx+R*Math.cos(ap),panels[1].cy-R*Math.sin(ap));
+  actx.fillStyle='#9e2a2b';actx.font='bold 15px system-ui';actx.fillText(`α = ${fmt(deg(a),0)}°`,panels[0].cx+35,panels[0].cy-R-12);actx.fillText(`α′ = ${fmt(deg(ap),1)}°`,panels[1].cx+28,panels[1].cy-R-12);
+  // source velocity arrow on observer panel
+  arrow(actx,panels[1].cx-72,panels[1].cy+205,panels[1].cx+72,panels[1].cy+205,'#8a5a18',`β=${fmt(b,2)}`);
+  actx.fillStyle='#5a6b7b';actx.font='14px system-ui';actx.fillText('isotropic angular slice',panels[0].cx-70,H-20);actx.fillText('same rays after Lorentz transformation',panels[1].cx-118,H-20);
+}
+function patternLabel(power){return power===2?'single-flash photon density  ∝ D²':power===3?'received photon rate  ∝ D³':'bolometric luminosity  ∝ D⁴'}
+function drawPolar(c,cx,cy,R,b,power,isRest){
+  c.strokeStyle='#dfe4ea';c.lineWidth=1;
+  for(let q=1;q<=4;q++){c.beginPath();c.arc(cx,cy,R*q/4,0,2*Math.PI);c.stroke()}
+  line(c,cx-R,cy,cx+R,cy);line(c,cx,cy-R,cx,cy+R);
+  c.fillStyle='#5a6b7b';c.font='13px system-ui';c.fillText('+x',cx+R-18,cy-7);c.fillText('−x',cx-R+3,cy-7);
+  const samples=720,vals=[];let maxv=1;
+  for(let i=0;i<=samples;i++){
+    const th=2*Math.PI*i/samples;let v=1;
+    if(!isRest){const D=dopplerFromObserverAngle(b,th);v=Math.pow(D,power);maxv=Math.max(maxv,v)}
+    vals.push({th,v});
+  }
+  c.strokeStyle=isRest?'#0f6e93':'#9e2a2b';c.lineWidth=3;c.beginPath();
+  vals.forEach((q,i)=>{const rr=R*(q.v/maxv),x=cx+rr*Math.cos(q.th),y=cy-rr*Math.sin(q.th);if(i===0)c.moveTo(x,y);else c.lineTo(x,y)});c.closePath();c.stroke();
+}
+function drawBeamPattern(b,power){
+  const W=beamCanvas.width,H=beamCanvas.height;bctx.clearRect(0,0,W,H);bctx.fillStyle='#fff';bctx.fillRect(0,0,W,H);
+  const R=170,c1=300,c2=860,cy=260;
+  bctx.fillStyle='#15243c';bctx.font='20px Georgia';bctx.fillText('Source rest frame: isotropic',c1-110,35);bctx.fillText('Observer frame: forward beam',c2-115,35);
+  drawPolar(bctx,c1,cy,R,b,power,true);drawPolar(bctx,c2,cy,R,b,power,false);
+  bctx.fillStyle='#5a6b7b';bctx.font='14px system-ui';bctx.fillText('constant per solid angle',c1-72,H-27);bctx.fillText(patternLabel(power),c2-110,H-27);
+  // half-photon cone marker
+  const half=Math.acos(clamp(b,-1,1));
+  bctx.strokeStyle='#8a5a18';bctx.setLineDash([6,5]);bctx.lineWidth=2;
+  line(bctx,c2,cy,c2+R*Math.cos(half),cy-R*Math.sin(half));line(bctx,c2,cy,c2+R*Math.cos(-half),cy-R*Math.sin(-half));bctx.setLineDash([]);
+  bctx.fillStyle='#8a5a18';bctx.font='13px system-ui';bctx.fillText('forward half of source-frame photons',c2+25,cy+R+24);
+}
+
+// ---------- Drawing helpers ----------
+function line(c,x1,y1,x2,y2){c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()}
+function arrow(c,x1,y1,x2,y2,col,label,underline){
+  c.strokeStyle=col;c.fillStyle=col;c.lineWidth=4;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();const ang=Math.atan2(y2-y1,x2-x1),L=14;
+  c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-L*Math.cos(ang-.45),y2-L*Math.sin(ang-.45));c.lineTo(x2-L*Math.cos(ang+.45),y2-L*Math.sin(ang+.45));c.closePath();c.fill();c.font='italic bold 15px Georgia';c.fillText(label,x2+7,y2-8);
+  // Underline the label when it names a four-vector (house style: four-vectors
+  // are underlined, three-vectors get \vec{}, matching the handwritten
+  // notes). Opt-in via the `underline` flag -- this function is also used for
+  // plain scalar/parameter callouts (e.g. the beta-arrow legend) that should
+  // not be decorated.
+  if(underline){const lw=c.measureText(label).width;c.lineWidth=1;c.beginPath();c.moveTo(x2+7,y2-3);c.lineTo(x2+7+lw,y2-3);c.stroke();}
+}
+function roundRect(c,x,y,w,h,r,fill,stroke){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();if(fill)c.fill();if(stroke)c.stroke()}
+
+// ---------- Internal numerical QA hooks ----------
+window.physicsChecks=function(){
+  const cases=[0,0.2,0.7,0.95,0.99];let maxNull=0,maxDdiff=0,maxUnit=0,maxJac=0;
+  for(const b of cases){const g=gamma(b);for(let j=0;j<=180;j+=3){const a=rad(j),q=aberrateDirection(b,a),ap=Math.atan2(q.ny,q.nx),D=q.D;
+    maxUnit=Math.max(maxUnit,Math.abs(q.nx*q.nx+q.ny*q.ny-1));
+    maxDdiff=Math.max(maxDdiff,Math.abs(D-dopplerFromObserverAngle(b,ap)));
+    const kp0=D,kpx=g*(Math.cos(a)+b),kpy=Math.sin(a);maxNull=Math.max(maxNull,Math.abs(-kp0*kp0+kpx*kpx+kpy*kpy));
+    const mu=Math.cos(a),mup=q.nx; const eps=1e-6; if(j>0&&j<180){
+      const mup2=(mu+eps+b)/(1+b*(mu+eps)); const numeric=(mup2-mup)/eps; const analytic=1/(D*D); maxJac=Math.max(maxJac,Math.abs(numeric-analytic));
+    }
+  }}
+  return {maxNull,maxDdiff,maxUnit,maxJac};
+};
+
+setActiveVector('timelike');updateVector();updateDoppler();$('qaResults').textContent=JSON.stringify(window.physicsChecks());
+</script>
+</body>
+</html>

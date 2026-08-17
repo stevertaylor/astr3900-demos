@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gravitational Time Dilation &amp; Redshift — ASTR 3900/8090</title>
+<style>
+  :root {
+    --bg: #FBFBF8;
+    --panel: #EDF1F6;
+    --ink: #15243C;
+    --blue: #0F6E93;
+    --blued: #2E6DA4;
+    --brown: #8A5A18;
+    --grey: #5A6B7B;
+    --mute2: #33465C;
+    --dim: #C4CBD8;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 32px 18px; }
+
+  header.hdr { margin-bottom: 6px; }
+  .step-label {
+    color: var(--blue); font-weight: bold; font-size: 14px; letter-spacing: 0.02em;
+  }
+  h1 {
+    font-family: 'DejaVu Serif', Georgia, serif; font-weight: 400;
+    font-size: 30px; color: var(--ink); margin: 4px 0 10px;
+  }
+  .rule { border: none; border-top: 1.4px solid var(--blued); opacity: 0.7; width: 240px; margin: 0 0 14px; }
+  .sub {
+    font-family: 'DejaVu Serif', Georgia, serif; font-style: italic; color: var(--blue);
+    font-size: 15.5px; margin: 0 0 22px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 22px;
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid #dde3ec;
+    border-radius: 10px;
+    padding: 14px 16px 16px;
+  }
+  .panel h2 {
+    font-family: 'DejaVu Serif', Georgia, serif; font-weight: 400; font-size: 16px;
+    color: var(--ink); margin: 0 0 8px;
+  }
+  canvas { display: block; width: 100%; height: auto; background: transparent; }
+
+  .controls {
+    margin-top: 14px;
+  }
+  .row { display: flex; align-items: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+  .row label { font-size: 13.5px; color: var(--mute2); min-width: 128px; }
+  input[type=range] {
+    flex: 1; min-width: 160px; accent-color: var(--blue);
+  }
+  .chiVal { font-variant-numeric: tabular-nums; color: var(--ink); font-size: 13.5px; min-width: 92px; text-align: right; }
+
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  button.preset {
+    font-family: 'DejaVu Sans', sans-serif; font-size: 12.5px; color: var(--ink);
+    background: #fff; border: 1px solid var(--dim); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer; transition: border-color .15s, color .15s;
+  }
+  button.preset:hover { border-color: var(--blue); color: var(--blue); }
+  button.preset.active { border-color: var(--blued); color: #fff; background: var(--blued); }
+
+  table.readout { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
+  table.readout td { padding: 5px 4px; border-bottom: 1px solid #dde3ec; }
+  table.readout td.k { color: var(--grey); }
+  table.readout td.v { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+  table.readout tr.hero td.v { color: var(--blued); font-size: 15px; }
+  table.readout tr.exact td.v { color: var(--brown); }
+
+  .note {
+    font-size: 12.5px; color: var(--grey); margin-top: 10px; line-height: 1.45;
+  }
+  .callout {
+    margin-top: 10px; font-size: 12.5px; color: var(--blue); font-style: italic;
+    border-left: 3px solid var(--blued); padding-left: 8px;
+  }
+
+  .legend { display:flex; gap:16px; font-size:12px; color: var(--grey); margin-top:6px; flex-wrap: wrap;}
+  .legend span.sw { display:inline-block; width:14px; height:3px; margin-right:5px; vertical-align:middle; }
+
+  footer {
+    display: flex; justify-content: space-between; font-size: 12px; color: var(--grey);
+    border-top: 1px solid #dde3ec; margin-top: 26px; padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hdr">
+    <div class="step-label">INTERACTIVE DEMO</div>
+    <h1>Gravitational Time Dilation &amp; Redshift</h1>
+    <hr class="rule">
+    <p class="sub">A photon climbing out of a gravitational well is redshifted; a clock deep in the well runs slow.</p>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Clock B (surface) and Clock A (far away)</h2>
+      <canvas id="scene" width="1040" height="880"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--blue)"></span>emitted wave</span>
+        <span><span class="sw" style="background:var(--brown)"></span>received wave (redshifted)</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Compactness GM / Rc&sup2;</h2>
+        <div class="controls">
+          <div class="row">
+            <label for="chiSlider">compactness &chi;</label>
+            <input type="range" id="chiSlider" min="0" max="1000" step="1">
+            <span class="chiVal" id="chiValLabel">—</span>
+          </div>
+          <div class="presets" id="presets"></div>
+        </div>
+
+        <table class="readout">
+          <tr><td class="k">&Delta;&Phi; = &chi; = GM/Rc&sup2;</td><td class="v" id="rChi">—</td></tr>
+          <tr class="exact"><td class="k">exact: &nu;<sub>&infin;</sub>/&nu;<sub>*</sub> = &radic;(1&minus;2&chi;)</td><td class="v" id="rNuExact">—</td></tr>
+          <tr><td class="k">weak-field: &nu;<sub>&infin;</sub>/&nu;<sub>*</sub> &asymp; 1&minus;&chi;</td><td class="v" id="rNuWeak">—</td></tr>
+          <tr class="exact hero"><td class="k">exact: &Delta;&tau;<sub>A</sub>/&Delta;&tau;<sub>B</sub> = 1/&radic;(1&minus;2&chi;)</td><td class="v" id="rTauExact">—</td></tr>
+          <tr><td class="k">weak-field: &Delta;&tau;<sub>A</sub>/&Delta;&tau;<sub>B</sub> &asymp; 1+&chi;</td><td class="v" id="rTauWeak">—</td></tr>
+          <tr><td class="k">&lambda;<sub>emit</sub></td><td class="v" id="rLamEmit">—</td></tr>
+          <tr class="exact"><td class="k">&lambda;<sub>obs</sub> (exact)</td><td class="v" id="rLamObs">—</td></tr>
+        </table>
+        <p class="callout" id="callout"></p>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <h2>Weak-field vs. exact GR</h2>
+        <canvas id="chart" width="820" height="520"></canvas>
+        <div class="note">Dashed line: weak-field approximation (1&minus;&chi;), used while GM/Rc&sup2; &ll; 1. Solid line: exact Schwarzschild result. They visibly part ways once &chi; climbs past a few percent.</div>
+      </div>
+
+      <p class="note">Colour and fringe spacing in the wave are stretched for legibility — a white dwarf's true shift is a few parts in 10<sup>4</sup>, far too small to show literally. All numeric readouts above are exact, unexaggerated.</p>
+    </div>
+  </div>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900 / 8090 &middot; Interactive Demo</span>
+  </footer>
+</div>
+
+<script>
+// ---------- Palette ----------
+const COL = {
+  bg: '#FBFBF8', panel: '#EDF1F6', ink: '#15243C', blue: '#0F6E93',
+  blued: '#2E6DA4', brown: '#8A5A18', grey: '#5A6B7B', mute2: '#33465C', dim: '#C4CBD8'
+};
+
+// ---------- Physics ----------
+// chi = GM / (R c^2). Valid range (0, 0.5) for the exact formula to stay real.
+function physics(chi, lambdaEmit) {
+  const weakFactor = 1 - chi;                    // nu_inf / nu_star, weak field
+  const exactFactor = Math.sqrt(Math.max(1 - 2 * chi, 1e-8)); // nu_inf / nu_star, exact
+  const tauExact = exactFactor;                   // dTau_B / dTau_A, exact
+  const tauWeakInv = 1 + chi;                      // dTau_A / dTau_B, weak field
+  const lamObsWeak = lambdaEmit / weakFactor;
+  const lamObsExact = lambdaEmit / exactFactor;
+  return { weakFactor, exactFactor, tauExact, tauWeakInv, lamObsWeak, lamObsExact };
+}
+
+// Smooth (0,1) mapping of a fractional shift onto a display blend factor.
+// Used ONLY for colour / visual fringe-spacing exaggeration, never for the numeric readouts.
+function shiftToT(fracShift) {
+  const s = 0.06;
+  const t = fracShift / (fracShift + s);
+  return Math.min(Math.max(t, 0), 1);
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function shiftColor(t) {
+  // t=0 -> emitted (cool blue-cyan), t=1 -> deep red / fading toward the horizon
+  const hue = lerp(196, 4, t);
+  const light = lerp(46, 28, t);
+  const sat = lerp(55, 78, t);
+  return `hsl(${hue.toFixed(1)}, ${sat.toFixed(0)}%, ${light.toFixed(0)}%)`;
+}
+
+// ---------- Scene drawing ----------
+// state = { chi, lambdaEmit, phase }  phase in [0,1), advances with time for animation
+function drawScene(ctx, W, H, state) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+
+  const p = physics(state.chi, state.lambdaEmit);
+  const fracShift = p.lamObsExact / state.lambdaEmit - 1;
+  const t = shiftToT(fracShift);
+
+  const cx = W * 0.34;
+  const yTop = H * 0.08;     // observer A
+  const yBot = H * 0.58;     // surface, point B
+  const starR = W * 0.115;
+  const starCy = yBot + starR * 0.55;
+  // Analytic check: circle bottom (starCy + starR) and its caption baseline
+  // (starCy + starR + 26 + ~15 for text height) must both stay below H at every
+  // W,H this is called with -- verified in verify.js across all preset/phase combos.
+
+  // --- gravity-well guide line ---
+  ctx.strokeStyle = COL.dim;
+  ctx.setLineDash([2, 6]);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(cx, yTop + 26);
+  ctx.lineTo(cx, yBot - 8);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // --- compact object ---
+  const grad = ctx.createRadialGradient(cx, starCy - starR * 0.3, starR * 0.1, cx, starCy, starR);
+  grad.addColorStop(0, '#2E6DA4');
+  grad.addColorStop(1, COL.ink);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, starCy, starR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = COL.grey;
+  ctx.font = '15px "DejaVu Sans"';
+  ctx.textAlign = 'center';
+  ctx.fillText('compact object, radius R', cx, starCy + starR + 26);
+
+  // --- point B (surface) ---
+  const bx = cx, by = yBot;
+  ctx.fillStyle = COL.brown;
+  ctx.beginPath();
+  ctx.arc(bx, by, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = COL.ink;
+  ctx.font = 'italic 17px "DejaVu Serif"';
+  ctx.textAlign = 'left';
+  ctx.fillText('B', bx + 12, by + 6);
+
+  // --- point A (far away) ---
+  const ax = cx, ay = yTop;
+  ctx.fillStyle = COL.blue;
+  ctx.beginPath();
+  ctx.arc(ax, ay, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = COL.ink;
+  ctx.font = 'italic 17px "DejaVu Serif"';
+  ctx.textAlign = 'left';
+  ctx.fillText('A  (far away)', ax + 12, ay + 6);
+
+  // --- travelling wave from B to A ---
+  const pathTop = ay + 22, pathBot = by - 14;
+  const pxWaveEmit = W * 0.040;
+  const pxWaveObs = lerp(W * 0.040, W * 0.135, t);
+  const waveAmp = W * 0.028;
+  const nSeg = 220;
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  for (let i = 0; i <= nSeg; i++) {
+    const f = i / nSeg;                 // 0 at B, 1 at A
+    const y = lerp(pathBot, pathTop, f);
+    const localLam = lerp(pxWaveEmit, pxWaveObs, f);
+    const phaseShift = state.phase * Math.PI * 2;
+    const x = cx + Math.sin((y / localLam) * Math.PI * 2 - phaseShift) * waveAmp;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  // colour the stroke with a gradient along its own path (blue near B -> shifted colour near A)
+  const wgrad = ctx.createLinearGradient(0, pathBot, 0, pathTop);
+  wgrad.addColorStop(0, COL.blue);
+  wgrad.addColorStop(1, shiftColor(t));
+  ctx.strokeStyle = wgrad;
+  ctx.stroke();
+
+  // --- clock faces ---
+  drawClock(ctx, ax + W * 0.30, ay + 8, 34, state.phase, COL.blue, 'A');
+  drawClock(ctx, bx + W * 0.30, by - 8, 34, state.phase * p.tauExact, COL.brown, 'B');
+
+  ctx.restore();
+}
+
+function drawClock(ctx, cx, cy, r, phaseFraction, color, label) {
+  ctx.save();
+  ctx.lineWidth = 2.2;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // tick marks
+  ctx.strokeStyle = COL.dim;
+  ctx.lineWidth = 1.2;
+  for (let k = 0; k < 12; k++) {
+    const a = (k / 12) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * (r - 4), cy + Math.sin(a) * (r - 4));
+    ctx.lineTo(cx + Math.cos(a) * (r - 8), cy + Math.sin(a) * (r - 8));
+    ctx.stroke();
+  }
+  // hand
+  const ang = (phaseFraction % 1) * Math.PI * 2 - Math.PI / 2;
+  ctx.strokeStyle = COL.ink;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(ang) * (r - 7), cy + Math.sin(ang) * (r - 7));
+  ctx.stroke();
+  ctx.fillStyle = COL.ink;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+  ctx.fill();
+  // label
+  ctx.fillStyle = color;
+  ctx.font = 'bold 13px "DejaVu Sans"';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, cx, cy + r + 18);
+  ctx.restore();
+}
+
+// ---------- Chart drawing ----------
+const CHI_MIN = 1e-4, CHI_MAX = 0.499;
+function chartX(chi, W, marginL, marginR) {
+  const lo = Math.log10(CHI_MIN), hi = Math.log10(CHI_MAX);
+  const f = (Math.log10(Math.max(chi, CHI_MIN)) - lo) / (hi - lo);
+  return marginL + f * (W - marginL - marginR);
+}
+function chartY(val, H, marginT, marginB) {
+  const f = (val - 0) / (1 - 0);
+  return H - marginB - f * (H - marginT - marginB);
+}
+
+function drawChart(ctx, W, H, state) {
+  ctx.clearRect(0, 0, W, H);
+  const marginL = 46, marginR = 16, marginT = 16, marginB = 34;
+
+  // axes
+  ctx.strokeStyle = COL.grey;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(marginL, marginT); ctx.lineTo(marginL, H - marginB); ctx.lineTo(W - marginR, H - marginB);
+  ctx.stroke();
+
+  ctx.fillStyle = COL.grey;
+  ctx.font = '11px "DejaVu Sans"';
+  ctx.textAlign = 'center';
+  [1e-4, 1e-3, 1e-2, 1e-1].forEach(v => {
+    const x = chartX(v, W, marginL, marginR);
+    ctx.beginPath(); ctx.moveTo(x, H - marginB); ctx.lineTo(x, H - marginB + 4); ctx.strokeStyle = COL.grey; ctx.stroke();
+    ctx.fillText(v.toExponential(0), x, H - marginB + 16);
+  });
+  ctx.textAlign = 'right';
+  [0, 0.25, 0.5, 0.75, 1.0].forEach(v => {
+    const y = chartY(v, H, marginT, marginB);
+    ctx.beginPath(); ctx.moveTo(marginL - 4, y); ctx.lineTo(marginL, y); ctx.strokeStyle = COL.grey; ctx.stroke();
+    ctx.fillText(v.toFixed(2), marginL - 7, y + 3);
+  });
+  ctx.save();
+  ctx.translate(12, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = COL.mute2;
+  ctx.font = '11px "DejaVu Sans"';
+  ctx.fillText('\u03BD\u221E / \u03BD*', 0, 0);
+  ctx.restore();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = COL.mute2;
+  ctx.fillText('compactness \u03C7 = GM/Rc\u00B2  (log scale)', (W + marginL - marginR) / 2, H - 6);
+
+  // weak-field curve (dashed)
+  ctx.beginPath();
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = COL.grey;
+  ctx.lineWidth = 2;
+  for (let i = 0; i <= 200; i++) {
+    const chi = Math.pow(10, lerp(Math.log10(CHI_MIN), Math.log10(CHI_MAX), i / 200));
+    const x = chartX(chi, W, marginL, marginR);
+    const y = chartY(1 - chi, H, marginT, marginB);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // exact curve (solid)
+  ctx.beginPath();
+  ctx.strokeStyle = COL.blued;
+  ctx.lineWidth = 2.4;
+  for (let i = 0; i <= 200; i++) {
+    const chi = Math.pow(10, lerp(Math.log10(CHI_MIN), Math.log10(CHI_MAX), i / 200));
+    const x = chartX(chi, W, marginL, marginR);
+    const y = chartY(Math.sqrt(Math.max(1 - 2 * chi, 0)), H, marginT, marginB);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // current-chi marker
+  const chiClamped = Math.min(Math.max(state.chi, CHI_MIN), CHI_MAX);
+  const mx = chartX(chiClamped, W, marginL, marginR);
+  ctx.strokeStyle = COL.brown;
+  ctx.setLineDash([3, 3]);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(mx, marginT); ctx.lineTo(mx, H - marginB); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const yExact = chartY(Math.sqrt(Math.max(1 - 2 * chiClamped, 0)), H, marginT, marginB);
+  const yWeak = chartY(1 - chiClamped, H, marginT, marginB);
+  ctx.fillStyle = COL.blued;
+  ctx.beginPath(); ctx.arc(mx, yExact, 4.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = COL.grey;
+  ctx.beginPath(); ctx.arc(mx, yWeak, 4.2, 0, Math.PI * 2); ctx.fill();
+}
+
+// ---------- Wiring (skipped in headless verification) ----------
+function initUI() {
+  const PRESETS = [
+    { name: 'Earth (office floors)', chi: 6.960415080041184e-10 },
+    { name: 'White dwarf', chi: 0.0002320454018489533 },
+    { name: 'Neutron star', chi: 0.18901152732423832 },
+    { name: 'Near horizon', chi: 0.499 }
+  ];
+
+  const state = { chi: PRESETS[1].chi, lambdaEmit: 500, phase: 0 };
+
+  const sceneCanvas = document.getElementById('scene');
+  const chartCanvas = document.getElementById('chart');
+  const sceneCtx = sceneCanvas.getContext('2d');
+  const chartCtx = chartCanvas.getContext('2d');
+
+  const slider = document.getElementById('chiSlider');
+  const chiValLabel = document.getElementById('chiValLabel');
+  const presetsDiv = document.getElementById('presets');
+
+  const LOG_MIN = Math.log10(1e-9), LOG_MAX = Math.log10(0.499);
+  function chiToSlider(chi) {
+    const f = (Math.log10(chi) - LOG_MIN) / (LOG_MAX - LOG_MIN);
+    return Math.round(f * 1000);
+  }
+  function sliderToChi(v) {
+    const f = v / 1000;
+    return Math.pow(10, lerp(LOG_MIN, LOG_MAX, f));
+  }
+
+  let activeBtn = null;
+  PRESETS.forEach(pr => {
+    const b = document.createElement('button');
+    b.className = 'preset';
+    b.textContent = pr.name;
+    b.onclick = () => {
+      state.chi = pr.chi;
+      slider.value = chiToSlider(pr.chi);
+      if (activeBtn) activeBtn.classList.remove('active');
+      b.classList.add('active');
+      activeBtn = b;
+      updateReadouts();
+    };
+    presetsDiv.appendChild(b);
+    if (pr === PRESETS[1]) { activeBtn = b; b.classList.add('active'); }
+  });
+
+  slider.value = chiToSlider(state.chi);
+  slider.addEventListener('input', () => {
+    state.chi = sliderToChi(+slider.value);
+    if (activeBtn) activeBtn.classList.remove('active');
+    activeBtn = null;
+    updateReadouts();
+  });
+
+  function fmt(x, d = 6) {
+    if (Math.abs(x) < 1e-3 || Math.abs(x) >= 1e5) return x.toExponential(3);
+    return x.toFixed(d);
+  }
+
+  function updateReadouts() {
+    const p = physics(state.chi, state.lambdaEmit);
+    document.getElementById('rChi').textContent = state.chi.toExponential(3);
+    document.getElementById('rNuExact').textContent = fmt(p.exactFactor, 6);
+    document.getElementById('rNuWeak').textContent = fmt(p.weakFactor, 6);
+    document.getElementById('rTauExact').textContent = fmt(1 / p.tauExact, 6);
+    document.getElementById('rTauWeak').textContent = fmt(p.tauWeakInv, 6);
+    document.getElementById('rLamEmit').textContent = state.lambdaEmit.toFixed(1) + ' nm';
+    document.getElementById('rLamObs').textContent = p.lamObsExact.toFixed(4) + ' nm';
+
+    const callout = document.getElementById('callout');
+    if (Math.abs(state.chi - 0.0002320454018489533) < 1e-9) {
+      callout.textContent = 'M \u2243 M\u2609, R \u2243 R\u2295 \u2014 matches the white-dwarf example in Step 18 (\u03BB_emit \u2243 479.9 nm for \u03BB_obs = 480 nm).';
+    } else if (state.chi < 1e-6) {
+      callout.textContent = 'At Earth\u2019s compactness the clocks and the wave colour are visually indistinguishable \u2014 exactly the point of "a deliberately small effect." The numbers above are exact.';
+    } else if (state.chi > 0.3) {
+      callout.textContent = 'Close to \u03C7 = 0.5 (the Schwarzschild horizon) the exact and weak-field curves are far apart \u2014 the weak-field formula is no longer usable here.';
+    } else {
+      callout.textContent = '';
+    }
+    chiValLabel.textContent = '\u03C7 = ' + state.chi.toExponential(3);
+  }
+
+  function frame() {
+    state.phase = (state.phase + 0.004) % 1;
+    drawScene(sceneCtx, sceneCanvas.width, sceneCanvas.height, state);
+    drawChart(chartCtx, chartCanvas.width, chartCanvas.height, state);
+    requestAnimationFrame(frame);
+  }
+
+  updateReadouts();
+  requestAnimationFrame(frame);
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', initUI);
+}
+</script>
+</body>
+</html>

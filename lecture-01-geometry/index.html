@@ -1,0 +1,311 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Lecture 1 - Gravity as Geometry Demo</title>
+<style>
+body{font-family:system-ui;margin:0;background:#fbfbf8;color:#15243c}
+header{padding:18px 28px;border-bottom:2px solid #2e6da4}
+h1{margin:0;font-family:Georgia,serif;font-size:28px}
+.tabs{display:flex;gap:8px;padding:14px 28px}
+.tabs button{padding:9px 14px;border:1px solid #c4cbd8;background:#edf1f6;border-radius:8px;cursor:pointer}
+.tabs button.active{border-color:#0f6e93;font-weight:700}
+.panel{display:none;padding:0 28px 24px}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:24px}
+.card{background:#edf1f6;padding:16px;border-radius:12px}
+canvas{background:white;border:1px solid #c4cbd8;border-radius:10px;width:100%;height:auto}
+.big{font:24px Georgia,serif}.accent{color:#8a5a18;font-weight:700}
+input[type=range]{width:100%}
+.eq{font-family:Georgia,serif;font-size:21px;text-align:center;padding:8px}.small{color:#5a6b7b;font-size:14px}
+.note{border-left:4px solid #0f6e93;padding-left:10px}
+.modebtns{display:flex;gap:8px;margin:6px 0 10px}
+.modebtns button{padding:7px 12px;border:1px solid #c4cbd8;background:#fbfbf8;border-radius:8px;cursor:pointer}
+.modebtns button.active{border-color:#0f6e93;background:#dce7ef;font-weight:700}
+</style>
+</head>
+<body>
+<header><h1>ASTR 3900/8090 - Lecture 1 interactive demo</h1><div>Universal free fall · coordinate descriptions · light-clock invariance</div></header>
+<div class="tabs">
+<button class="active" onclick="show(0)">1. Universal free fall</button>
+<button onclick="show(1)">2. Same geometry, new coordinates</button>
+<button onclick="show(2)">3. Light clock</button>
+</div>
+
+<section class="panel active">
+<div class="grid">
+<canvas id="fall" width="700" height="480"></canvas>
+<div class="card">
+<div class="big">Change the test mass</div>
+<p>Mass: <span id="mval">1.0</span> arbitrary units</p>
+<input id="mass" type="range" min="0.2" max="8" step="0.1" value="1">
+<p class="accent">The body gets bigger. The curve does not move.</p>
+<p>For the same initial position and velocity, and neglecting non-gravitational forces such as air resistance, freely falling test bodies have the same acceleration.</p>
+<div class="eq">h(t) = h₀ + v₀t − ½gt²</div>
+<div class="eq">dh/dt = velocity, &nbsp; d²h/dt² = −g</div>
+<p class="small">The plotted curve is a complete constant-acceleration trajectory: h(t) is quadratic, so it is a parabola.</p>
+<p class="small note">Time runs up the page and height runs across it, following the lecture notes. Read this way the parabola is already a worldline, which is the object panel 3 returns to.</p>
+</div>
+</div>
+</section>
+
+<section class="panel">
+<div class="grid">
+<canvas id="coords" width="700" height="480"></canvas>
+<div class="card">
+<div class="big">Cartesian ↔ polar coordinates</div>
+<p>At fixed r = 1, angle φ: <span id="phival">35</span>°</p>
+<input id="phi" type="range" min="5" max="85" value="35">
+<p>Toggle the coordinate grid:</p>
+<div class="modebtns">
+<button id="btnCart" class="active" onclick="setMode('cart')">Cartesian</button>
+<button id="btnPol" onclick="setMode('polar')">Polar</button>
+</div>
+<div class="eq">ds² = dx² + dy² = dr² + r²dφ²</div>
+<div class="eq">x = r cosφ, &nbsp; y = r sinφ</div>
+<p id="coordread" class="small"></p>
+<p class="small">The slider reports φ in degrees for convenience; the differential dφ in the line element is understood in radians.</p>
+<p class="accent">The coordinates change; the Euclidean geometry and line element do not.</p>
+</div>
+</div>
+</section>
+
+<section class="panel">
+<div class="grid">
+<canvas id="clock" width="700" height="480"></canvas>
+<div class="card">
+<div class="big">Moving light clock</div>
+<p>β = v/c: <span id="bval">0.60</span></p>
+<input id="beta" type="range" min="0" max="0.92" step="0.01" value="0.60">
+<p>Use c = 1 and mirror separation L = 1. Frame S is the clock rest frame; S′ sees the clock moving along x′. Because L is transverse to the motion, the mirror separation is unchanged.</p>
+<div class="eq">Δt = 2L/c = <span id="dt">2.000</span></div>
+<div class="eq">cΔt′/2 = √[L² + (Δx′/2)²]</div>
+<div class="eq">γ = 1/√(1−β²), &nbsp; Δt′ = 2γL/c = <span id="dtp">2.500</span></div>
+<div class="eq">Δx′ = vΔt′ = <span id="dxp">1.500</span></div>
+<div class="eq">−(cΔt′)² + (Δx′)² = <span id="invp">−4.000</span></div>
+<p class="accent">For events A and C, the spacetime interval remains Δs² = −4L².</p>
+<p class="small note">The right-hand spacetime plot is only the x′-ct′ projection. The photon also moves in y′, so its projected path there should not be mistaken for a 45° null ray.</p>
+</div>
+</div>
+</section>
+
+<script>
+const tabs=[...document.querySelectorAll('.tabs button')], panels=[...document.querySelectorAll('.panel')];
+function show(i){tabs.forEach((b,j)=>b.classList.toggle('active',i===j));panels.forEach((p,j)=>p.classList.toggle('active',i===j));}
+
+const INK='#15243c', GREY='#5a6b7b', BROWN='#8a5a18', BLUE='#0f6e93', DIM='#c4cbd8';
+
+function drawArrow(ctx,x1,y1,x2,y2,label,color){
+  const col=color||INK;
+  ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1),s=8;
+  ctx.beginPath();ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-s*Math.cos(a-Math.PI/6),y2-s*Math.sin(a-Math.PI/6));
+  ctx.lineTo(x2-s*Math.cos(a+Math.PI/6),y2-s*Math.sin(a+Math.PI/6));
+  ctx.closePath();ctx.fill();
+  if(label){ctx.font='16px system-ui';ctx.fillText(label,x2+6,y2+4)}
+}
+
+// double-headed dimension line, so that every length label is attached to the length it names
+function dimLine(ctx,x1,y1,x2,y2,label,ox,oy){
+  ctx.save();ctx.strokeStyle=BLUE;ctx.fillStyle=BLUE;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1),s=7;
+  [[x2,y2,a],[x1,y1,a+Math.PI]].forEach(function(e){
+    ctx.beginPath();ctx.moveTo(e[0],e[1]);
+    ctx.lineTo(e[0]-s*Math.cos(e[2]-Math.PI/6),e[1]-s*Math.sin(e[2]-Math.PI/6));
+    ctx.lineTo(e[0]-s*Math.cos(e[2]+Math.PI/6),e[1]-s*Math.sin(e[2]+Math.PI/6));
+    ctx.closePath();ctx.fill();
+  });
+  ctx.font='15px system-ui';
+  ctx.fillText(label,(x1+x2)/2+ox,(y1+y2)/2+oy);
+  ctx.restore();
+}
+
+/* ---------- Panel 1: universal free fall ----------
+   Axes follow the lecture notes: time up the page, height across it. */
+const ox1=95, oy1=402, hs=440, ts=330;
+function hOfT(t){return 4*t*(1-t);}
+function fallPt(t){return [ox1+hOfT(t)*hs, oy1-t*ts];}
+
+function drawFall(){
+  const m=+document.getElementById('mass').value;
+  const c=document.getElementById('fall'),x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+  drawArrow(x,ox1,oy1,655,oy1,null);
+  drawArrow(x,ox1,oy1,ox1,48,null);
+  x.fillStyle=GREY;x.font='15px system-ui';
+  x.fillText('height  h',575,oy1+24);
+  x.fillText('time  t',ox1-58,62);
+
+  x.strokeStyle=BROWN;x.lineWidth=4;x.beginPath();
+  for(let i=0;i<=200;i++){const p=fallPt(i/200);i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);}
+  x.stroke();
+
+  // the body itself, drawn at three instants; radius set by the mass
+  const R=7*Math.cbrt(m);
+  [0.16,0.5,0.84].forEach(function(t){
+    const p=fallPt(t);
+    x.fillStyle='rgba(138,90,24,0.28)';x.beginPath();x.arc(p[0],p[1],R,0,2*Math.PI);x.fill();
+    x.strokeStyle=BROWN;x.lineWidth=2;x.beginPath();x.arc(p[0],p[1],R,0,2*Math.PI);x.stroke();
+  });
+
+  x.fillStyle=BLUE;x.font='18px system-ui';
+  x.fillText('same curve for every test mass',220,84);
+  x.fillStyle=GREY;x.font='14px system-ui';
+  x.fillText('release point',ox1+4,oy1+24);
+  x.fillStyle=INK;x.font='15px system-ui';
+  x.fillText('h(t) = h₀ + v₀t − ½gt²',300,oy1+54);
+}
+document.getElementById('mass').oninput=function(e){document.getElementById('mval').textContent=(+e.target.value).toFixed(1);drawFall()};
+drawFall();
+
+/* ---------- Panel 2: same geometry, new coordinates ----------
+   U is the pixels-per-unit-length used by BOTH the grid and the point P. */
+let mode='cart';
+const cx2=350, cy2=250, U=90;
+function setMode(m){
+  mode=m;
+  document.getElementById('btnCart').classList.toggle('active',m==='cart');
+  document.getElementById('btnPol').classList.toggle('active',m==='polar');
+  drawCoords();
+}
+function drawCoords(){
+  const c=document.getElementById('coords'),x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+  x.strokeStyle=DIM;x.lineWidth=1;
+  if(mode==='cart'){
+    for(let k=-2;k<=2;k++){
+      x.beginPath();x.moveTo(cx2+k*U,58);x.lineTo(cx2+k*U,442);x.stroke();
+      x.beginPath();x.moveTo(110,cy2+k*U);x.lineTo(600,cy2+k*U);x.stroke();
+    }
+    drawArrow(x,100,cy2,635,cy2,'x');
+    drawArrow(x,cx2,450,cx2,48,'y');
+    x.fillStyle=GREY;x.font='13px system-ui';
+    [1,2].forEach(function(k){
+      x.fillText(''+k,cx2+k*U-4,cy2+20);x.fillText('-'+k,cx2-k*U-8,cy2+20);
+      x.fillText(''+k,cx2+9,cy2-k*U+5);x.fillText('-'+k,cx2+9,cy2+k*U+5);
+    });
+  }else{
+    for(let k=1;k<=2;k++){x.beginPath();x.arc(cx2,cy2,k*U,0,2*Math.PI);x.stroke();}
+    for(let a=0;a<2*Math.PI;a+=Math.PI/8){
+      x.beginPath();x.moveTo(cx2,cy2);x.lineTo(cx2+200*Math.cos(a),cy2-200*Math.sin(a));x.stroke();
+    }
+    drawArrow(x,cx2,cy2,cx2+215,cy2,'r');
+    x.fillStyle=GREY;x.font='13px system-ui';
+    [1,2].forEach(function(k){x.fillText('r = '+k,cx2+k*U-24,cy2+20)});
+  }
+
+  const deg=+document.getElementById('phi').value, ph=deg*Math.PI/180;
+  const px=cx2+U*Math.cos(ph), py=cy2-U*Math.sin(ph);
+
+  if(mode==='cart'){
+    x.save();x.setLineDash([5,5]);x.strokeStyle=BROWN;x.lineWidth=1.5;
+    x.beginPath();x.moveTo(px,py);x.lineTo(px,cy2);x.stroke();
+    x.beginPath();x.moveTo(px,py);x.lineTo(cx2,py);x.stroke();x.restore();
+    x.fillStyle=BROWN;x.font='15px system-ui';
+    x.fillText('x',px+10,cy2+40);
+    x.fillText('y',cx2-26,py+5);
+  }else{
+    x.strokeStyle=BROWN;x.lineWidth=1.5;
+    x.beginPath();x.arc(cx2,cy2,48,-ph,0);x.stroke();
+    x.fillStyle=BROWN;x.font='15px system-ui';
+    x.fillText('φ',cx2+62*Math.cos(ph/2)-5,cy2-62*Math.sin(ph/2)+5);
+  }
+
+  x.strokeStyle=BROWN;x.lineWidth=2;x.beginPath();x.moveTo(cx2,cy2);x.lineTo(px,py);x.stroke();
+  x.fillStyle=BROWN;x.beginPath();x.arc(px,py,7,0,2*Math.PI);x.fill();
+  x.fillStyle=INK;x.font='16px system-ui';x.fillText('P',px+12,py-10);
+
+  document.getElementById('coordread').textContent=
+    'For this point: (r, \u03c6) = (1, '+deg+'\u00b0), so (x, y) \u2248 ('+Math.cos(ph).toFixed(3)+', '+Math.sin(ph).toFixed(3)+'). One grid unit is one unit of length in both pictures.';
+}
+document.getElementById('phi').oninput=function(e){document.getElementById('phival').textContent=e.target.value;drawCoords()};
+drawCoords();
+
+/* ---------- Panel 3: light clock ---------- */
+function labelPoint(ctx,p,label,dx,dy){
+  ctx.fillStyle=BLUE;ctx.beginPath();ctx.arc(p[0],p[1],5,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle=INK;ctx.font='15px system-ui';ctx.fillText(label,p[0]+dx,p[1]+dy);
+}
+// the whole two-mirror clock, so that the object being carried along is always visible
+function clockSnapshot(ctx,xc,yBottom,L,alpha){
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.strokeStyle=DIM;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(xc,yBottom);ctx.lineTo(xc,yBottom-L);ctx.stroke();
+  ctx.strokeStyle=GREY;ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(xc-24,yBottom);ctx.lineTo(xc+24,yBottom);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(xc-24,yBottom-L);ctx.lineTo(xc+24,yBottom-L);ctx.stroke();
+  ctx.restore();
+}
+
+function drawClock(){
+  const b=+document.getElementById('beta').value, g=1/Math.sqrt(1-b*b);
+  const dt=2, dtp=2*g, dx=b*dtp;
+  document.getElementById('bval').textContent=b.toFixed(2);
+  document.getElementById('dt').textContent=dt.toFixed(3);
+  document.getElementById('dtp').textContent=dtp.toFixed(3);
+  document.getElementById('dxp').textContent=dx.toFixed(3);
+  document.getElementById('invp').textContent=(-dtp*dtp+dx*dx).toFixed(3);
+
+  const c=document.getElementById('clock'),x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+
+  /* LEFT: spatial x'-y' geometry. Equal pixel scale in x' and y', so the drawn
+     photon path length is literally c*dt'. */
+  x.fillStyle=INK;x.font='17px system-ui';x.fillText('Spatial picture in S\u2032',28,26);
+  x.font='13px system-ui';
+  x.fillStyle=BROWN;x.fillText('photon path',28,48);
+  x.fillStyle=GREY;x.fillText('clock at the three events',28,66);
+
+  const lx0=28, ly0=430, sp=44, L=sp, yB=340;
+  drawArrow(x,lx0,ly0,320,ly0,'x\u2032');
+  drawArrow(x,lx0,ly0,lx0,96,'y\u2032');
+  const disp=dx*sp;
+  const A=[64,yB], B=[64+disp/2,yB-L], C=[64+disp,yB];
+
+  clockSnapshot(x,A[0],yB,L,0.30);
+  clockSnapshot(x,B[0],yB,L,0.50);
+  clockSnapshot(x,C[0],yB,L,0.90);
+
+  x.strokeStyle=BROWN;x.lineWidth=3;
+  x.beginPath();x.moveTo(A[0],A[1]);x.lineTo(B[0],B[1]);x.lineTo(C[0],C[1]);x.stroke();
+
+  // event labels; when A and C nearly coincide they are stacked instead of overprinted
+  labelPoint(x,B,'B',-4,-12);
+  if(disp<24){labelPoint(x,A,'A',-24,22);labelPoint(x,C,'C',12,22);}
+  else{labelPoint(x,A,'A',-16,20);labelPoint(x,C,'C',8,20);}
+
+  dimLine(x,C[0]+32,yB,C[0]+32,yB-L,'L',8,5);
+  if(disp>=24) dimLine(x,A[0],yB+40,C[0],yB+40,'\u0394x\u2032',-14,22);
+
+  /* RIGHT: x'-ct' spacetime projection, equal pixel scale for x' and ct'. */
+  x.fillStyle=INK;x.font='17px system-ui';x.fillText('x\u2032-ct\u2032 projection',388,26);
+  const ox=388, oy=420, xEnd=672, yTop=70;
+  const maxT=2/Math.sqrt(1-0.92*0.92), maxX=0.92*maxT;
+  const ss=Math.min((xEnd-28-ox)/maxX,(oy-yTop-18)/maxT);
+  drawArrow(x,ox,oy,xEnd,oy,'x\u2032');
+  drawArrow(x,ox,oy,ox,yTop,'ct\u2032');
+
+  // 45-degree null reference. Right branch only: nothing here lies at negative x'.
+  const nl=Math.min(xEnd-24-ox,oy-yTop-12);
+  x.save();x.setLineDash([6,6]);x.strokeStyle=DIM;x.lineWidth=1.5;
+  x.beginPath();x.moveTo(ox,oy);x.lineTo(ox+nl,oy-nl);x.stroke();x.restore();
+  x.save();x.fillStyle=GREY;x.font='12px system-ui';
+  x.translate(ox+0.42*nl,oy-0.42*nl);x.rotate(-Math.PI/4);
+  x.fillText('45\u00b0 null reference',0,20);x.restore();
+
+  const Ap=[ox,oy], Bp=[ox+b*(dtp/2)*ss,oy-(dtp/2)*ss], Cp=[ox+b*dtp*ss,oy-dtp*ss];
+  x.strokeStyle=BROWN;x.lineWidth=3;
+  x.beginPath();x.moveTo(Ap[0],Ap[1]);x.lineTo(Cp[0],Cp[1]);x.stroke();
+  labelPoint(x,Ap,'A',-20,4);labelPoint(x,Bp,'B',12,6);labelPoint(x,Cp,'C',-20,-8);
+  x.fillStyle=GREY;x.font='13px system-ui';
+  x.fillText('clock worldline: dx\u2032/d(ct\u2032) = \u03b2',ox+24,oy+36);
+}
+document.getElementById('beta').oninput=drawClock;drawClock();
+
+const initialPanel=new URLSearchParams(location.search).get('panel');
+if(initialPanel!==null && ['0','1','2'].includes(initialPanel)){show(Number(initialPanel));}
+</script>
+</body>
+</html>

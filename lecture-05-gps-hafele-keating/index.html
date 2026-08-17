@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Effects, One Clock — GPS &amp; Hafele–Keating</title>
+<style>
+  :root{
+    --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+    --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: "SF Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px; margin:0 auto; padding:28px 20px 60px;}
+  header{margin-bottom:22px;}
+  .eyebrow{
+    font-family:var(--sans); font-weight:700; font-size:12.5px; letter-spacing:0.09em;
+    text-transform:uppercase; color:var(--blue); margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--serif); font-size:clamp(26px,4vw,36px); margin:0 0 8px;
+    color:var(--ink); line-height:1.15; font-weight:400;
+  }
+  .sub{color:var(--grey); font-size:15px; max-width:640px; line-height:1.5; margin:0;}
+  .formula-strip{
+    margin-top:16px; padding:12px 16px; background:var(--panel); border:1px solid #d7deea;
+    border-radius:10px; font-family:var(--serif); font-size:15px; color:var(--mute2);
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .formula-strip .eq{font-style:italic; color:var(--ink);}
+  .formula-strip .tag{
+    font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:0.04em;
+    padding:2px 8px; border-radius:999px; text-transform:uppercase;
+  }
+  .tag.sr{background:#f3e6d3; color:var(--brown);}
+  .tag.gr{background:#dbeaf1; color:var(--blue);}
+
+  nav.tabs{
+    display:flex; gap:6px; margin:26px 0 20px; flex-wrap:wrap;
+    border-bottom:1px solid #dfe4ec; padding-bottom:0;
+  }
+  nav.tabs button{
+    font-family:var(--sans); font-size:13.5px; font-weight:600; color:var(--grey);
+    background:none; border:none; padding:10px 14px; cursor:pointer; border-radius:8px 8px 0 0;
+    position:relative; top:1px;
+  }
+  nav.tabs button.active{
+    color:var(--blue); border-bottom:2px solid var(--blue);
+  }
+  nav.tabs button:hover:not(.active){color:var(--ink);}
+
+  .grid{display:grid; grid-template-columns: 1.05fr 1fr; gap:22px;}
+  @media (max-width:760px){ .grid{grid-template-columns:1fr;} }
+
+  .card{
+    background:#fff; border:1px solid #e6eaf1; border-radius:14px; padding:20px 22px;
+  }
+  .card h2{
+    font-family:var(--sans); font-size:12.5px; font-weight:700; letter-spacing:0.07em;
+    text-transform:uppercase; color:var(--grey); margin:0 0 16px;
+  }
+
+  .control{margin-bottom:18px;}
+  .control:last-child{margin-bottom:0;}
+  .control-label{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;
+  }
+  .control-label span.name{font-size:14px; color:var(--mute2); font-weight:600;}
+  .control-label span.val{font-family:var(--mono); font-size:13.5px; color:var(--ink);}
+  input[type=range]{
+    width:100%; -webkit-appearance:none; height:5px; border-radius:3px;
+    background:linear-gradient(to right, var(--blued), var(--blued)) no-repeat, var(--dim);
+    background-size: var(--fill,50%) 100%;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:17px; height:17px; border-radius:50%;
+    background:var(--blue); border:2px solid #fff; box-shadow:0 0 0 1px var(--blued);
+    cursor:pointer; margin-top:-6px;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:15px; height:15px; border-radius:50%; background:var(--blue);
+    border:2px solid #fff; box-shadow:0 0 0 1px var(--blued); cursor:pointer;
+  }
+  .hint{font-size:12px; color:var(--grey); margin-top:5px; line-height:1.4;}
+
+  .direction-toggle{
+    display:flex; gap:8px; margin-bottom:18px;
+  }
+  .direction-toggle button{
+    flex:1; padding:9px 8px; border-radius:8px; border:1.5px solid #dfe4ec;
+    background:#fff; font-family:var(--sans); font-size:13px; font-weight:600;
+    color:var(--grey); cursor:pointer;
+  }
+  .direction-toggle button.active{
+    border-color:var(--blue); color:var(--blue); background:#eef6f9;
+  }
+
+  /* twin clocks: the point of the animation. Both readouts derive from the exact
+     same elapsed-time value -- they are LITERALLY identical, on purpose, because
+     the effect we're demonstrating is far below the resolution a clock face can
+     show. That's the whole point: you cannot see this with your eyes. */
+  .twin-clocks{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    margin-bottom:6px;
+  }
+  .clock-box{
+    flex:1; text-align:center; background:var(--panel); border-radius:12px;
+    padding:12px 8px; border:1px solid #e2e8f1;
+  }
+  .clock-label{
+    font-size:11px; color:var(--grey); text-transform:uppercase; letter-spacing:.04em;
+    margin-bottom:4px; font-weight:600;
+  }
+  .clock-readout{
+    font-family:var(--mono); font-size:clamp(18px,3.2vw,24px); font-weight:700;
+    color:var(--ink); letter-spacing:-0.01em;
+  }
+  .clock-vs{font-size:12px; color:var(--dim); font-weight:700;}
+  .twin-note{
+    text-align:center; font-size:12px; color:var(--grey); margin:8px 0 18px;
+    font-style:italic;
+  }
+
+  /* signature hero counter, driven by the Run animation -- the ONLY place the
+     otherwise-invisible difference between the two clocks above becomes visible */
+  .hero-counter-wrap{
+    text-align:center; margin-bottom:20px; padding:14px 10px 12px;
+    background:linear-gradient(180deg,#fbfdfe,var(--panel)); border-radius:12px;
+    border:1px solid #e2e8f1;
+  }
+  .hero-label{font-size:11.5px; color:var(--grey); margin-bottom:2px;}
+  .hero-counter{
+    font-family:var(--mono); font-size:clamp(28px,5vw,40px); font-weight:700;
+    color:var(--ink); letter-spacing:-0.01em; line-height:1.2;
+    transition:color .15s ease;
+  }
+  .hero-counter.running{color:var(--blue);}
+  .hero-sub{font-size:11.5px; color:var(--grey); margin-top:4px;}
+  .hero-sub b{color:var(--mute2);}
+
+  /* the tug-of-war bar: signature element */
+  .duel{margin:6px 0 22px;}
+  .duel-labels{display:flex; justify-content:space-between; font-size:12px; color:var(--grey); margin-bottom:6px;}
+  .duel-labels .l{color:var(--brown); font-weight:700;}
+  .duel-labels .r{color:var(--blue); font-weight:700;}
+  .duel-track{
+    position:relative; height:46px; background:var(--panel); border-radius:10px;
+    overflow:hidden; border:1px solid #dde3ec;
+  }
+  .duel-mid{
+    position:absolute; left:50%; top:0; bottom:0; width:1px; background:#b8c2d1; z-index:3;
+  }
+  .duel-bar{
+    position:absolute; top:6px; bottom:6px; border-radius:6px; transition:all .25s ease;
+  }
+  .duel-bar.sr{background:linear-gradient(90deg,#a3742f,var(--brown)); right:50%;}
+  .duel-bar.gr{background:linear-gradient(90deg,var(--blue),#0a5878); left:50%;}
+  .duel-net{
+    position:absolute; top:-3px; bottom:-3px; width:3px; background:var(--ink); z-index:4;
+    border-radius:2px; transition:left .25s ease;
+  }
+  .duel-net::after{
+    content:attr(data-label); position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    font-family:var(--mono); font-size:11px; color:var(--ink); white-space:nowrap; font-weight:700;
+  }
+
+  .readout{
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:6px;
+  }
+  .readout .cell{
+    background:var(--panel); border-radius:10px; padding:12px 10px; text-align:center;
+  }
+  .readout .cell .k{font-size:10.5px; color:var(--grey); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px;}
+  .readout .cell .v{font-family:var(--mono); font-size:17px; color:var(--ink); font-weight:600;}
+  .readout .cell.sr .v{color:var(--brown);}
+  .readout .cell.gr .v{color:var(--blue);}
+  .readout .cell.net .v{color:var(--ink); font-size:18px;}
+
+  .verdict{
+    margin-top:16px; padding:12px 14px; border-radius:10px; background:#f5f8ee;
+    border:1px solid #dce6c8; font-size:13.5px; color:var(--mute2); line-height:1.5;
+  }
+  .verdict b{color:var(--ink);}
+
+  .compare-table{width:100%; border-collapse:collapse; margin-top:10px; font-size:13.5px;}
+  .compare-table th{
+    text-align:right; font-weight:600; color:var(--grey); font-size:11px;
+    text-transform:uppercase; letter-spacing:.04em; padding:6px 8px; border-bottom:1px solid #e6eaf1;
+  }
+  .compare-table th:first-child{text-align:left;}
+  .compare-table td{padding:9px 8px; text-align:right; border-bottom:1px solid #f0f2f6; font-family:var(--mono);}
+  .compare-table td:first-child{text-align:left; font-family:var(--sans); color:var(--mute2); font-weight:600;}
+  .compare-table tr.computed td{color:var(--blue); font-weight:700;}
+
+  .gps-extra{margin-top:16px; padding-top:16px; border-top:1px dashed #dfe4ec;}
+  .gps-extra p{font-size:13px; color:var(--mute2); line-height:1.55; margin:0 0 10px;}
+  .gps-extra .fact{
+    display:inline-flex; align-items:baseline; gap:6px; font-family:var(--mono);
+    background:var(--panel); padding:6px 10px; border-radius:8px; font-size:13px; margin-bottom:10px;
+  }
+
+  .fly-row{display:flex; gap:12px; align-items:center; margin-top:18px;}
+  .fly-btn{
+    font-family:var(--sans); font-weight:700; font-size:13.5px; color:#fff; background:var(--blue);
+    border:none; padding:10px 18px; border-radius:8px; cursor:pointer; white-space:nowrap;
+  }
+  .fly-btn:hover{background:var(--blued);}
+  .fly-btn:disabled{background:var(--dim); cursor:default;}
+  .fly-hint{font-size:12px; color:var(--grey);}
+
+  footer{
+    margin-top:34px; padding-top:16px; border-top:1px solid #e6eaf1;
+    font-size:11.5px; color:var(--grey); display:flex; justify-content:space-between;
+    flex-wrap:wrap; gap:6px;
+  }
+  .assumptions{
+    margin-top:10px; font-size:12px; color:var(--grey); line-height:1.6;
+    background:var(--panel); border-radius:10px; padding:12px 14px;
+  }
+  .assumptions b{color:var(--mute2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Lecture 5 &middot; Newtonian Gravity in Spacetime Terms</p>
+    <h1>Two Effects, One Clock</h1>
+    <p class="sub">Every moving, elevated clock is pulled two ways at once: special-relativistic
+      time dilation slows it down, gravitational redshift speeds it up. Pick a real scenario
+      and watch the two effects race.</p>
+    <div class="formula-strip">
+      <span class="eq">&tau;<sub>AB</sub> &approx; &int; dt&nbsp;[&nbsp;1 &minus; ( v&sup2;/2 &minus; &Phi; )&nbsp;]</span>
+      <span class="tag sr">v&sup2;/2 &nbsp;=&nbsp; SR time dilation</span>
+      <span class="tag gr">&Phi; &nbsp;=&nbsp; grav. potential redshift</span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-scenario="gps" class="active">GPS satellite</button>
+    <button data-scenario="hk">Hafele&ndash;Keating flight</button>
+    <button data-scenario="custom">Custom</button>
+  </nav>
+
+  <div class="grid">
+    <div class="card" id="controlsCard">
+      <h2 id="controlsTitle">Controls</h2>
+      <div id="controlsBody"></div>
+    </div>
+
+    <div class="card">
+      <h2>Which effect wins?</h2>
+
+      <div class="twin-clocks">
+        <div class="clock-box">
+          <div class="clock-label">Ground reference</div>
+          <div class="clock-readout" id="clockRef">00:00:00</div>
+        </div>
+        <div class="clock-vs">vs</div>
+        <div class="clock-box">
+          <div class="clock-label" id="clockTravelLabel">Satellite clock</div>
+          <div class="clock-readout" id="clockTravel">00:00:00</div>
+        </div>
+      </div>
+      <div class="twin-note">To the eye, these two clocks tick identically.</div>
+
+      <div class="hero-counter-wrap">
+        <div class="hero-label">...but a cesium atomic clock would detect a difference of:</div>
+        <div class="hero-counter" id="heroCounter">&mdash;</div>
+        <div class="hero-sub" id="heroSub">press <b>Run the clock</b> to reveal it</div>
+      </div>
+
+      <div class="duel">
+        <div class="duel-labels"><span class="l">&larr; SR slows it down</span><span class="r">GR speeds it up &rarr;</span></div>
+        <div class="duel-track">
+          <div class="duel-mid"></div>
+          <div class="duel-bar sr" id="barSR" style="width:0%"></div>
+          <div class="duel-bar gr" id="barGR" style="width:0%"></div>
+          <div class="duel-net" id="netMarker" data-label="" style="left:50%"></div>
+        </div>
+      </div>
+
+      <div class="readout">
+        <div class="cell sr"><div class="k">SR term</div><div class="v" id="srVal">&mdash;</div></div>
+        <div class="cell gr"><div class="k">GR term</div><div class="v" id="grVal">&mdash;</div></div>
+        <div class="cell net"><div class="k">Net &Delta;&tau;</div><div class="v" id="netVal">&mdash;</div></div>
+      </div>
+
+      <div class="verdict" id="verdict"></div>
+
+      <div id="compareBlock" style="display:none;">
+        <table class="compare-table">
+          <thead><tr><th>Eastbound / Westbound</th><th>Predicted</th><th>Observed</th></tr></thead>
+          <tbody id="compareBody"></tbody>
+        </table>
+      </div>
+
+      <div class="gps-extra" id="gpsExtra" style="display:none;">
+        <p>Real GPS satellites orbit at &asymp;20,200&nbsp;km altitude. At that altitude the
+          gravitational (GR) effect dominates the kinematic (SR) effect, and the satellite's
+          on-board clock must be corrected by:</p>
+        <div class="fact">net &asymp; +38.5 &micro;s / day</div>
+        <p>(&minus;7.2&nbsp;&micro;s/day from its orbital speed, +45.7&nbsp;&micro;s/day from being
+          higher up a shallower potential well &mdash; built into every GPS receiver's firmware.)</p>
+      </div>
+
+      <div class="fly-row">
+        <button class="fly-btn" id="flyBtn">&#9654; Run the clock</button>
+        <span class="fly-hint" id="flyHint">reveals what the clocks above can't show you</span>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="assumptions" id="assumptions"></div>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Fall 2026 &middot; Lecture 5 demo</span>
+  </footer>
+
+</div>
+
+<script>
+// ---------- physics ----------
+const Gc = 6.674e-11, M = 5.972e24, R = 6.371e6, c = 2.998e8;
+const GM = G_times_M();
+function G_times_M(){ return Gc*M; }
+const g0 = GM / (R*R);                        // surface gravity, ~9.82
+const Vearth = 2*Math.PI*R/86164;              // equatorial rotation speed, ~464.6 m/s
+
+// SR + GR contributions to (flying clock - reference clock), in seconds,
+// following the Step-8/Step-10 formula, assuming constant v, h over duration T (s).
+// Reference clock: Earth's surface at the equator (v = Vearth for 'hk'/'custom' modes,
+// which already includes the surface clock's own rotation baked into V_earth term;
+// v = 0 non-rotating reference for 'gps' mode, matching the standard GPS convention
+// that reproduces the textbook 38 microseconds/day figure).
+function computeHK(Vg_signed, h, T){
+  // Delta tau = (1/c^2) * T * { g*h - (1/2)*Vg*(Vg + 2*Vearth) }
+  const gr = g0 * h;                  // m^2/s^2 equivalent, "GR-like" piece before scaling
+  const sr = -0.5 * Vg_signed * (Vg_signed + 2*Vearth);
+  const grTerm = (T / (c*c)) * gr;    // seconds
+  const srTerm = (T / (c*c)) * sr;    // seconds
+  return {srTerm, grTerm, net: srTerm + grTerm};
+}
+function computeGPS(v, r, T){
+  // relative to a non-rotating clock at Earth's surface (v=0, r=R)
+  const grTerm = (T*GM/(c*c)) * (1/R - 1/r);
+  const srTerm = -(T/(2*c*c)) * (v*v);
+  return {srTerm, grTerm, net: srTerm + grTerm};
+}
+
+// ---------- state ----------
+let scenario = 'gps';
+let direction = 'east'; // for hk
+let flying = false, flyRAF = null, flyStart = 0;
+
+const els = {
+  tabs: document.getElementById('tabs'),
+  controlsTitle: document.getElementById('controlsTitle'),
+  controlsBody: document.getElementById('controlsBody'),
+  barSR: document.getElementById('barSR'),
+  barGR: document.getElementById('barGR'),
+  netMarker: document.getElementById('netMarker'),
+  srVal: document.getElementById('srVal'),
+  grVal: document.getElementById('grVal'),
+  netVal: document.getElementById('netVal'),
+  verdict: document.getElementById('verdict'),
+  compareBlock: document.getElementById('compareBlock'),
+  compareBody: document.getElementById('compareBody'),
+  gpsExtra: document.getElementById('gpsExtra'),
+  assumptions: document.getElementById('assumptions'),
+  flyBtn: document.getElementById('flyBtn'),
+  flyHint: document.getElementById('flyHint'),
+  heroCounter: document.getElementById('heroCounter'),
+  heroSub: document.getElementById('heroSub'),
+  clockRef: document.getElementById('clockRef'),
+  clockTravel: document.getElementById('clockTravel'),
+  clockTravelLabel: document.getElementById('clockTravelLabel'),
+};
+
+// ---------- scenario configs ----------
+const HK_HISTORICAL = {
+  east: {pred:-40, predErr:23, obs:-59, obsErr:10},
+  west: {pred:275, predErr:21, obs:273, obsErr:7},
+};
+
+let params = {
+  gps: {altitude: 20200},          // km above surface
+  hk:  {speed: 243, altitude: 8900, duration: 41.2},  // m/s, m, hours
+  custom: {speed: 250, altitude: 10000, duration: 24},
+};
+
+function fmtNs(seconds){
+  const ns = seconds*1e9;
+  const sign = ns >= 0 ? '+' : '\u2212';
+  return sign + Math.abs(ns).toFixed(1) + ' ns';
+}
+function fmtUs(seconds){
+  const us = seconds*1e6;
+  const sign = us >= 0 ? '+' : '\u2212';
+  return sign + Math.abs(us).toFixed(2) + ' \u00b5s';
+}
+
+function renderControls(){
+  if(scenario === 'gps'){
+    els.controlsTitle.textContent = 'GPS satellite altitude';
+    els.controlsBody.innerHTML = `
+      <div class="control">
+        <div class="control-label"><span class="name">Orbital altitude</span>
+          <span class="val" id="altOut">${params.gps.altitude.toLocaleString()} km</span></div>
+        <input type="range" id="altSlider" min="300" max="35800" step="100" value="${params.gps.altitude}">
+        <div class="hint">Real GPS satellites orbit at 20,200&nbsp;km &mdash; drag down toward
+          the ISS (&asymp;400&nbsp;km) or up toward geostationary (&asymp;35,800&nbsp;km) to see
+          where SR and GR trade off.</div>
+      </div>
+      <div class="control">
+        <div class="control-label"><span class="name">Elapsed time</span>
+          <span class="val" id="durOutGps">1 day</span></div>
+        <input type="range" id="durSliderGps" min="1" max="30" step="1" value="1">
+      </div>`;
+    document.getElementById('altSlider').oninput = e=>{
+      params.gps.altitude = +e.target.value;
+      document.getElementById('altOut').textContent = params.gps.altitude.toLocaleString()+' km';
+      update();
+    };
+    document.getElementById('durSliderGps').oninput = e=>{
+      gpsDays = +e.target.value;
+      document.getElementById('durOutGps').textContent = gpsDays + (gpsDays==1?' day':' days');
+      update();
+    };
+  } else if(scenario === 'hk'){
+    els.controlsTitle.textContent = 'Flight parameters';
+    els.controlsBody.innerHTML = `
+      <div class="direction-toggle">
+        <button id="dirEast" class="${direction==='east'?'active':''}">Eastbound</button>
+        <button id="dirWest" class="${direction==='west'?'active':''}">Westbound</button>
+      </div>
+      <div class="control">
+        <div class="control-label"><span class="name">Ground speed</span>
+          <span class="val" id="spOut">${params.hk.speed} m/s</span></div>
+        <input type="range" id="spSlider" min="150" max="320" step="1" value="${params.hk.speed}">
+      </div>
+      <div class="control">
+        <div class="control-label"><span class="name">Cruising altitude</span>
+          <span class="val" id="altOutHk">${params.hk.altitude.toLocaleString()} m</span></div>
+        <input type="range" id="altSliderHk" min="6000" max="12000" step="100" value="${params.hk.altitude}">
+      </div>
+      <div class="control">
+        <div class="control-label"><span class="name">Flight duration</span>
+          <span class="val" id="durOutHk">${params.hk.duration} hr</span></div>
+        <input type="range" id="durSliderHk" min="10" max="70" step="0.5" value="${params.hk.duration}">
+        <div class="hint">Defaults are the published average speed/altitude/airborne time for
+          the 1971 flights. The historical predicted/observed totals (right) come from
+          integrating the actual varying flight profile \u2014 this slider model uses constant
+          averages, so it lands close but not identical.</div>
+      </div>`;
+    document.getElementById('dirEast').onclick = ()=>{direction='east'; renderControls(); update();};
+    document.getElementById('dirWest').onclick = ()=>{direction='west'; renderControls(); update();};
+    document.getElementById('spSlider').oninput = e=>{
+      params.hk.speed = +e.target.value;
+      document.getElementById('spOut').textContent = params.hk.speed+' m/s';
+      update();
+    };
+    document.getElementById('altSliderHk').oninput = e=>{
+      params.hk.altitude = +e.target.value;
+      document.getElementById('altOutHk').textContent = params.hk.altitude.toLocaleString()+' m';
+      update();
+    };
+    document.getElementById('durSliderHk').oninput = e=>{
+      params.hk.duration = +e.target.value;
+      document.getElementById('durOutHk').textContent = params.hk.duration+' hr';
+      update();
+    };
+  } else {
+    els.controlsTitle.textContent = 'Your own clock';
+    els.controlsBody.innerHTML = `
+      <div class="control">
+        <div class="control-label"><span class="name">Speed relative to Earth's surface</span>
+          <span class="val" id="spOutC">${params.custom.speed} m/s</span></div>
+        <input type="range" id="spSliderC" min="0" max="8000" step="10" value="${params.custom.speed}">
+      </div>
+      <div class="control">
+        <div class="control-label"><span class="name">Altitude above surface</span>
+          <span class="val" id="altOutC">${params.custom.altitude.toLocaleString()} m</span></div>
+        <input type="range" id="altSliderC" min="0" max="40000000" step="10000" value="${params.custom.altitude}">
+      </div>
+      <div class="control">
+        <div class="control-label"><span class="name">Duration</span>
+          <span class="val" id="durOutC">${params.custom.duration} hr</span></div>
+        <input type="range" id="durSliderC" min="1" max="168" step="1" value="${params.custom.duration}">
+      </div>
+      <div class="hint">Try 0 m/s at 0 m (nothing happens); then just altitude (clock runs
+        fast); then just speed at the surface (clock runs slow) \u2014 the same competition as
+        every other tab, stripped down.</div>`;
+    document.getElementById('spSliderC').oninput = e=>{
+      params.custom.speed = +e.target.value;
+      document.getElementById('spOutC').textContent = params.custom.speed+' m/s';
+      update();
+    };
+    document.getElementById('altSliderC').oninput = e=>{
+      params.custom.altitude = +e.target.value;
+      document.getElementById('altOutC').textContent = params.custom.altitude.toLocaleString()+' m';
+      update();
+    };
+    document.getElementById('durSliderC').oninput = e=>{
+      params.custom.duration = +e.target.value;
+      document.getElementById('durOutC').textContent = params.custom.duration+' hr';
+      update();
+    };
+  }
+}
+
+let gpsDays = 1;
+
+function currentResult(){
+  if(scenario === 'gps'){
+    const r = R + params.gps.altitude*1000;
+    const v = Math.sqrt(GM / r);
+    const T = gpsDays*86400;
+    return {...computeGPS(v, r, T), T, label:'satellite clock'};
+  } else if(scenario === 'hk'){
+    const Vg = direction==='east' ? params.hk.speed : -params.hk.speed;
+    const T = params.hk.duration*3600;
+    return {...computeHK(Vg, params.hk.altitude, T), T, label:'flying clock'};
+  } else {
+    const T = params.custom.duration*3600;
+    return {...computeHK(params.custom.speed, params.custom.altitude, T), T, label:'clock'};
+  }
+}
+
+const CLOCK_LABELS = {
+  gps: 'Satellite clock',
+  hk: {east: 'Flying clock (eastbound)', west: 'Flying clock (westbound)'},
+  custom: 'Your clock',
+};
+
+function totalDurationSeconds(){
+  if(scenario==='gps') return gpsDays*86400;
+  if(scenario==='hk') return params.hk.duration*3600;
+  return params.custom.duration*3600;
+}
+
+function formatElapsed(totalSeconds){
+  let s = Math.max(0, Math.floor(totalSeconds));
+  const days = Math.floor(s/86400); s -= days*86400;
+  const hh = Math.floor(s/3600); s -= hh*3600;
+  const mm = Math.floor(s/60); const ss = Math.floor(s%60);
+  const pad = n => String(n).padStart(2,'0');
+  return (days>0 ? days+'d ' : '') + pad(hh)+':'+pad(mm)+':'+pad(ss);
+}
+
+function applyState(res, frac){
+  // frac in [0,1]: fraction of the way through the run. frac=1 is the resting/idle display.
+  const srNs = res.srTerm*1e9*frac, grNs = res.grTerm*1e9*frac, netVal = res.net*frac;
+  const srNsFull = res.srTerm*1e9, grNsFull = res.grTerm*1e9;
+  const maxMag = Math.max(Math.abs(srNsFull), Math.abs(grNsFull), 1) * 1.15;
+
+  els.barSR.style.width = (Math.abs(srNs)/maxMag*50) + '%';
+  els.barGR.style.width = (Math.abs(grNs)/maxMag*50) + '%';
+  const netPct = 50 + ((netVal*1e9)/maxMag*50);
+  els.netMarker.style.left = Math.max(2,Math.min(98,netPct)) + '%';
+  els.netMarker.setAttribute('data-label', frac > 0.03 ? fmtNs(netVal) : '');
+
+  const useUs = scenario==='gps';
+  els.heroCounter.textContent = useUs ? fmtUs(netVal) : fmtNs(netVal);
+
+  // Both clocks show the SAME elapsed wall-clock time -- deliberately. The
+  // physics difference (shown above, in ns/us) is roughly nine to twelve orders
+  // of magnitude smaller than what a HH:MM:SS readout can resolve, so an honest
+  // clock face for both really would look identical at every instant. That's
+  // the point being demonstrated, not a simplification.
+  const elapsed = formatElapsed(totalDurationSeconds() * frac);
+  els.clockRef.textContent = elapsed;
+  els.clockTravel.textContent = elapsed;
+}
+
+function update(){
+  const res = currentResult();
+
+  const useUs = scenario==='gps';
+  els.srVal.textContent = useUs ? fmtUs(res.srTerm) : fmtNs(res.srTerm);
+  els.grVal.textContent = useUs ? fmtUs(res.grTerm) : fmtNs(res.grTerm);
+  els.netVal.textContent = useUs ? fmtUs(res.net) : fmtNs(res.net);
+
+  const srNs = res.srTerm*1e9, grNs = res.grTerm*1e9;
+  const winner = Math.abs(grNs) > Math.abs(srNs) ? 'gravitational (GR)' : 'kinematic (SR)';
+  const sense = res.net >= 0 ? 'runs fast \u2014 gains time' : 'runs slow \u2014 loses time';
+  const durLabel = scenario==='gps' ? gpsDays+(gpsDays==1?' day':' days')
+                  : (scenario==='hk'?params.hk.duration:params.custom.duration)+' hours';
+  els.verdict.innerHTML = `The <b>${winner}</b> effect wins here: the ${res.label} <b>${sense}</b>
+    relative to the reference clock, by <b>${useUs?fmtUs(res.net):fmtNs(res.net)}</b> over
+    ${durLabel}.`;
+
+  els.clockTravelLabel.textContent = scenario==='hk' ? CLOCK_LABELS.hk[direction] : CLOCK_LABELS[scenario];
+  els.heroSub.innerHTML = 'press <b>Run the clock</b> to reveal it';
+  applyState(res, 1);
+
+  els.compareBlock.style.display = scenario==='hk' ? 'block' : 'none';
+  els.gpsExtra.style.display = scenario==='gps' ? 'block' : 'none';
+
+  if(scenario==='hk'){
+    const hist = HK_HISTORICAL[direction];
+    els.compareBody.innerHTML = `
+      <tr class="computed"><td>Your slider model</td><td colspan="2">${fmtNs(res.net)}</td></tr>
+      <tr><td>Hafele\u2013Keating ${direction}bound</td>
+          <td>${hist.pred>0?'+':''}${hist.pred}\u00b1${hist.predErr} ns</td>
+          <td>${hist.obs>0?'+':''}${hist.obs}\u00b1${hist.obsErr} ns</td></tr>`;
+  }
+
+  renderAssumptions();
+}
+
+function renderAssumptions(){
+  let text = '';
+  if(scenario==='gps'){
+    text = `<b>Model:</b> circular orbit, v = &radic;(GM/r); reference is a
+      <b>non-rotating</b> clock at Earth's surface (the usual convention, and the one that
+      reproduces the textbook 38&nbsp;&micro;s/day figure). Earth's own rotation is
+      neglected here for clarity \u2014 the Hafele&ndash;Keating tab includes it explicitly.`;
+  } else if(scenario==='hk'){
+    text = `<b>Model:</b> Lecture 5, Step 10 \u2014 constant ground speed and altitude along
+      the equator, reference is a clock at rest on Earth's rotating surface
+      (includes V<sub>\u2295</sub> &asymp; 465&nbsp;m/s). Eastbound speed adds to Earth's
+      rotation; westbound subtracts.`;
+  } else {
+    text = `<b>Model:</b> same formula as the Hafele&ndash;Keating tab, generalized to any
+      speed and altitude \u2014 reference is a clock at rest on Earth's rotating equatorial
+      surface.`;
+  }
+  els.assumptions.innerHTML = text;
+}
+
+// ---------- fly animation ----------
+// Linear, not eased: the physics itself accumulates linearly with elapsed time
+// for fixed v and h, and the clock readouts above are meant to tick at a
+// constant rate like a real clock would, so the animation doesn't fake a
+// non-uniform pace.
+els.flyBtn.onclick = ()=>{
+  if(flying) return;
+  flying = true;
+  els.flyBtn.disabled = true;
+  els.flyBtn.textContent = '\u25B6 Running\u2026';
+  els.heroCounter.classList.add('running');
+  els.heroSub.textContent = 'revealing\u2026';
+
+  const res = currentResult();
+  applyState(res, 0);
+
+  flyStart = performance.now();
+  const DURATION_MS = 2600;
+  function frame(now){
+    const t = Math.min(1, (now-flyStart)/DURATION_MS);
+    applyState(res, t);
+    if(t < 1){
+      flyRAF = requestAnimationFrame(frame);
+    } else {
+      flying = false;
+      els.flyBtn.disabled = false;
+      els.flyBtn.textContent = '\u25B6 Run the clock';
+      els.heroCounter.classList.remove('running');
+      els.heroSub.innerHTML = 'undetectable to the eye, real to an atomic clock \u2014 drag a slider or press again';
+    }
+  }
+  flyRAF = requestAnimationFrame(frame);
+};
+
+// ---------- tabs ----------
+els.tabs.querySelectorAll('button').forEach(btn=>{
+  btn.onclick = ()=>{
+    els.tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    scenario = btn.dataset.scenario;
+    renderControls();
+    update();
+  };
+});
+
+renderControls();
+update();
+</script>
+</body>
+</html>

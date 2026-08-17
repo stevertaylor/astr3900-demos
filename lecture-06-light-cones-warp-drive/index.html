@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alcubierre Warp Drive — Interactive Light Cone Demo</title>
+<style>
+  :root{
+    --bg:    #FBFBF8;
+    --panel: #EDF1F6;
+    --ink:   #15243C;
+    --blue:  #0F6E93;
+    --blued: #2E6DA4;
+    --brown: #8A5A18;
+    --grey:  #5A6B7B;
+    --mute2: #33465C;
+    --dim:   #C4CBD8;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  .wrap{ max-width:1280px; margin:0 auto; padding:22px 22px 40px; }
+  header{ margin-bottom:14px; }
+  .kicker{
+    color:var(--blue); font-weight:700; font-size:13px; letter-spacing:.06em;
+    text-transform:uppercase; margin:0 0 4px;
+  }
+  h1{
+    font-family: Georgia, "Times New Roman", serif; font-weight:400;
+    font-size:30px; margin:0 0 6px; color:var(--ink);
+  }
+  .sub{ color:var(--grey); font-size:14.5px; margin:0 0 2px; }
+  .rule{ height:2px; width:210px; background:var(--blued); opacity:.7; margin:12px 0 18px; border:none; }
+
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .stage{ flex:1 1 640px; min-width:320px; }
+  .panel{ flex:0 1 380px; min-width:300px; }
+
+  .card{
+    background:#fff; border:1px solid #E4E8EF; border-radius:14px;
+    padding:16px 18px; margin-bottom:16px;
+  }
+  .card h2{
+    font-family: Georgia, serif; font-weight:400; font-size:17px; margin:0 0 10px;
+    color:var(--ink); display:flex; align-items:center; gap:8px;
+  }
+  .card h2 .dot{ width:9px; height:9px; border-radius:50%; background:var(--blue); display:inline-block; }
+  .hint{ color:var(--grey); font-size:13px; line-height:1.5; margin:0 0 12px; }
+
+  canvas{ display:block; width:100%; height:auto; background:var(--bg); border-radius:10px; }
+  #stageCanvas{ background: #FDFDFB; border:1px solid #E7EAF1; }
+  #profCanvas{ background:#fff; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:12px 18px; font-size:12px; color:var(--mute2); margin-top:10px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .swatch{ width:16px; height:3px; border-radius:2px; display:inline-block; }
+  .sw-worldline{ background:var(--brown); height:3px; }
+  .sw-grid{ background:var(--dim); height:2px; }
+  .sw-cone{ background:var(--blue); height:3px; }
+  .sw-bubble{ width:12px; height:12px; border-radius:50%; background:rgba(138,90,24,.25); border:1.4px dashed var(--brown); }
+
+  .ctrl{ margin-bottom:16px; }
+  .ctrl:last-child{ margin-bottom:0; }
+  .ctrl label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:13.5px; color:var(--mute2); margin-bottom:6px;
+  }
+  .ctrl label b{ color:var(--ink); font-weight:600; }
+  .ctrl .val{
+    font-variant-numeric: tabular-nums; font-weight:700; color:var(--blue);
+    font-size:13.5px;
+  }
+  .ctrl .val.warn{ color:#B34700; }
+  input[type=range]{
+    width:100%; -webkit-appearance:none; appearance:none; height:6px; border-radius:4px;
+    background: linear-gradient(90deg, var(--blued), var(--dim)); outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:17px; height:17px; border-radius:50%;
+    background:#fff; border:2.5px solid var(--blue); cursor:pointer; margin-top:-1px;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:15px; height:15px; border-radius:50%; background:#fff; border:2.5px solid var(--blue); cursor:pointer;
+  }
+
+  .row{ display:flex; gap:10px; align-items:center; }
+  button{
+    font-family: inherit; font-size:13.5px; font-weight:600; color:#fff;
+    background:var(--blue); border:none; border-radius:8px; padding:9px 14px;
+    cursor:pointer; transition:background .15s;
+  }
+  button:hover{ background:var(--blued); }
+  button.secondary{ background:#fff; color:var(--blue); border:1.4px solid var(--blue); }
+  button.secondary:hover{ background:#EEF5F8; }
+
+  .checkline{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--mute2); margin-top:10px; }
+  .checkline input{ accent-color: var(--blue); width:15px; height:15px; }
+
+  .readout{
+    background:var(--panel); border:1.4px solid var(--blued); border-radius:12px;
+    padding:14px 16px; font-size:13.5px; color:var(--mute2); line-height:1.65;
+  }
+  .readout .line{ display:flex; justify-content:space-between; margin-bottom:5px; }
+  .readout .line b{ color:var(--ink); }
+  .flag{
+    margin-top:8px; padding:8px 10px; border-radius:8px; font-size:12.8px; font-weight:600;
+    display:none;
+  }
+  .flag.on{ display:block; background:#FCEFE3; color:#8A4B00; border:1px solid #F0C79A; }
+  .flag.ok{ display:block; background:#EAF3EC; color:#2A6B3B; border:1px solid #BFE0C6; margin-top:8px; }
+
+  .math{ font-family: Georgia, "Times New Roman", serif; font-style:italic; font-size:14.5px; color:var(--ink); }
+  .math .op{ font-style:normal; }
+  .mathblock{
+    background:var(--panel); border:1px solid #DCE3EC; border-radius:10px;
+    padding:10px 14px; margin:8px 0; text-align:center; font-size:15.5px;
+  }
+  .mathrow{ margin:6px 0; }
+  .mathnote{ font-family:inherit; font-style:normal; color:var(--grey); font-size:11.5px; display:block; margin-top:2px; }
+  .cite{ color:var(--grey); font-style:italic; font-size:12px; text-align:right; margin-top:-4px; margin-bottom:8px;}
+
+  footer{
+    margin-top:26px; padding-top:14px; border-top:1px solid #E4E8EF;
+    display:flex; justify-content:space-between; font-size:11.5px; color:var(--grey);
+    flex-wrap:wrap; gap:6px;
+  }
+  @media (max-width:760px){
+    .layout{ flex-direction:column; }
+    .panel{ flex-basis:auto; width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">ASTR 3900 / 8090 &middot; Lecture 6 companion demo</p>
+    <h1>The Alcubierre Warp Drive — tip the light cones yourself</h1>
+    <p class="sub">Reshape the warp bubble, push the ship's coordinate speed past <i>c</i>, and watch why it still never outruns its own local light cone.</p>
+    <hr class="rule">
+  </header>
+
+  <div class="layout">
+    <!-- ================= STAGE ================= -->
+    <div class="stage">
+      <div class="card">
+        <h2><span class="dot"></span>Spacetime diagram <span style="color:var(--grey); font-weight:400; font-size:12.5px;">(equal x&ndash;t scale, so a true light ray sits at 45&deg;; units with c&nbsp;=&nbsp;1)</span></h2>
+        <canvas id="stageCanvas" width="900" height="620"></canvas>
+        <div class="legend">
+          <span><i class="swatch sw-worldline"></i> ship's worldline x<sub>s</sub>(t)</span>
+          <span><i class="swatch sw-grid"></i> local light-cone tilt field</span>
+          <span><i class="swatch sw-cone"></i> local cone at the ship (r<sub>s</sub>&nbsp;=&nbsp;0)</span>
+          <span><i class="swatch sw-bubble"></i> warp bubble, radius R</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>Shape of the bubble &mdash; f(r<sub>s</sub>)</h2>
+        <p class="hint">f is 1 at the ship's own position, stays flat out to the core radius <i>a</i>, then tapers smoothly to 0 by the bubble edge R. Spacetime is flat wherever f&nbsp;=&nbsp;0.</p>
+        <canvas id="profCanvas" width="620" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- ================= CONTROLS ================= -->
+    <div class="panel">
+      <div class="card">
+        <h2><span class="dot"></span>Controls</h2>
+
+        <div class="ctrl">
+          <label>Peak <b>coordinate</b> speed of the ship &nbsp;<span class="val" id="valVmax">1.95c</span></label>
+          <input type="range" id="vmax" min="0.2" max="3.0" step="0.01" value="1.95">
+        </div>
+
+        <div class="ctrl">
+          <label>Warp bubble radius &nbsp;R &nbsp;<span class="val" id="valR">0.180</span></label>
+          <input type="range" id="rad" min="0.06" max="0.40" step="0.005" value="0.18">
+        </div>
+
+        <div class="ctrl">
+          <label>Bubble core fraction &nbsp;a&#8202;/&#8202;R &nbsp;<span class="val" id="valCore">0.50</span></label>
+          <input type="range" id="core" min="0.08" max="0.92" step="0.01" value="0.50">
+        </div>
+
+        <div class="ctrl">
+          <label>Time &nbsp;t &nbsp;(0&nbsp;&rarr;&nbsp;T&nbsp;=&nbsp;1) &nbsp;<span class="val" id="valT">0.00</span></label>
+          <input type="range" id="tcur" min="0" max="1" step="0.002" value="0">
+        </div>
+
+        <div class="row">
+          <button id="playBtn">&#9654;&nbsp; Play</button>
+          <button class="secondary" id="resetBtn">Reset to lecture values</button>
+        </div>
+
+        <div class="checkline">
+          <input type="checkbox" id="showGrid" checked>
+          <label for="showGrid">Show background tilt field</label>
+        </div>
+        <div class="checkline">
+          <input type="checkbox" id="showRef" checked>
+          <label for="showRef">Show reference cones along the path</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>Live readout</h2>
+        <div class="readout">
+          <div class="line"><span>Ship position x<sub>s</sub>(t)</span><b id="roX">0.000</b></div>
+          <div class="line"><span>Coordinate velocity V<sub>s</sub>(t)</span><b id="roV">0.000 c</b></div>
+          <div class="line"><span>Local null slopes at the ship (r<sub>s</sub>=0)</span><b id="roNull">&minus;1.00, +1.00</b></div>
+          <div class="line"><span>Station separation D / T</span><b id="roDT">0.00 / 1.00</b></div>
+          <div class="flag" id="ftlFlag">&#9889; Coordinate speed exceeds <i>c</i> right now &mdash; by the naive x/t bookkeeping, the ship looks superluminal.</div>
+          <div class="flag ok" id="okFlag">The worldline sits exactly midway between the two tilted null rays &mdash; the ship is always inside its own light cone.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span>The metric</h2>
+        <p class="cite">(Alcubierre 1994)</p>
+        <div class="mathblock">
+          <div class="mathrow math">ds<span class="op">&sup2;</span> = &minus;dt<span class="op">&sup2;</span> + [dx &minus; V<sub>s</sub>(t) f(r<sub>s</sub>) dt]<span class="op">&sup2;</span> + dy<span class="op">&sup2;</span> + dz<span class="op">&sup2;</span></div>
+        </div>
+        <div class="mathblock">
+          <div class="mathrow math">dx&#8202;/&#8202;dt = &plusmn;1 + V<sub>s</sub>(t) f(r<sub>s</sub>)</div>
+          <span class="mathnote">null directions (ds = 0) &mdash; this is exactly the tilt field drawn on the diagram</span>
+        </div>
+        <div class="mathrow math" style="font-size:13px;">
+          V<sub>s</sub>(t) &equiv; dx<sub>s</sub>&#8202;/&#8202;dt &nbsp;&nbsp;&nbsp; r<sub>s</sub><span class="op">&sup2;</span> &equiv; (x&minus;x<sub>s</sub>(t))<span class="op">&sup2;</span>+y<span class="op">&sup2;</span>+z<span class="op">&sup2;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 6 &mdash; interactive companion to "Resolution: local light cones, not coordinate speed"</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const COL = {
+    bg:"#FDFDFB", panel:"#EDF1F6", ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4",
+    brown:"#8A5A18", grey:"#5A6B7B", mute2:"#33465C", dim:"#C4CBD8"
+  };
+
+  // ---------- physics (matches the Lecture 6 build_deck.py conventions) ----------
+  const T_SHIP = 1.0;
+  function smoothS(u){ return 3*u*u - 2*u*u*u; }
+  function smoothSp(u){ return 6*u - 6*u*u; }
+  function clamp01(u){ return Math.min(Math.max(u,0),1); }
+
+  function shipX(t, D){ const u = clamp01(t/T_SHIP); return D*smoothS(u); }
+  function shipV(t, D){ const u = clamp01(t/T_SHIP); return (D/T_SHIP)*smoothSp(u); }
+  function fProfile(rs, R, a){
+    rs = Math.abs(rs);
+    if (rs <= a) return 1.0;
+    if (rs >= R) return 0.0;
+    return 0.5*(1+Math.cos(Math.PI*(rs-a)/(R-a)));
+  }
+
+  // ---------- state ----------
+  const state = { vmax:1.95, R:0.18, core:0.50, t:0.0, playing:false };
+
+  function D(){ return (2/3)*state.vmax; }   // peak of Sp(u) is 1.5 at u=0.5  =>  Vmax = 1.5*D/T
+  function a(){ return state.core*state.R; }
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const elVmax=$("vmax"), elR=$("rad"), elCore=$("core"), elT=$("tcur");
+  const valVmax=$("valVmax"), valR=$("valR"), valCore=$("valCore"), valT=$("valT");
+  const playBtn=$("playBtn"), resetBtn=$("resetBtn");
+  const showGrid=$("showGrid"), showRef=$("showRef");
+  const roX=$("roX"), roV=$("roV"), roNull=$("roNull"), roDT=$("roDT");
+  const ftlFlag=$("ftlFlag"), okFlag=$("okFlag");
+  const stage=$("stageCanvas"), prof=$("profCanvas");
+  const sctx=stage.getContext("2d"), pctx=prof.getContext("2d");
+
+  function syncInputs(){
+    elVmax.value=state.vmax; elR.value=state.R; elCore.value=state.core; elT.value=state.t;
+    valVmax.textContent = state.vmax.toFixed(2)+"c";
+    valVmax.classList.toggle("warn", state.vmax>1.0);
+    valR.textContent = state.R.toFixed(3);
+    valCore.textContent = state.core.toFixed(2);
+    valT.textContent = state.t.toFixed(2);
+  }
+
+  // ---------- canvas sizing (device-pixel aware, keeps CSS size responsive) ----------
+  function fitCanvas(cv){
+    const cssW = cv.clientWidth || cv.width;
+    const dpr = window.devicePixelRatio || 1;
+    const targetW = Math.round(cssW*dpr), targetH = Math.round((cv.height/cv.width)*cssW*dpr);
+    if (cv._w!==targetW || cv._h!==targetH){
+      cv.width = targetW; cv.height = targetH; cv._w=targetW; cv._h=targetH;
+    }
+    return dpr;
+  }
+
+  // ================= main spacetime diagram =================
+  function drawStage(){
+    const dpr = fitCanvas(stage);
+    const W = stage.width, H = stage.height;
+    const ctx = sctx;
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = COL.bg; ctx.fillRect(0,0,W,H);
+
+    const Dv = D(), Rv = state.R, Av = a();
+
+    // ---- domain & equal-scale mapping ----
+    const margin = {l:0.075*W, r:0.045*W, t:0.06*H, b:0.13*H};
+    const xMin=-0.42, xMax=Dv+0.42, tMin=-0.10, tMax=1.20;
+    const plotW = W-margin.l-margin.r, plotH = H-margin.t-margin.b;
+    const s = Math.min(plotW/(xMax-xMin), plotH/(tMax-tMin));
+    const usedW = s*(xMax-xMin), usedH = s*(tMax-tMin);
+    const ox = margin.l + (plotW-usedW)/2, oy = margin.t + (plotH-usedH)/2;
+    function toPx(x,t){ return [ox+(x-xMin)*s, oy+(tMax-t)*s]; }
+
+    // ---- axes ----
+    ctx.strokeStyle=COL.ink; ctx.fillStyle=COL.ink; ctx.lineWidth=1.3*dpr;
+    let [ax0,ay0]=toPx(xMin+0.05,0), [ax1,ay1]=toPx(xMax-0.05,0);
+    arrow(ctx, ax0,ay0, ax1,ay1, dpr);
+    let [bx0,by0]=toPx(0,-0.06), [bx1,by1]=toPx(0,tMax-0.06);
+    arrow(ctx, bx0,by0, bx1,by1, dpr);
+    ctx.font = (13*dpr)+"px Georgia, serif"; ctx.textBaseline="middle";
+    ctx.fillText("x", ax1+6*dpr, ay1);
+    ctx.textAlign="center"; ctx.fillText("t", bx1, by1-10*dpr); ctx.textAlign="left";
+
+    // ---- stations & D / T brackets ----
+    ctx.setLineDash([4*dpr,3*dpr]); ctx.strokeStyle=COL.grey; ctx.lineWidth=1*dpr;
+    [[0,"1"],[Dv,"2"]].forEach(([xv,lab])=>{
+      let [px0,py0]=toPx(xv,0), [px1,py1]=toPx(xv,1.02);
+      ctx.beginPath(); ctx.moveTo(px0,py0); ctx.lineTo(px1,py1); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle=COL.grey; ctx.font=(11.5*dpr)+"px sans-serif"; ctx.textAlign="center";
+      ctx.fillText(lab, px1, py1-8*dpr);
+      ctx.setLineDash([4*dpr,3*dpr]);
+    });
+    ctx.setLineDash([]);
+
+    // D bracket (bottom)
+    {
+      let [d0x,d0y]=toPx(0,tMin+0.02), [d1x,d1y]=toPx(Dv,tMin+0.02);
+      ctx.strokeStyle=COL.brown; ctx.fillStyle=COL.brown;
+      doubleArrow(ctx, d0x,d0y, d1x,d1y, dpr);
+      ctx.font=(12*dpr)+"px Georgia, serif"; ctx.textAlign="center";
+      ctx.fillText("D = "+Dv.toFixed(2), (d0x+d1x)/2, d0y+16*dpr);
+    }
+    // T bracket (left)
+    {
+      let [t0x,t0y]=toPx(xMin+0.02,0), [t1x,t1y]=toPx(xMin+0.02,1);
+      ctx.strokeStyle=COL.blue; ctx.fillStyle=COL.blue;
+      doubleArrow(ctx, t0x,t0y, t1x,t1y, dpr);
+      ctx.font=(12*dpr)+"px Georgia, serif"; ctx.textAlign="left";
+      ctx.save(); ctx.translate(t0x-8*dpr,(t0y+t1y)/2); ctx.rotate(-Math.PI/2);
+      ctx.textAlign="center"; ctx.fillText("T = 1", 0, 0); ctx.restore();
+    }
+
+    // ---- background tilt field ----
+    if (showGrid.checked){
+      const nx=26, nt=16, Lvis=9*dpr;
+      ctx.strokeStyle=COL.dim; ctx.lineWidth=1.1*dpr;
+      for(let j=0;j<nt;j++){
+        const t = 0.02 + (0.96)*(j/(nt-1));
+        const Vt = shipV(t,Dv), xs = shipX(t,Dv);
+        for(let i=0;i<nx;i++){
+          const x = xMin+0.08*(xMax-xMin) + (xMax-xMin)*0.84*(i/(nx-1));
+          const rs = Math.abs(x-xs), f = fProfile(rs,Rv,Av), Vf = Vt*f;
+          const [px,py] = toPx(x,t);
+          [Vf+1, Vf-1].forEach(m=>{
+            const len = Math.hypot(m*s, s) || 1;
+            const ex = px + (m*s/len)*Lvis, ey = py - (s/len)*Lvis;
+            ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ex,ey); ctx.stroke();
+          });
+        }
+      }
+    }
+
+    // ---- worldline ----
+    ctx.strokeStyle=COL.brown; ctx.lineWidth=2.6*dpr; ctx.beginPath();
+    for(let k=0;k<=220;k++){
+      const t=k/220, xv=shipX(t,Dv); const [px,py]=toPx(xv,t);
+      if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    // endpoints
+    ctx.fillStyle=COL.ink;
+    [[0,0],[Dv,1]].forEach(([xv,tv])=>{ const [px,py]=toPx(xv,tv); dot(ctx,px,py,3.4*dpr); });
+
+    // ---- reference cones along the path ----
+    if (showRef.checked){
+      [0.12,0.34,0.55,0.74].forEach(frac=>drawCone(ctx, frac, Dv, s, toPx, dpr, "rgba(15,110,147,0.42)", 20*dpr, 1.6*dpr));
+    }
+
+    // ---- warp bubble @ current time ----
+    {
+      const xs = shipX(state.t, Dv);
+      const [px,py] = toPx(xs, state.t);
+      const rad = Rv*s;
+      ctx.beginPath(); ctx.arc(px,py,rad,0,Math.PI*2);
+      ctx.fillStyle="rgba(138,90,24,0.16)"; ctx.fill();
+      ctx.setLineDash([5*dpr,3*dpr]); ctx.strokeStyle=COL.brown; ctx.lineWidth=1.4*dpr; ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // ---- current time indicator line ----
+    {
+      const [lx0,ly0]=toPx(xMin+0.05, state.t), [lx1,ly1]=toPx(xMax-0.05, state.t);
+      ctx.setLineDash([2.5*dpr,3.5*dpr]); ctx.strokeStyle="rgba(90,107,123,0.55)"; ctx.lineWidth=1*dpr;
+      ctx.beginPath(); ctx.moveTo(lx0,ly0); ctx.lineTo(lx1,ly1); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // ---- highlighted cone + ship marker @ current time ----
+    drawCone(ctx, state.t/T_SHIP, Dv, s, toPx, dpr, COL.blue, 34*dpr, 2.2*dpr);
+    {
+      const xs = shipX(state.t, Dv);
+      const [px,py]=toPx(xs, state.t);
+      ctx.fillStyle=COL.blue; dot(ctx,px,py,4.6*dpr);
+      ctx.strokeStyle="#fff"; ctx.lineWidth=1.6*dpr; ctx.beginPath(); ctx.arc(px,py,4.6*dpr,0,Math.PI*2); ctx.stroke();
+    }
+  }
+
+  function drawCone(ctx, frac, Dv, s, toPx, dpr, color, len, lw){
+    const t = Math.min(Math.max(frac,0),1);
+    const xs = shipX(t, Dv), Vt = shipV(t, Dv); // r_s = 0 at the ship
+    const [px,py] = toPx(xs, t);
+    ctx.strokeStyle=color; ctx.lineWidth=lw;
+    [Vt+1, Vt-1].forEach(m=>{
+      const l = Math.hypot(m*s, s) || 1;
+      const ex = px + (m*s/l)*len, ey = py - (s/l)*len;
+      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ex,ey); ctx.stroke();
+    });
+  }
+
+  function arrow(ctx,x0,y0,x1,y1,dpr){
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    const ang=Math.atan2(y1-y0,x1-x0), h=7*dpr;
+    ctx.beginPath(); ctx.moveTo(x1,y1);
+    ctx.lineTo(x1-h*Math.cos(ang-0.4), y1-h*Math.sin(ang-0.4));
+    ctx.lineTo(x1-h*Math.cos(ang+0.4), y1-h*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fillStyle=ctx.strokeStyle; ctx.fill();
+  }
+  function doubleArrow(ctx,x0,y0,x1,y1,dpr){
+    ctx.lineWidth=1.3*dpr;
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    [[x0,y0,x1,y1],[x1,y1,x0,y0]].forEach(([ax,ay,bx,by])=>{
+      const ang=Math.atan2(by-ay,bx-ax), h=6*dpr;
+      ctx.beginPath(); ctx.moveTo(ax,ay);
+      ctx.lineTo(ax+h*Math.cos(ang-0.5), ay+h*Math.sin(ang-0.5));
+      ctx.lineTo(ax+h*Math.cos(ang+0.5), ay+h*Math.sin(ang+0.5));
+      ctx.closePath(); ctx.fillStyle=ctx.strokeStyle; ctx.fill();
+    });
+  }
+  function dot(ctx,x,y,r){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
+
+  // ================= f(r_s) inset =================
+  function drawProfile(){
+    const dpr = fitCanvas(prof);
+    const W=prof.width, H=prof.height, ctx=pctx;
+    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
+    ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+
+    const Rv=state.R, Av=a();
+    const margin={l:0.09*W,r:0.05*W,t:0.24*H,b:0.20*H};
+    const plotW=W-margin.l-margin.r, plotH=H-margin.t-margin.b;
+    const rMax = Math.max(0.40, Rv*1.35);
+    function toPx(rs,f){ return [margin.l+(rs/rMax)*plotW, margin.t+(1-f)*plotH]; }
+
+    // axes
+    ctx.strokeStyle=COL.ink; ctx.lineWidth=1.2*dpr;
+    ctx.beginPath(); ctx.moveTo(margin.l,margin.t); ctx.lineTo(margin.l,margin.t+plotH); ctx.lineTo(margin.l+plotW,margin.t+plotH); ctx.stroke();
+
+    // guide lines at f=1 and rs = a, R
+    ctx.setLineDash([3*dpr,3*dpr]); ctx.strokeStyle=COL.dim; ctx.lineWidth=1*dpr;
+    let [gx,gy] = toPx(0,1); ctx.beginPath(); ctx.moveTo(margin.l,gy); ctx.lineTo(margin.l+plotW,gy); ctx.stroke();
+    [Av,Rv].forEach(rv=>{
+      let [x0,y0]=toPx(rv,0), [x1,y1]=toPx(rv,1);
+      ctx.beginPath(); ctx.moveTo(x0,margin.t); ctx.lineTo(x1,margin.t+plotH); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    // curve
+    ctx.strokeStyle=COL.brown; ctx.lineWidth=2.2*dpr; ctx.beginPath();
+    for(let i=0;i<=200;i++){
+      const rs=(i/200)*rMax, f=fProfile(rs,Rv,Av); const [px,py]=toPx(rs,f);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+
+    // labels
+    ctx.fillStyle=COL.grey; ctx.font=(11*dpr)+"px sans-serif"; ctx.textAlign="right"; ctx.textBaseline="middle";
+    ctx.fillText("1", margin.l-6*dpr, gy);
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    let [ax0,ay0]=toPx(Av,0); ctx.fillText("a", ax0, margin.t+plotH+4*dpr);
+    let [rx0,ry0]=toPx(Rv,0); ctx.fillText("R", rx0, margin.t+plotH+4*dpr);
+    ctx.font="italic "+(12*dpr)+"px Georgia, serif";
+    ctx.fillText("r_s", margin.l+plotW*0.5, margin.t+plotH+16*dpr);
+    ctx.textAlign="left"; ctx.textBaseline="top";
+    ctx.fillText("f(r_s)", margin.l, 6*dpr);
+  }
+
+  // ================= readouts =================
+  function updateReadout(){
+    const Dv=D(), Vt=shipV(state.t,Dv), xs=shipX(state.t,Dv);
+    roX.textContent = xs.toFixed(3);
+    roV.textContent = Vt.toFixed(3)+" c";
+    roV.style.color = Math.abs(Vt)>1 ? "#B34700" : "var(--ink)";
+    const fmtSigned = v => (v>=0?"+":"") + v.toFixed(2);
+    roNull.textContent = fmtSigned(Vt-1)+",  "+fmtSigned(Vt+1);
+    roDT.textContent = Dv.toFixed(3)+" / 1.000";
+    ftlFlag.classList.toggle("on", Math.abs(Vt)>1.0);
+  }
+
+  // ================= wiring =================
+  function redrawAll(){ syncInputs(); drawStage(); drawProfile(); updateReadout(); }
+
+  elVmax.addEventListener("input", e=>{ state.vmax=parseFloat(e.target.value); redrawAll(); });
+  elR.addEventListener("input", e=>{ state.R=parseFloat(e.target.value); redrawAll(); });
+  elCore.addEventListener("input", e=>{ state.core=parseFloat(e.target.value); redrawAll(); });
+  elT.addEventListener("input", e=>{ state.t=parseFloat(e.target.value); state.playing=false; playBtn.innerHTML="&#9654;&nbsp; Play"; redrawAll(); });
+  showGrid.addEventListener("change", drawStage);
+  showRef.addEventListener("change", drawStage);
+
+  resetBtn.addEventListener("click", ()=>{
+    state.vmax=1.95; state.R=0.18; state.core=0.50; state.t=0.0; state.playing=false;
+    playBtn.innerHTML="&#9654;&nbsp; Play";
+    redrawAll();
+  });
+
+  let playStart=null;
+  const LOOP_S = 3.4;
+  function playFrame(ts){
+    if(!state.playing) return;
+    if(playStart===null) playStart=ts;
+    let elapsed = ((ts-playStart)/1000) % LOOP_S;
+    state.t = elapsed/LOOP_S;
+    syncInputs(); drawStage(); updateReadout();
+    requestAnimationFrame(playFrame);
+  }
+  playBtn.addEventListener("click", ()=>{
+    state.playing = !state.playing;
+    if(state.playing){
+      playBtn.innerHTML="&#10074;&#10074;&nbsp; Pause";
+      playStart=null;
+      requestAnimationFrame(playFrame);
+    } else {
+      playBtn.innerHTML="&#9654;&nbsp; Play";
+    }
+  });
+
+  window.addEventListener("resize", ()=>{ drawStage(); drawProfile(); });
+
+  redrawAll();
+})();
+</script>
+</body>
+</html>
