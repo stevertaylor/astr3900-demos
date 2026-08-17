@@ -7,17 +7,19 @@
 <style>
 :root{--bg:#FBFBF8;--panel:#EDF1F6;--ink:#15243C;--blue:#0F6E93;--blued:#2E6DA4;--brown:#8A5A18;--grey:#5A6B7B;--dim:#C4CBD8;--red:#A43B34;--green:#2E7D57;--white:#FFFFFF}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
-header{padding:18px 24px 10px;border-bottom:1px solid #d6dce7;background:rgba(251,251,248,.97);position:sticky;top:0;z-index:5}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+header{padding:0 0 10px;border-bottom:1px solid #d6dce7;background:rgba(251,251,248,.97);position:sticky;top:0;z-index:5}
 .eyebrow{font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin:0 0 6px}
 h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px;color:var(--ink)} .sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
-footer{margin-top:24px;padding:14px 24px;border-top:1px solid #d6dce7;font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
-.tabs{display:flex;gap:8px;padding:12px 24px 0;flex-wrap:wrap}.tab{padding:8px 12px;border:1px solid var(--dim);border-radius:8px;background:var(--white);cursor:pointer;font-weight:700;color:var(--ink)}.tab.active{border-color:var(--blued);color:var(--blue);background:#F4F8FB}
-main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding:16px 24px 24px}.canvasWrap{background:var(--white);border:1px solid #d6dce7;border-radius:12px;padding:8px;overflow:hidden;max-width:900px;aspect-ratio:1100/665}.canvasWrap canvas{width:100%;height:auto;aspect-ratio:1100/1050;display:block;margin-top:-7.73%;touch-action:none}
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid #d6dce7;font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.tabs{display:flex;gap:8px;padding:12px 0 0;flex-wrap:wrap}.tab{padding:8px 12px;border:1px solid var(--dim);border-radius:8px;background:var(--white);cursor:pointer;font-weight:700;color:var(--ink)}.tab.active{border-color:var(--blued);color:var(--blue);background:#F4F8FB}
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding:16px 0 24px}.canvasWrap{background:var(--white);border:1px solid #d6dce7;border-radius:12px;padding:8px;overflow:hidden;max-width:900px;aspect-ratio:1100/665}.canvasWrap canvas{width:100%;height:auto;aspect-ratio:1100/1050;display:block;margin-top:-7.73%;touch-action:none}
 aside{display:flex;flex-direction:column;gap:12px}section{background:var(--white);border:1px solid #d6dce7;border-radius:10px;padding:13px 14px}h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 10px;color:var(--ink)}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:7px 0}.row label{font-size:14px}.value{font-family:"Courier New",monospace;font-weight:700}input[type=range]{width:100%}.readout{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:13px}.prompt{border-left:4px solid var(--blue);padding-left:10px;font-size:14px;line-height:1.4}.hint{font-size:12.5px;color:var(--grey);line-height:1.4;margin-top:8px}.eq{font-family:Georgia,"Times New Roman",serif;font-size:16px;background:#FBFBF8;border:1px solid #e0e5ee;border-radius:7px;padding:8px 10px;margin-top:8px}.status{font-weight:700}.spacelike{color:var(--blue)}.null{color:var(--red)}.timelike{color:var(--green)} button{border:1px solid var(--dim);border-radius:8px;background:var(--white);padding:7px 9px;cursor:pointer;font-weight:600}button:hover{background:#F4F8FB}
 @media(max-width:980px){main{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<div class="wrap">
 <header>
 <div class="eyebrow">ASTR 3900/8090 · Lecture 2</div>
 <h1>Special Relativity: Spacetime Geometry</h1>
@@ -38,6 +40,7 @@ aside{display:flex;flex-direction:column;gap:12px}section{background:var(--white
 </aside>
 </main>
 <footer><span>S. Taylor · Vanderbilt University</span><span>ASTR 3900/8090 · Lecture 2</span></footer>
+</div>
 <script>
 (()=>{
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
