@@ -44,8 +44,9 @@
   }
   .card h2{
     font-family: Georgia, serif; font-weight:400; font-size:17px; margin:0 0 10px;
-    color:var(--ink); display:flex; align-items:center; gap:8px;
+    color:var(--ink);
   }
+  .card h2 .dot{ margin-right:8px; vertical-align:middle; }
   .card h2 .dot{ width:9px; height:9px; border-radius:50%; background:var(--blue); display:inline-block; }
   .hint{ color:var(--grey); font-size:13px; line-height:1.5; margin:0 0 12px; }
 
@@ -54,7 +55,8 @@
   #profCanvas{ background:#fff; }
 
   .legend{ display:flex; flex-wrap:wrap; gap:12px 18px; font-size:12px; color:var(--mute2); margin-top:10px; }
-  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend span{ display:inline-block; }
+  .legend span .swatch{ margin-right:6px; vertical-align:middle; }
   .swatch{ width:16px; height:3px; border-radius:2px; display:inline-block; }
   .sw-worldline{ background:var(--brown); height:3px; }
   .sw-grid{ background:var(--dim); height:2px; }

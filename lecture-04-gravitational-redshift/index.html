@@ -495,7 +495,7 @@ function initUI() {
 
     const callout = document.getElementById('callout');
     if (Math.abs(state.chi - 0.0002320454018489533) < 1e-9) {
-      callout.textContent = 'M \u2243 M\u2609, R \u2243 R\u2295 \u2014 matches the white-dwarf example in Step 18 (\u03BB_emit \u2243 479.9 nm for \u03BB_obs = 480 nm).';
+      callout.innerHTML = 'M \u2243 M\u2609, R \u2243 R\u2295 \u2014 matches the white-dwarf example in Step 18 (\u03BB<sub>emit</sub> \u2243 479.9 nm for \u03BB<sub>obs</sub> = 480 nm).';
     } else if (state.chi < 1e-6) {
       callout.textContent = 'At Earth\u2019s compactness the clocks and the wave colour are visually indistinguishable \u2014 exactly the point of "a deliberately small effect." The numbers above are exact.';
     } else if (state.chi > 0.3) {
