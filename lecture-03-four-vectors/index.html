@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lecture 3 Interactive Demo — Four-vectors, Doppler shift, aberration, and beaming</title>
+<title>Lecture 3: Four-Vector Explorer — ASTR 3900/8090</title>
 <style>
 :root{
   --bg:#fbfbf8;--ink:#15243c;--blue:#0f6e93;--brown:#8a5a18;--panel:#edf1f6;
@@ -13,7 +13,9 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
 .wrap{max-width:1320px;margin:auto;padding:26px}
 h1,h2,h3{font-family:Georgia,serif;font-weight:500}h1{margin:0 0 4px;font-size:34px}h2{margin:0 0 12px;font-size:25px}h3{margin:10px 0 8px;font-size:20px}
+.eyebrow{font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin:0 0 6px}
 p{color:var(--grey);line-height:1.45}.subtitle{margin-top:4px}
+footer{margin-top:26px;padding-top:16px;border-top:1px solid #c7d0da;font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
 .tabs{display:flex;gap:8px;margin:18px 0}.tabbtn,.modebtn{padding:9px 13px;border-radius:9px;border:1px solid #9ba8b5;background:white;color:var(--ink);cursor:pointer;font-weight:650}.tabbtn.active,.modebtn.active{background:var(--blue);color:white;border-color:var(--blue)}
 .tab{display:none}.tab.active{display:block}
 .grid{display:grid;grid-template-columns:360px 1fr;gap:24px}.dopgrid{display:grid;grid-template-columns:390px 1fr;gap:24px}
@@ -30,7 +32,8 @@ canvas{width:100%;height:auto;background:white;border-radius:14px;border:1px sol
 </head>
 <body>
 <div class="wrap">
-  <h1>Lecture 3 interactive demo</h1>
+  <div class="eyebrow">ASTR 3900/8090 · Lecture 3</div>
+  <h1>Four-Vector Explorer</h1>
   <p class="subtitle">Four-vectors, Lorentz transformations, relativistic Doppler shift, aberration, and beaming · units c = 1</p>
 
   <div class="tabs">
@@ -105,6 +108,7 @@ canvas{width:100%;height:auto;background:white;border-radius:14px;border:1px sol
     </div>
   </section>
 <div id="qaResults" style="display:none"></div>
+<footer><span>S. Taylor · Vanderbilt University</span><span>ASTR 3900/8090 · Lecture 3</span></footer>
 </div>
 
 <script>
