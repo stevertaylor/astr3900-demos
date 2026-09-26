@@ -214,6 +214,15 @@ const DEMOS = [
     path:'lecture-09-wormhole-geodesics/index.html',
     blurb:'Integrate geodesics of ds² = −dt² + dr² + (b² + r²)dφ² on a rotatable wormhole, spray a fan of angular momenta, and find the critical ℓ above which the throat turns you back.'
   },
+  {
+    id:'l10-conserved-quantities',
+    title:'Conserved Quantities and Broken Symmetries',
+    tag:'Lecture 10',
+    accent:'#f87171',
+    path:'lecture-10-conserved-quantities/index.html',
+    blurb:'Integrate orbits in a Schwarzschild metric whose mass you can make wobble in t or φ, predict which of '
+        + '−ξ·U and η·U will drift, and watch each conservation law fail exactly when its Killing vector is broken.'
+  },
 ];
 
 const $=id=>document.getElementById(id);
@@ -231,7 +240,7 @@ $('grid').innerHTML = DEMOS.map(d=>`
 
 /* build bar pills */
 pills.innerHTML = DEMOS.map(d=>`
-  <button class="pill" data-id="${d.id}"><span class="pdot" style="background:${d.accent}"></span>${d.tag}</button>`).join('');
+  <button class="pill" data-id="${d.id}" title="${d.tag}: ${d.title}"><span class="pdot" style="background:${d.accent}"></span>${d.tag.replace('Lecture ','L')}</button>`).join('');
 
 document.querySelectorAll('.card,.pill').forEach(el=>
   el.addEventListener('click',()=>{ location.hash = el.dataset.id; }));
@@ -260,7 +269,8 @@ function openDemo(d){
   $('newTab').style.display='flex';
   $('escHint').style.display='inline';
   $('labLink').style.display='none';
-  pills.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.id===d.id));
+  pills.querySelectorAll('.pill').forEach(p=>{ const on=p.dataset.id===d.id; p.classList.toggle('active',on);
+    if(on && p.scrollIntoView) p.scrollIntoView({block:'nearest',inline:'nearest'}); });
   document.title=d.title+' — ASTR 3900/8090 Demos';
 }
 
