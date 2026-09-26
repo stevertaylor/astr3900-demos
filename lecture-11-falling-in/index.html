@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 11: Falling In: Two Clocks — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:12px}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/750}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.55;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model .mono{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;color:var(--ink)}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.divider{font-family:Georgia,serif;font-size:15px;color:var(--ink);margin:12px 0 8px;
+         padding-top:9px;border-top:1px solid var(--dim)}
+.row{margin:0 0 8px}
+.row:last-child{margin-bottom:0}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tabs button{font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:9px 14px;border:1px solid var(--dim);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+.tabs button:hover{border-color:var(--blued)}
+.tabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.tabs.seg{margin:0 0 10px}
+.tabs.seg button{padding:7px 11px;font-size:12.5px;flex:1}
+
+.btns{display:flex;gap:8px;margin:0 0 10px}
+.btn{flex:1;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn.primary{background:var(--blued);color:#fff}
+
+.clocks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+.clock{background:#fff;border:1px solid var(--dim);border-radius:8px;padding:6px 9px}
+.clock .lab{font-size:11.5px;color:var(--grey)}
+.clock .val{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:20px;line-height:1.25}
+.clock.faller .val{color:var(--blue)}
+.clock.far .val{color:var(--brown)}
+.clock .unit{font-size:11px;color:var(--grey);font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace}
+.note{font-size:11.5px;line-height:1.45;color:var(--grey);margin:4px 0 0}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap;padding-left:6px}
+table.read tr.sep td{border-top:1px solid var(--dim);padding-top:5px}
+.gloss{display:block;font-size:11px;color:var(--grey);line-height:1.3}
+.ask{color:var(--brown);font-style:italic}
+.em{color:var(--blue)}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 11</div>
+    <h1>Falling In: Two Clocks</h1>
+    <div class="sub">Follow a radial plunge on the faller's clock and on a distant clock, and watch its outgoing pulses arrive ever further apart.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="model">
+        <b>Model:</b> the exact radial geodesic of the Schwarzschild metric with e = 1 and &ell; = 0
+        (released from rest at infinity), in units G = c = 1; clocks read from the moment the faller
+        passes r<sub>0</sub>. The <b>distant clock</b> is Schwarzschild t, the proper time of a static
+        observer far away. Pulses are outgoing radial null geodesics, drawn exactly on equal r and t
+        scales; &ldquo;received&rdquo; means at that far observer. Playback runs at the rate shown under
+        the speed slider; nothing else is rescaled or exaggerated. <b>Beyond the lecture:</b> a pulse
+        from the moving faller is redshifted by the static factor (1&minus;2M/r)<sup>&minus;1/2</sup>
+        times a Doppler factor with &beta; = (2M/r)<sup>1/2</sup>; together 1 + z = 1/[1 &minus; (2M/r)<sup>1/2</sup>].
+        Drag the blue dot to move along the fall.
+        <br><b>Checks on the path as drawn</b> (finite differences of the plotted t(&tau;), r(&tau;)):
+        (1 &minus; 2M/r) dt/d&tau; = <span class="mono" id="chkE"></span> (should be e = 1);
+        U&middot;U = <span class="mono" id="chkU"></span> (should be &minus;1).
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Clocks</h2>
+        <div class="clocks">
+          <div class="clock faller"><div class="lab">Faller's clock, &tau; &minus; &tau;<sub>0</sub></div>
+            <div class="val" id="clkTau">0.00</div><div class="unit" id="clkTauU">M</div></div>
+          <div class="clock far"><div class="lab">Distant clock, t &minus; t<sub>0</sub></div>
+            <div class="val" id="clkT">0.00</div><div class="unit" id="clkTU">M</div></div>
+        </div>
+        <div class="tabs seg" id="modeTabs">
+          <button data-mode="tau" class="active">Run on faller's &tau;</button>
+          <button data-mode="t">Run on distant t</button>
+        </div>
+        <div class="btns">
+          <button id="go" class="btn primary">Play</button>
+          <button id="rs" class="btn">Reset</button>
+        </div>
+        <div class="row">
+          <label id="scrubLab">position on the faller's clock, &tau; &minus; &tau;<sub>0</sub> <span class="v" id="vScrub"></span></label>
+          <input type="range" id="scrub" min="0" max="7" step="0.01" value="3">
+        </div>
+        <div class="row">
+          <label>playback speed <span class="v" id="vSpd"></span></label>
+          <input type="range" id="spd" min="0" max="100" value="40">
+          <div class="note" id="slowNote"></div>
+        </div>
+
+        <div class="divider">Set-up</div>
+        <div class="row">
+          <label>clocks start at r<sub>0</sub> / M <span class="v" id="vR0"></span></label>
+          <input type="range" id="r0" min="3" max="20" step="0.5" value="6">
+        </div>
+        <div class="row">
+          <label>pulse spacing on the faller's clock / M <span class="v" id="vDp"></span></label>
+          <input type="range" id="dp" min="0.2" max="2" step="0.1" value="0.5">
+        </div>
+        <div class="row">
+          <label>black-hole mass, for the units</label>
+          <div class="tabs seg" id="massTabs" style="margin:0">
+            <button data-m="1">1 M&#9737;</button>
+            <button data-m="10" class="active">10 M&#9737;</button>
+            <button data-m="4.3e6" title="4.3 &times; 10^6 solar masses">Sgr A*</button>
+            <button data-m="6.5e9" title="6.5 &times; 10^9 solar masses">M87*</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Readouts</h2>
+        <table class="read">
+          <tr><td>r now</td><td class="n" id="rNow"></td></tr>
+          <tr><td class="em">&Delta;&tau;, r<sub>0</sub> &rarr; 2M</td><td class="n em" id="dTau2M"></td></tr>
+          <tr class="sep"><td>1 + z of a pulse sent now</td><td class="n" id="zMove"></td></tr>
+          <tr><td>&nbsp;&nbsp;if the emitter were static</td><td class="n" id="zStat"></td></tr>
+          <tr><td>&nbsp;&nbsp;ratio: Doppler factor</td><td class="n" id="zDop"></td></tr>
+          <tr><td>pulses received / sent</td><td class="n" id="nPulse"></td></tr>
+        </table>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 11</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// ================================================================ physics (G = c = M = 1)
+// Radial e = 1 infall:  dr/dtau = -sqrt(2/r),  dt/dtau = (1 - 2/r)^-1.
+// Closed forms:  tau(r) from r0,  r(tau),  and  t(r) = -(4/3)x^3 - 4x + 2 ln[(x+1)/(x-1)],  x = sqrt(r/2).
+// Near r = 2M everything is carried in sig = ln(r - 2M), because r - 2M ~ e^(-t/2M)
+// underflows double precision after a few tens of M on the distant clock.
+function tauOf(r0, r){ return (2/3)*(Math.pow(r0,1.5) - Math.pow(r,1.5))/Math.SQRT2; }
+function rOfTau(r0, tau){ var q = Math.pow(r0,1.5) - 1.5*Math.SQRT2*tau; return q > 0 ? Math.pow(q, 2/3) : 0; }
+function sigOf(r){ return Math.log(r - 2); }
+function tOfSig(sig){
+  var eps = Math.exp(sig), x = Math.sqrt(1 + eps/2);
+  var lxm1 = sig - Math.LN2 - Math.log(x + 1);            // ln(x - 1), since x - 1 = (eps/2)/(x + 1)
+  return -(4/3)*x*x*x - 4*x + 2*(Math.log(x + 1) - lxm1);
+}
+function rstarSig(sig){ return 2 + Math.exp(sig) + 2*(sig - Math.LN2); }   // r* = r + 2 ln(r/2 - 1)
+function sigOfT(r0, t){                                   // invert t(sig) - t(r0); t falls as sig rises
+  var s0 = sigOf(r0), t0 = tOfSig(s0), lo, hi, mid, i;
+  if(t <= 0) return s0;
+  lo = -t/2 - 60; hi = s0;
+  while(tOfSig(lo) - t0 < t) lo -= 60;
+  for(i=0;i<200;i++){
+    mid = 0.5*(lo + hi);
+    if(tOfSig(mid) - t0 > t) lo = mid; else hi = mid;
+    if(hi - lo < 1e-12) break;
+  }
+  return 0.5*(lo + hi);
+}
+function lnZ(sig){                                        // redshift factors as logs, valid for r > 2M
+  var eps = Math.exp(sig), x = Math.sqrt(1 + eps/2), lxm1 = sig - Math.LN2 - Math.log(x + 1);
+  var lnMove = Math.log(x) - lxm1;                        // 1 + z = x/(x - 1) = 1/(1 - sqrt(2M/r))
+  var lnStat = 0.5*(Math.log(2 + eps) - sig);             // (1 - 2M/r)^(-1/2)
+  return { lnMove:lnMove, lnStat:lnStat, lnDop:lnMove - lnStat };
+}
+// invariant checks by finite differences of the closed-form path actually drawn
+function checks(r0, tau){
+  // 4th-order central differences of the closed forms that are drawn; below r - 2M = 1e-3 M the
+  // two terms of U.U (each ~ 2M/(r - 2M)) cancel too finely for double precision.
+  var r = rOfTau(r0, tau), eps = r - 2;
+  if(!(eps > 1e-3)) return null;
+  var h = 1e-3*Math.min(1, eps), c = Math.max(tau, 2*h);
+  var R = function(x){ return rOfTau(r0, x); }, Tt = function(x){ return tOfSig(sigOf(rOfTau(r0, x))); };
+  var d = function(F){ return (-F(c + 2*h) + 8*F(c + h) - 8*F(c - h) + F(c - 2*h))/(12*h); };
+  var tdot = d(Tt), rdot = d(R), e2 = R(c) - 2, f = e2/(2 + e2);
+  return { e: f*tdot, uu: -f*tdot*tdot + rdot*rdot/f };
+}
+
+// ================================================================ state
+var TMSUN = 4.925490947e-6;                               // G M_sun / c^3 in seconds
+var S = { mode:"tau", r0:6, dp:0.5, mass:10, tau:3.0, t:0, speed:40,
+          running:false, revealed:false };
+function tau2M(){ return tauOf(S.r0, 2); }
+function tau0(){ return tauOf(S.r0, 0); }
+function now(){
+  var r, t, sig, tau;
+  if(S.mode === "tau"){
+    tau = S.tau; r = rOfTau(S.r0, tau);
+    sig = r > 2 ? sigOf(r) : -Infinity;
+    t = r > 2 ? tOfSig(sig) - tOfSig(sigOf(S.r0)) : Infinity;
+  } else {
+    t = S.t; sig = sigOfT(S.r0, t); r = 2 + Math.exp(sig);
+    tau = Math.min(tauOf(S.r0, r), tau2M());
+  }
+  return { tau:tau, r:r, t:t, sig:sig };
+}
+function pulses(tauNow){
+  var out = [], k, tau, r, sig, t0 = tOfSig(sigOf(S.r0));
+  for(k = 0; k*S.dp <= tauNow + 1e-12 && k < 4000; k++){
+    tau = k*S.dp; r = rOfTau(S.r0, tau);
+    if(r > 2){ sig = sigOf(r);
+      var t = tOfSig(sig) - t0;
+      out.push({ tau:tau, r:r, t:t, u:t - rstarSig(sig), esc:true }); }
+    else out.push({ tau:tau, r:r, esc:false });
+  }
+  return out;
+}
+function dpMin(){ return Math.max(0.2, Math.ceil(10*tau2M()/40)/10); }   // at most ~40 pulses before 2M
+
+// ================================================================ canvas
+var INK="#15243C", BLUE="#0F6E93", BLUED="#2E6DA4", BROWN="#8A5A18", GREY="#5A6B7B",
+    MUTE2="#33465C", DIM="#C4CBD8", HATCH="#DCE1EA", WHITE="#FFFFFF";
+// Logical size; the backing store is logical x devicePixelRatio. All draw calls use logical units.
+var OW = 1100, OH = 750;
+// Type scale: the canvas shows at ~740 CSS px, so logical px x 0.673 must clear 11 CSS px
+// (labels) and 13 (titles): 17 -> 11.4, 20 -> 13.5.
+var FV = "italic 17px Georgia, 'Times New Roman', serif",   // variables
+    FL = "17px Helvetica, Arial, sans-serif",               // numbers, units, prose
+    FI = "13px Helvetica, Arial, sans-serif",               // indices, upright
+    FVI = "italic 13px Georgia, 'Times New Roman', serif",  // indices, variables
+    FT = "20px Georgia, 'Times New Roman', serif",          // panel titles
+    FTV = "italic 20px Georgia, 'Times New Roman', serif",  // variables inside titles
+    FAX = "italic 22px Georgia, 'Times New Roman', serif";  // axis names
+
+var A = { x0:86,  x1:526,  y0:60, y1:500 };     // Schwarzschild t vs r, equal scales
+var B = { x0:640, x1:1058, y0:60, y1:500 };     // proper time vs r
+var ST = { x0:86, x1:1058, yE:616, yR:698 };    // sent / received timelines
+
+var cvs, ctx, REG = { labels:[], segs:[], dots:[] };
+
+function fit(cv){
+  var dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
+  cv.width = Math.round(OW*dpr); cv.height = Math.round(OH*dpr);
+  var c = cv.getContext("2d");
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);          // after sizing: sizing resets it
+  return c;
+}
+function partFont(k){ return { v:FV, l:FL, i:FI, vi:FVI, t:FT, tv:FTV, ax:FAX }[k] || FL; }
+function isIdx(k){ return k === "i" || k === "vi"; }
+// Mixed-font run: parts = [[text, kind, colour], ...]. Indices are drawn smaller and lowered,
+// never as Unicode sub/superscripts. Registers its box for the collision check.
+function run(x, y, parts, align, color, bg, name){
+  var i, ws = [], w = 0;
+  for(i=0;i<parts.length;i++){ ctx.font = partFont(parts[i][1]); ws.push(ctx.measureText(parts[i][0]).width); w += ws[i]; }
+  var x0 = align === "center" ? x - w/2 : (align === "right" ? x - w : x);
+  var big = parts.some(function(p){ return p[1] === "t" || p[1] === "tv" || p[1] === "ax"; });
+  var top = y - (big ? 16 : 13), bot = y + (parts.some(function(p){ return isIdx(p[1]); }) ? 8 : 4);
+  if(bg){ ctx.fillStyle = bg; ctx.fillRect(x0 - 4, top - 2, w + 8, bot - top + 4); }
+  for(i=0;i<parts.length;i++){
+    ctx.font = partFont(parts[i][1]); ctx.fillStyle = parts[i][2] || color || GREY; ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(parts[i][0], x0, isIdx(parts[i][1]) ? y + 5 : y);
+    x0 += ws[i];
+  }
+  REG.labels.push({ name:name || parts.map(function(p){return p[0];}).join(""),
+                    x0:x0 - w, y0:top, x1:x0, y1:bot });
+  return w;
+}
+function seg(x0, y0, x1, y1, col, w, dash, name, noreg){
+  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = w || 1.5; if(dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.restore();
+  if(!noreg) REG.segs.push({ name:name || "", x0:x0, y0:y0, x1:x1, y1:y1 });
+}
+function poly(pts, col, w, dash, name, alpha, yTop, yBot){
+  if(pts.length < 2) return;
+  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = w; if(dash) ctx.setLineDash(dash);
+  if(alpha) ctx.globalAlpha = alpha;
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke(); ctx.restore();
+  for(var j=1;j<pts.length;j++){
+    if(yTop !== undefined && Math.min(pts[j-1][1], pts[j][1]) < yTop) continue;   // clipped away on screen
+    if(yBot !== undefined && Math.max(pts[j-1][1], pts[j][1]) > yBot) continue;
+    REG.segs.push({ name:name, x0:pts[j-1][0], y0:pts[j-1][1], x1:pts[j][0], y1:pts[j][1] }); }
+}
+function dot(x, y, rad, col, name){
+  ctx.save(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, rad, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+  REG.dots.push({ name:name || "dot", x0:x - rad, y0:y - rad, x1:x + rad, y1:y + rad });
+}
+function head(x, y, ang, col, sz){
+  ctx.save(); ctx.fillStyle = col; ctx.translate(x, y); ctx.rotate(ang);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-sz, -sz*0.45); ctx.lineTo(-sz, sz*0.45); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function hatch(x0, y0, x1, y1){
+  ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+  ctx.strokeStyle = HATCH; ctx.lineWidth = 1;
+  for(var k = -(y1 - y0); k < (x1 - x0); k += 9){ ctx.beginPath(); ctx.moveTo(x0 + k, y1); ctx.lineTo(x0 + k + (y1 - y0), y0); ctx.stroke(); }
+  ctx.restore();
+}
+function niceStep(range, n){ var raw = range/n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw/p;
+  return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10)*p; }
+function fmt(v, d){ return isFinite(v) ? v.toFixed(d) : "∞"; }
+function rLabel(r){ return r === 0 ? [["0","l"]] : [[String(r),"l"],["M","v"]]; }
+
+function geom(){
+  var rmax = S.r0 + 1.5;
+  var sA = (A.x1 - A.x0)/rmax;                   // px per M, both axes of the left panel
+  var T = (A.y1 - A.y0)/sA;
+  var sBr = (B.x1 - B.x0)/rmax, tauMax = tau0()*1.06, sBt = (B.y1 - B.y0)/tauMax;
+  var sS = (ST.x1 - ST.x0)/(tau2M()*1.35);
+  return { rmax:rmax, sA:sA, T:T, sBr:sBr, tauMax:tauMax, sBt:sBt, sS:sS };
+}
+var dragView = null;
+function viewA(g, nw){
+  if(dragView) return dragView;
+  var tlo = S.mode === "t" ? Math.max(0, nw.t - 0.72*g.T) : 0;
+  return { tlo:tlo, sA:g.sA };
+}
+
+// ---------------------------------------------------------------- left panel: t vs r
+function drawA(g, nw, ps){
+  var V = viewA(g, nw), X = function(r){ return A.x0 + r*g.sA; }, Y = function(t){ return A.y1 - (t - V.tlo)*g.sA; };
+  hatch(A.x0, A.y0, X(2), A.y1);
+  seg(X(2), A.y0, X(2), A.y1, GREY, 1.4, [6,5], "A 2M line");
+  ctx.save(); ctx.beginPath(); ctx.rect(A.x0, A.y0 - 1, A.x1 - A.x0 + 1, A.y1 - A.y0 + 1); ctx.clip();
+  // outgoing pulses: exact radial null curves t = t_e + r*(r) - r*(r_e)
+  ps.forEach(function(p, k){ if(!p.esc) return;
+    var pts = [], i, se = sigOf(p.r);
+    for(i=0;i<=120;i++){
+      var r = p.r + (g.rmax - p.r)*i/120, sg = i === 0 ? se : Math.log(r - 2), y = Y(p.t + rstarSig(sg) - rstarSig(se));
+      pts.push([X(r), y]); if(y < A.y0 - 30) break;
+    }
+    poly(pts, BROWN, 1.5, null, "ray " + k, 0.9, A.y0, A.y1);
+  });
+  // worldline traced up to now: uniform in r far out, uniform in ln(r - 2M) near the horizon
+  var t0w = tOfSig(sigOf(S.r0)), sA0 = sigOf(S.r0), sMid = Math.log(Math.min(0.05, S.r0 - 2));
+  var sEnd = isFinite(nw.sig) ? nw.sig : sigOfT(S.r0, V.tlo + g.T + 2);
+  var sgs = [], i;
+  for(i=0;i<=300;i++){ var s1 = sA0 + (sMid - sA0)*i/300; if(s1 < sEnd) break; sgs.push(s1); }
+  if(sEnd < sMid) for(i=1;i<=300;i++) sgs.push(sMid + (sEnd - sMid)*i/300);
+  else sgs.push(sEnd);
+  var wl = [];
+  sgs.forEach(function(sg){ var y = Y(tOfSig(sg) - t0w); if(y > A.y0 - 40) wl.push([X(2 + Math.exp(sg)), y]); });
+  poly(wl, INK, 2.6, null, "A worldline", undefined, A.y0, A.y1);
+  ps.forEach(function(p){ if(p.esc){ var y = Y(p.t); if(y > A.y0 && y < A.y1) dot(X(p.r), y, 3.4, BROWN, "A emit"); } });
+  var inWin = isFinite(nw.t) && Y(nw.t) >= A.y0;
+  if(inWin) dot(X(nw.r), Y(nw.t), 7, BLUE, "A particle");
+  ctx.restore();
+  // axes
+  seg(A.x0, A.y1, A.x1 + 8, A.y1, INK, 1.5, null, "A r axis", true); head(A.x1 + 14, A.y1, 0, INK, 10);
+  seg(A.x0, A.y1, A.x0, A.y0 - 8, INK, 1.5, null, "A t axis", true); head(A.x0, A.y0 - 14, -Math.PI/2, INK, 10);
+  var stepR = g.rmax > 12 ? 4 : 2, r, t;
+  for(r = 0; r <= g.rmax - 0.3; r += stepR){ seg(X(r), A.y1, X(r), A.y1 + 6, INK, 1.2, null, "", true);
+    run(X(r), A.y1 + 27, rLabel(r), "center", GREY, null, "A rtick " + r); }
+  var st = niceStep(g.T, 5);
+  for(t = Math.ceil(V.tlo/st)*st; t <= V.tlo + g.T + 1e-9; t += st){ var y = Y(t); if(y < A.y0 + 8) continue;
+    seg(A.x0 - 6, y, A.x0, y, INK, 1.2, null, "", true);
+    run(A.x0 - 10, y + 6, [[fmt(t, st < 1 ? 1 : 0), "l"]], "right", GREY, null, "A ttick " + t); }
+  run(A.x1 + 22, A.y1 + 7, [["r","ax"]], "left", INK, null, "A r name");
+  run(A.x0 - 8, A.y0 - 14, [["t","ax"]], "right", INK, null, "A t name");
+  run(A.x0, A.y1 + 62, [["Schwarzschild ","t"],["t","tv"],[" against ","t"],["r","tv"],["  (equal scales)","t"]], "left", MUTE2, null, "A title");
+  if(!inWin){
+    run(A.x0 + 16, A.y0 - 14, isFinite(nw.t) ? [["↑ the faller is above this window","l"]]
+        : [["↑ crossed ","l"],["r","v"],[" = 2","l"],["M","v"],[" at ","l"],["t","v"],[" = ∞","l"]], "left", BLUE, null, "A indicator");
+  }
+}
+
+// ---------------------------------------------------------------- right panel: tau vs r
+function drawB(g, nw, ps){
+  var X = function(r){ return B.x0 + r*g.sBr; }, Y = function(tau){ return B.y1 - tau*g.sBt; };
+  hatch(B.x0, B.y0, X(2), B.y1);
+  seg(X(2), B.y0, X(2), B.y1, GREY, 1.4, [6,5], "B 2M line");
+  var past = [], fut = [], i, tau, N = 400;
+  for(i=0;i<=N;i++){ tau = tau0()*i/N; var p = [X(rOfTau(S.r0, tau)), Y(tau)];
+    if(tau <= nw.tau) past.push(p); else { if(!fut.length && past.length) fut.push(past[past.length-1]); fut.push(p); } }
+  past.push([X(nw.r), Y(nw.tau)]);
+  if(S.revealed) poly(fut, INK, 1.4, [4,5], "B future", 0.45);
+  poly(past, INK, 2.6, null, "B worldline");
+  if(S.revealed){
+    var y2 = Y(tau2M()), yS = Y(tau0());
+    seg(B.x0, y2, B.x1, y2, BLUE, 1.1, [3,4], "B tau2M line");
+    seg(B.x0, yS, B.x1, yS, GREY, 1.1, [3,4], "B tau0 line");
+    run(B.x1, y2 + 22, [["r","v"],[" = 2","l"],["M","v"],["  at  ","l"],["τ","v"],[" = " + tau2M().toFixed(3) + " ","l"],["M","v"]], "right", BLUE, WHITE, "B tau2M label");
+    run(B.x1, yS - 9, [["r","v"],[" = 0  at  ","l"],["τ","v"],[" = " + tau0().toFixed(3) + " ","l"],["M","v"]], "right", GREY, WHITE, "B tau0 label");
+  }
+  var rad = Math.max(1.8, Math.min(3.4, S.dp*g.sBt/3));
+  ps.forEach(function(p){ dot(X(p.r), Y(p.tau), rad, p.esc ? BROWN : GREY, "B emit"); });
+  dot(X(nw.r), Y(nw.tau), 7, BLUE, "B particle");
+  seg(B.x0, B.y1, B.x1 + 8, B.y1, INK, 1.5, null, "", true); head(B.x1 + 14, B.y1, 0, INK, 10);
+  seg(B.x0, B.y1, B.x0, B.y0 - 8, INK, 1.5, null, "", true); head(B.x0, B.y0 - 14, -Math.PI/2, INK, 10);
+  var stepR = g.rmax > 12 ? 4 : 2, r, t;
+  for(r = 0; r <= g.rmax - 0.3; r += stepR){ seg(X(r), B.y1, X(r), B.y1 + 6, INK, 1.2, null, "", true);
+    run(X(r), B.y1 + 27, rLabel(r), "center", GREY, null, "B rtick " + r); }
+  var st = niceStep(g.tauMax, 5);
+  for(t = 0; t <= g.tauMax + 1e-9; t += st){ var y = Y(t); if(y < B.y0 + 8) continue;
+    seg(B.x0 - 6, y, B.x0, y, INK, 1.2, null, "", true);
+    run(B.x0 - 10, y + 6, [[fmt(t, st < 1 ? 1 : 0), "l"]], "right", GREY, null, "B tick " + t); }
+  run(B.x1 + 20, B.y1 + 7, [["r","ax"]], "left", INK, null, "B r name");
+  run(B.x0 - 8, B.y0 - 14, [["τ","ax"]], "right", INK, null, "B tau name");
+  run(B.x0, B.y1 + 62, [["Faller’s proper time ","t"],["τ","tv"],[" against ","t"],["r","tv"]], "left", MUTE2, null, "B title");
+}
+
+// ---------------------------------------------------------------- timelines
+function drawStrip(g, nw, ps){
+  var X = function(v){ return ST.x0 + v*g.sS; };
+  run(ST.x0, ST.yE - 20, [["sent: one pulse per fixed step of the faller’s clock","l"]], "left", BLUE, null, "S sent label");
+  run(ST.x0, ST.yR - 20, [["received far away, on the distant clock","l"]], "left", BROWN, null, "S recv label");
+  seg(ST.x0, ST.yE, ST.x1, ST.yE, DIM, 1.2, null, "", true); seg(ST.x0, ST.yR, ST.x1, ST.yR, DIM, 1.2, null, "", true);
+  var xh = X(tau2M());
+  if(S.revealed && xh <= ST.x1){ seg(xh, ST.yE - 9, xh, ST.yE + 9, GREY, 1.2, [3,3], "S 2M mark", true);
+    run(xh + 6, ST.yE + 27, [["r","v"],[" = 2","l"],["M","v"]], "left", GREY, null, "S 2M label"); }
+  var u0 = ps.length && ps[0].esc ? ps[0].u : 0, nRx = 0, off = 0, tw = ps.length > 40 ? 1.6 : 2.2;
+  ps.forEach(function(p){
+    var x = X(p.tau);
+    if(x <= ST.x1) seg(x, ST.yE - 8, x, ST.yE + 8, p.esc ? BLUE : GREY, tw, null, "", true);
+    if(p.esc){ nRx++; var xr = X(p.u - u0);
+      if(xr <= ST.x1) seg(xr, ST.yR - 8, xr, ST.yR + 8, BROWN, tw, null, "", true); else off++; }
+  });
+  if(off > 0){ head(ST.x1 + 12, ST.yR, 0, BROWN, 10);
+    run(ST.x1, ST.yR + 29, [[off + " more beyond this scale","l"]], "right", BROWN, null, "S more label"); }
+  return nRx;
+}
+
+// ---------------------------------------------------------------- readouts
+function phys(s){ var a = Math.abs(s);
+  if(a < 1e-3) return (s*1e6).toPrecision(3) + " µs";
+  if(a < 1)    return (s*1e3).toPrecision(3) + " ms";
+  if(a < 120)  return s.toPrecision(3) + " s";
+  if(a < 7200) return (s/60).toPrecision(3) + " min";
+  if(a < 172800) return (s/3600).toPrecision(3) + " h";
+  return (s/86400).toPrecision(3) + " d"; }
+function sci(lnv){ var l10 = lnv/Math.LN10, n = Math.floor(l10), a = Math.pow(10, l10 - n);
+  return a.toFixed(1) + " &times; 10<sup>" + (n < 0 ? "&minus;" + (-n) : n) + "</sup>"; }
+function big(lnv){ return lnv < Math.log(1e5) ? Math.exp(lnv).toFixed(3) : sci(lnv); }
+function setT(id, v){ var el = document.getElementById(id); if(el) el.textContent = v; }
+function setH(id, v){ var el = document.getElementById(id); if(el) el.innerHTML = v; }
+
+function speedMps(){ return 0.1*Math.pow(10, S.speed/50); }      // clock-M per screen second, 0.1 .. 10
+
+function sync(nw, nRx, nSent){
+  var Ms = S.mass*TMSUN;
+  setT("clkTau", fmt(nw.tau, 2)); setT("clkT", fmt(nw.t, 2));
+  setT("clkTauU", "M  =  " + phys(nw.tau*Ms));
+  setT("clkTU", isFinite(nw.t) ? "M  =  " + phys(nw.t*Ms) : "the crossing is at t = ∞");
+  if(nw.r <= 0) setT("rNow", "0 (singularity)");
+  else if(isFinite(nw.sig) && nw.sig < Math.log(1e-3)) setH("rNow", "2M + " + sci(nw.sig) + " M");
+  else setT("rNow", nw.r.toFixed(3) + " M");
+  if(S.revealed) setT("dTau2M", tau2M().toFixed(3) + " M = " + phys(tau2M()*Ms));
+  else setH("dTau2M", '<span class="ask">predict, then run it</span>');
+  if(isFinite(nw.sig)){ var L = lnZ(nw.sig); setH("zMove", big(L.lnMove)); setH("zStat", big(L.lnStat)); setH("zDop", big(L.lnDop)); }
+  else { setT("zMove", "never arrives"); setT("zStat", "—"); setT("zDop", "—"); }
+  setT("nPulse", nRx + " / " + nSent);
+  var ck = checks(S.r0, nw.tau);
+  if(ck){ setT("chkE", ck.e.toFixed(6)); setT("chkU", ck.uu.toFixed(6)); }
+  else { setH("chkE", "not checked within 10<sup>&minus;3</sup> M of 2M"); setT("chkU", "\u2014"); }
+  // controls
+  setT("vR0", S.r0.toFixed(1)); setT("vDp", S.dp.toFixed(1));
+  var sp = speedMps(); setT("vSpd", sp.toFixed(2) + " M per second");
+  var f = sp*Ms, txt;
+  txt = "1 s on screen = " + phys(f) + " of real time: " + (f < 1 ? "slowed &times; " + fmtFactor(1/f) : "sped up &times; " + fmtFactor(f));
+  if(REDUCED) txt += ". Reduced motion is on: Play jumps ahead.";
+  setH("slowNote", txt);
+  var sc = document.getElementById("scrub");
+  if(S.mode === "tau"){ setH("scrubLab", "position on the faller's clock, &tau; &minus; &tau;<sub>0</sub> <span class=\"v\" id=\"vScrub\"></span>");
+    sc.min = 0; sc.max = tau0().toFixed(2); sc.step = 0.01; sc.value = S.tau; setT("vScrub", S.tau.toFixed(2)); }
+  else { setH("scrubLab", "position on the distant clock, t &minus; t<sub>0</sub> <span class=\"v\" id=\"vScrub\"></span>");
+    sc.min = 0; sc.max = 100; sc.step = 0.05; sc.value = Math.min(S.t, 100); setT("vScrub", S.t.toFixed(2)); }
+  setT("go", S.running ? "Pause" : "Play");
+}
+function fmtFactor(v){ if(v < 1e4) return v.toPrecision(3); var n = Math.floor(Math.log10(v));
+  return (v/Math.pow(10,n)).toFixed(1) + " &times; 10<sup>" + n + "</sup>"; }
+
+function draw(){
+  REG = { labels:[], segs:[], dots:[] };
+  var g = geom(), nw = now(), ps = pulses(nw.tau);
+  if(nw.tau >= tau2M() - 1e-3) S.revealed = true;
+  ctx.fillStyle = WHITE; ctx.fillRect(0, 0, OW, OH);        // logical size, not cv.width
+  drawA(g, nw, ps); drawB(g, nw, ps); var nRx = drawStrip(g, nw, ps);
+  sync(nw, nRx, ps.length);
+}
+
+// ================================================================ animation (rAF only while running)
+var REDUCED = false, raf = null, last = 0;
+function frame(ts){
+  if(!S.running){ raf = null; return; }
+  var dt = Math.min(0.05, last ? (ts - last)/1000 : 0.016);   // real elapsed time, capped at 50 ms
+  last = ts;
+  advance(dt*speedMps());
+  draw();
+  raf = S.running ? requestAnimationFrame(frame) : null;
+}
+function advance(d){
+  if(S.mode === "tau"){ S.tau = Math.min(tau0(), S.tau + d); if(S.tau >= tau0()) S.running = false; }
+  else S.t += d;
+}
+function play(){
+  if(S.mode === "tau" && S.tau >= tau0()) S.tau = 0;
+  if(REDUCED){ advance(S.mode === "tau" ? tau0() : 20); draw(); return; }
+  S.running = true; last = 0;
+  if(raf === null) raf = requestAnimationFrame(frame);
+  draw();
+}
+function pause(){ S.running = false; if(raf !== null){ cancelAnimationFrame(raf); raf = null; } draw(); }
+function reset(){ pause(); S.tau = 0; S.t = 0; S.revealed = false; clampDp(); draw(); }
+function clampDp(){ var m = dpMin(), el = document.getElementById("dp"); el.min = m; if(S.dp < m){ S.dp = m; el.value = m; } }
+function setMode(m){
+  if(m === S.mode) return;
+  var nw = now(); pause(); S.mode = m;
+  if(m === "t") S.t = isFinite(nw.t) ? nw.t : 0;
+  else S.tau = nw.tau;
+  document.querySelectorAll("#modeTabs button").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-mode") === m); });
+  draw();
+}
+
+// ================================================================ direct manipulation
+var dragging = null;
+function logical(ev){ var b = cvs.getBoundingClientRect();
+  return { x:(ev.clientX - b.left)*(OW/b.width), y:(ev.clientY - b.top)*(OH/b.height) }; }
+function handleAt(p){
+  var g = geom(), nw = now();
+  var bx = B.x0 + nw.r*g.sBr, by = B.y1 - nw.tau*g.sBt;
+  if(Math.hypot(p.x - bx, p.y - by) < 22) return "B";
+  if(isFinite(nw.t)){ var V = viewA(g, nw), ax = A.x0 + nw.r*g.sA, ay = A.y1 - (nw.t - V.tlo)*g.sA;
+    if(ay >= A.y0 && Math.hypot(p.x - ax, p.y - ay) < 22) return "A"; }
+  return null;
+}
+function dragTo(p){
+  var g = geom();
+  if(dragging === "B"){ S.mode = "tau"; S.tau = Math.max(0, Math.min(tau0(), (B.y1 - p.y)/g.sBt)); }
+  else { S.mode = "t"; S.t = Math.max(0, dragView.tlo + (A.y1 - p.y)/g.sA); }
+  document.querySelectorAll("#modeTabs button").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-mode") === S.mode); });
+  scheduleDraw();
+}
+var pending = false;
+function scheduleDraw(){ if(pending) return; pending = true; requestAnimationFrame(function(){ pending = false; draw(); }); }
+
+// ================================================================ init
+function init(){
+  if(window.matchMedia){ try { REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ REDUCED = false; } }
+  cvs = document.getElementById("c"); ctx = fit(cvs);
+  var byId = function(id){ return document.getElementById(id); };
+  byId("r0").addEventListener("input", function(e){ S.r0 = +e.target.value; reset(); });
+  byId("dp").addEventListener("input", function(e){ S.dp = +e.target.value; draw(); });
+  byId("spd").addEventListener("input", function(e){ S.speed = +e.target.value; draw(); });
+  byId("scrub").addEventListener("input", function(e){
+    var v = +e.target.value;                               // read before pause(): pause redraws and re-syncs the slider
+    S.running = false; if(raf !== null){ cancelAnimationFrame(raf); raf = null; }
+    if(S.mode === "tau") S.tau = v; else S.t = v;
+    draw(); });
+  byId("go").addEventListener("click", function(){ if(S.running) pause(); else play(); });
+  byId("rs").addEventListener("click", reset);
+  document.querySelectorAll("#modeTabs button").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.getAttribute("data-mode")); }); });
+  document.querySelectorAll("#massTabs button").forEach(function(b){ b.addEventListener("click", function(){
+    S.mass = +b.getAttribute("data-m");
+    document.querySelectorAll("#massTabs button").forEach(function(x){ x.classList.toggle("active", x === b); });
+    draw(); }); });
+  cvs.addEventListener("pointermove", function(ev){
+    var p = logical(ev);
+    if(dragging){ dragTo(p); return; }
+    cvs.style.cursor = handleAt(p) ? "grab" : "default";
+  });
+  cvs.addEventListener("pointerdown", function(ev){
+    var p = logical(ev), h = handleAt(p); if(!h) return;
+    pause(); dragging = h; dragView = viewA(geom(), now());       // freeze the view for the whole drag
+    cvs.style.cursor = "grabbing"; if(cvs.setPointerCapture) cvs.setPointerCapture(ev.pointerId);
+  });
+  function end(ev){ if(!dragging) return; dragging = null; dragView = null; cvs.style.cursor = "grab";
+    if(cvs.releasePointerCapture && ev) try { cvs.releasePointerCapture(ev.pointerId); } catch(e){} draw(); }
+  cvs.addEventListener("pointerup", end); cvs.addEventListener("pointercancel", end);
+  if(window.matchMedia){ var mq = window.matchMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)");
+    if(mq && mq.addEventListener) mq.addEventListener("change", function(){ ctx = fit(cvs); draw(); }); }
+  clampDp(); draw();       // loads mid-fall: pulses already spreading, the answer still hidden
+}
+init();
+
+// hook for automated checks (headless render and collision tests)
+window.__L11 = { S:S, draw:draw, now:now, geom:geom, pulses:pulses, sigOfT:sigOfT, tOfSig:tOfSig, tauOf:tauOf,
+                 rOfTau:rOfTau, lnZ:lnZ, checks:checks, clampDp:clampDp, setMode:setMode, reg:function(){ return REG; } };
+})();
+</script>
+</body>
+</html>

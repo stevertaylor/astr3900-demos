@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 12: Schwarzschild Orbit Explorer — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:12px}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/800;cursor:default}
+
+.presets{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.presets .plab{font-size:13px;font-weight:700;color:var(--blue);margin-right:2px}
+.presets .btn{flex:none;padding:6px 10px}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.55;color:var(--mute2)}
+.model b{color:var(--ink)}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 7px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 2px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+
+.tabs{display:flex;gap:6px;margin:0 0 9px}
+.tab{flex:1;padding:6px 8px;font-size:13.5px;font-weight:600;border-radius:8px;cursor:pointer;
+     border:1px solid var(--dim);background:#fff;color:var(--ink)}
+.tab.on{background:var(--blue);border-color:var(--blue);color:#fff}
+
+.btns{display:flex;gap:8px;margin-top:9px}
+.btn{flex:1;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.chk{font-size:12.5px;color:var(--mute2);margin:9px 0 0;display:block}
+.chk input{margin:0 6px 0 0;vertical-align:-2px;accent-color:var(--blue)}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px;color:var(--mute2)}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;color:var(--ink)}
+.gloss{display:block;font-size:11px;color:var(--grey);line-height:1.3}
+.verdict{font-size:12.5px;line-height:1.5;margin:0 0 8px;padding-bottom:8px;
+         border-bottom:1px solid var(--dim);color:var(--mute2);min-height:57px}
+.verdict b{color:var(--ink);font-family:Georgia,serif;font-weight:400;font-size:16px}
+.ask{color:var(--brown);font-style:italic}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 12</div>
+    <h1>Schwarzschild Orbit Explorer</h1>
+    <div class="sub">Place a particle in the effective potential, predict its fate, then launch it beside its Newtonian twin.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="presets">
+        <span class="plab">Try:</span>
+        <button class="btn" data-p="lowl">&ell;/M = 3.3</button>
+        <button class="btn" data-p="c10">Circle at 10M</button>
+        <button class="btn" data-p="c5">Circle at 5M</button>
+        <button class="btn" data-p="c6">Circle at 6M</button>
+        <button class="btn" data-p="whirl">Near barrier top</button>
+        <button class="btn" data-p="bound">Bound orbit</button>
+      </div>
+      <div class="model">
+        <b>Model:</b> equatorial Schwarzschild geodesics, G = c = M = 1:
+        &frac12;(dr/d&tau;)<sup>2</sup> + V<sub>eff</sub> = &#x2130; and d&phi;/d&tau; = &ell;/r<sup>2</sup>, integrated with RK4 in
+        proper time &tau; and drawn in (r, &phi;) as flat polar coordinates. <b>Newton (grey)</b>: same
+        r<sub>0</sub>, dr/d&tau; and &ell;, with &tau; read as Newtonian time (grey dotted energy level).
+        <b>Playback</b> &times;1 = 18 M of &tau; per second, about 1100&times; slow motion for a 10 M<sub>&#9737;</sub> hole.
+        Pale path: inside r = 2M, where the far-away time t has stopped. <b>&#x2130; drift</b> is integration error only.
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Launch</h2>
+        <div class="tabs">
+          <button class="tab on" id="inward">Moving inward</button>
+          <button class="tab" id="outward">Moving outward</button>
+        </div>
+        <div class="row">
+          <label>angular momentum &ell; / M <span class="v" id="vl"></span></label>
+          <input type="range" id="l" min="0" max="6" step="0.005" value="4">
+        </div>
+        <div class="row">
+          <label>launch radius r<sub>0</sub> / M <span class="v" id="vr"></span></label>
+          <input type="range" id="r0" min="2.1" max="60" step="0.05" value="22.5">
+        </div>
+        <div class="row">
+          <label>energy &#x2130; = (e<sup>2</sup> &minus; 1)/2 <span class="v" id="vE"></span></label>
+          <input type="range" id="E" min="-0.5" max="0.5" step="0.0005" value="-0.03">
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="go">Launch</button>
+          <button class="btn" id="rs">Reset</button>
+          <button class="btn" id="nudge" title="Kick dr/d&tau; outward by 0.012">Nudge</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="newt" checked>Newtonian orbit, same launch</label>
+        <div class="row" style="margin-top:8px">
+          <label>playback speed <span class="v" id="vsp"></span></label>
+          <input type="range" id="speed" min="-1.3" max="1" step="0.01" value="0">
+        </div>
+        <div class="row" style="margin-bottom:0">
+          <label>view radius / M <span class="v" id="vz"></span></label>
+          <input type="range" id="zoom" min="8" max="60" step="0.5" value="26">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>What happens</h2>
+        <div class="verdict" id="verdict"></div>
+        <table class="read">
+          <tr><td>e = &minus;&xi;&middot;U (energy per unit mass)</td><td class="n" id="ne">&mdash;</td></tr>
+          <tr><td>V<sub>eff</sub> maximum, minimum at r / M</td><td class="n" id="nx">&mdash;</td></tr>
+          <tr><td>proper time &tau; / far-away time t</td><td class="n" id="nt">&mdash;</td></tr>
+          <tr><td>&#x2130; drift <span class="gloss">control: integration error only</span></td><td class="n" id="nd">&mdash;</td></tr>
+          <tr><td>d&phi;/dt vs &radic;(M/r<sup>3</sup>)<span class="gloss">circular orbits</span></td><td class="n" id="nk">&mdash;</td></tr>
+          <tr><td>dt/d&tau; vs (1 &minus; 3M/r)<sup>&minus;1/2</sup><span class="gloss">circular orbits</span></td><td class="n" id="nu">&mdash;</td></tr>
+        </table>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 12</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// ================================================================ physics
+// Equatorial timelike geodesics of Schwarzschild, G = c = M = 1.
+//   (1/2)(dr/dtau)^2 + Veff(r) = E,  E = (e^2 - 1)/2,  dphi/dtau = l/r^2,
+//   dt/dtau = e/(1 - 2M/r).
+// Integrated as r'' = -dVeff/dr so turning points need no special handling.
+var M = 1, SQ12 = Math.sqrt(12);
+function Veff(r, l){ return -M/r + l*l/(2*r*r) - M*l*l/(r*r*r); }
+function VN(r, l){ return -M/r + l*l/(2*r*r); }
+function extrema(l){               // {rmin, rmax}: V_eff minimum and maximum, or null
+  if (!(l > 0)) return null;
+  var d = 1 - 12*(M/l)*(M/l);
+  if (d < -1e-12) return null;
+  var s = Math.sqrt(Math.max(d, 0));
+  return {rmin: l*l/(2*M)*(1+s), rmax: l*l/(2*M)*(1-s)};
+}
+function accGR(r, l){ return -(M/(r*r) - l*l/(r*r*r) + 3*M*l*l/(r*r*r*r)); }
+function accN(r, l){ return -(M/(r*r) - l*l/(r*r*r)); }
+
+var P = { l:4, r0:22.5, E:-0.03, dir:-1, newt:true, speed:1, view:26 };
+var S = { gr:null, nw:null, running:false, revealed:false, cls:null, nudged:false };
+
+function body(r0, pr0, l, isGR, E){
+  return { r:r0, pr:pr0, ph:0, t:0, tau:0, l:l, gr:isGR, E0:E, e:Math.sqrt(Math.max(1+2*E,0)),
+           trail:[[r0,0]], inside:[], done:false, end:"", crossTau:null, drift:0,
+           phRef:0, rRef:r0, turned:false };
+}
+function launchState(){
+  var v2 = 2*(P.E - Veff(P.r0, P.l));
+  var pr0 = P.dir*Math.sqrt(Math.max(v2, 0));
+  S.gr = body(P.r0, pr0, P.l, true, P.E);
+  S.nw = body(P.r0, pr0, P.l, false, 0.5*pr0*pr0 + VN(P.r0, P.l));
+  S.cls0 = classify(P.r0, P.E, P.dir, P.l, true); S.cls = S.cls0;
+  S.revealed = false; S.nudged = false;
+}
+
+function step(b, hmax){
+  var r = b.r, l = b.l;
+  var h = Math.min(0.01*Math.min(Math.pow(r,1.5), r*r/Math.max(l,1e-6)) + 1e-6, hmax);
+  var acc = b.gr ? accGR : accN;
+  function f(rr, pp){ return [pp, acc(rr,l), l/(rr*rr)]; }
+  var k1 = f(r, b.pr),
+      k2 = f(r + h/2*k1[0], b.pr + h/2*k1[1]),
+      k3 = f(r + h/2*k2[0], b.pr + h/2*k2[1]),
+      k4 = f(r + h*k3[0],   b.pr + h*k3[1]);
+  var rn = r + h/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]);
+  var pn = b.pr + h/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]);
+  var dph = h/6*(k1[2]+2*k2[2]+2*k3[2]+k4[2]);
+  if (b.gr){
+    if (b.crossTau === null && rn > 2*M){
+      var g = function(rr){ return b.e/(1 - 2*M/rr); };
+      b.t += h/6*(g(r) + 4*g(0.5*(r+rn)) + g(rn));       // Simpson in tau
+    }
+    b.tau += h;
+  } else { b.t += h; b.tau += h; }
+  if (b.pr < 0 && pn >= 0) b.turned = true;           // passed a turning point (periapsis)
+  b.r = rn; b.pr = pn; b.ph += dph;
+  return h;
+}
+function advance(b, dT){
+  var done = 0, n = 0;
+  while (done < dT && !b.done && n < 40000){
+    done += step(b, dT - done); n++;
+    if (b.gr && b.crossTau === null && b.r <= 2*M) b.crossTau = b.tau;
+    if (b.gr && b.crossTau === null){
+      b.drift = Math.max(b.drift, Math.abs(0.5*b.pr*b.pr + Veff(b.r, b.l) - b.E0));
+    }
+    var pt = [b.r, b.ph];
+    if (b.gr && b.crossTau !== null) b.inside.push(pt); else b.trail.push(pt);
+    if (b.gr && b.r < 0.06*M){ b.done = true; b.end = "origin"; }
+    if (!b.gr && b.r < 0.25*M){ b.done = true; b.end = "origin"; }
+    if (b.r > 4*P.view + 40 && b.pr > 0){ b.done = true; b.end = "escaped"; }
+  }
+  if (b.trail.length > 60000) b.trail.splice(0, b.trail.length - 60000);
+}
+
+// ================================================================ classification
+// Decided from the launch conditions, but only SHOWN once the run has shown it
+// (predict, then reveal).
+function classify(r0, E, dir, l, fromLaunch){
+  var ex = extrema(l), out = dir > 0, tiny = 2e-5, v = "", w = "";
+  if (!ex){
+    if (l < 0.02 && !(out && E >= 0)){ v = "Radial plunge";
+      w = "&ell; = 0: no angular momentum, so Newton and GR both fall straight in."; }
+    else if (out && E >= 0){ v = "Escapes"; w = "Moving outward with &#x2130; &ge; 0 and nothing to stop it."; }
+    else { v = "Plunging orbit";
+      w = "&ell;/M &lt; &radic;12: V<sub>eff</sub> has no maximum, so there is no barrier. Newton's centrifugal barrier still reflects its particle."; }
+  } else {
+    var Vmax = Veff(ex.rmax, l), Vmin = Veff(ex.rmin, l), merged = Math.abs(ex.rmin - ex.rmax) < 1e-3;
+    if (fromLaunch && Math.abs(E - Vmin) < tiny && Math.abs(r0 - ex.rmin) < 2e-3 && !merged){
+      v = "Stable circular orbit"; w = "At the minimum of V<sub>eff</sub> with dr/d&tau; = 0. After a nudge it oscillates about the same radius.";
+    } else if (fromLaunch && Math.abs(E - Vmax) < tiny && Math.abs(r0 - ex.rmax) < 2e-3){
+      if (merged){ v = "Circular orbit at the ISCO";
+        w = "&ell;/M = &radic;12: minimum and maximum have merged at 6M. Marginally stable: after a nudge it drifts off and plunges."; }
+      else { v = "Unstable circular orbit"; w = "Balanced on the maximum of V<sub>eff</sub>. Any nudge sends it in or out."; }
+    } else if (E > Vmax){
+      if (!out){ v = "Plunging orbit"; w = "&#x2130; &gt; V<sub>eff,max</sub>: it clears the top of the barrier and falls all the way in."; }
+      else if (E >= 0){ v = "Escapes"; w = "Moving outward over the barrier with &#x2130; &ge; 0."; }
+      else { v = "Rises, turns back, then plunges"; w = "Bound (&#x2130; &lt; 0) but above the barrier top: it turns at the outer turning point and falls in."; }
+    } else if (r0 < ex.rmax){
+      v = "Plunging orbit"; w = "Inside the barrier (r &lt; r<sub>max</sub>) with &#x2130; &lt; V<sub>eff,max</sub>: nothing turns it around.";
+    } else if (E >= 0){
+      if (out){ v = "Escapes"; w = "Outside the barrier, moving outward, &#x2130; &ge; 0."; }
+      else { v = "Scattering orbit"; w = "0 &lt; &#x2130; &lt; V<sub>eff,max</sub>: it swings round the black hole, turns at the barrier and returns to infinity."; }
+    } else {
+      v = "Bound, oscillating orbit"; w = "&#x2130; &lt; 0 in the well of V<sub>eff</sub>: r oscillates between two turning points and the orbit precesses.";
+    }
+  }
+  return {v:v, w:w, circular: /ircular/.test(v)};
+}
+// Reveal once the run has shown the answer: the particle ended (r = 0 or escape), crossed
+// the horizon, came back out past its launch radius, or (bound) went once round. A circular
+// orbit's real question is what a nudge does, so it stays hidden until after a nudge.
+function checkReveal(){
+  var g = S.gr; if (!g || S.revealed) return;
+  if (S.cls0.circular && !S.nudged) return;
+  if (g.done || g.crossTau !== null) { S.revealed = true; return; }
+  if (g.turned && g.pr > 0 && g.r >= 0.97*g.rRef) { S.revealed = true; return; }
+  if ((g.ph - g.phRef) >= (S.nudged ? 4 : 2)*Math.PI) S.revealed = true;
+}
+
+// ================================================================ canvas
+var INK="#15243C", BLUE="#0F6E93", BLUED="#2E6DA4", BROWN="#8A5A18", GREY="#5A6B7B",
+    MUTE2="#33465C", DIM="#C4CBD8", PALE="#9DB9CC", WHITE="#FFFFFF";
+// Logical sizes; backing store is logical x devicePixelRatio (addendum override 1).
+var W = 1100, H = 800;
+// Two panels, one scale each.
+var ORB = {h:500, cx:550, cy:252, R:232};                     // R px = view radius
+var POT = {top:548, bot:742, left:96, right:1078};            // plot area; labels outside it
+// Type scale: the canvas shows at ~740 CSS px, i.e. x0.673. 17 -> 11.4 px, 20 -> 13.5 px.
+var FV = "italic 17px Georgia, 'Times New Roman', serif",
+    FL = "17px Helvetica, Arial, sans-serif",
+    FVB = "italic 24px Georgia, 'Times New Roman', serif",    // axis titles
+    FIB = "17px Helvetica, Arial, sans-serif";                 // index under an axis title
+var cv, ctx;
+
+function fit(c, LW, LH){
+  var dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
+  c.width = Math.round(LW*dpr); c.height = Math.round(LH*dpr);
+  var x = c.getContext("2d");
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return x;
+}
+/* Mixed run: parts = [[text, kind, color]]; kind "v" italic serif variable, "l" upright
+   sans, "V"/"I" large axis title and its index. Never a Unicode sub/superscript. */
+function pf(k){ return k==="v" ? FV : (k==="V" ? FVB : (k==="I" ? FIB : FL)); }
+function run(x, y, parts, align, bg){
+  var i, ws = [], w = 0;
+  for (i=0;i<parts.length;i++){ ctx.font = pf(parts[i][1]); ws.push(ctx.measureText(parts[i][0]).width); w += ws[i]; }
+  var x0 = align==="center" ? x - w/2 : (align==="right" ? x - w : x);
+  if (bg){ ctx.fillStyle = bg; ctx.fillRect(x0-6, y-16, w+12, 23); }
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  for (i=0;i<parts.length;i++){
+    ctx.font = pf(parts[i][1]); ctx.fillStyle = parts[i][2] || GREY;
+    ctx.fillText(parts[i][0], x0, parts[i][1]==="I" ? y + 7 : y);
+    x0 += ws[i];
+  }
+  return {x0: x0 - w, x1: x0, w: w};
+}
+function fmt(x, n){ return isFinite(x) ? (Math.abs(x) < 5e-13 ? 0 : x).toFixed(n) : "—"; }
+
+// ---- orbit panel
+function oxy(r, ph){ var s = ORB.R/P.view; return [ORB.cx + r*Math.cos(ph)*s, ORB.cy - r*Math.sin(ph)*s]; }
+function circ(r, stroke, lw, dash, fill){
+  var s = ORB.R/P.view;
+  ctx.beginPath(); ctx.arc(ORB.cx, ORB.cy, r*s, 0, 2*Math.PI);
+  if (fill){ ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke){ ctx.setLineDash(dash||[]); ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke(); ctx.setLineDash([]); }
+}
+function path(pts, color, lw, dash){
+  if (pts.length < 2) return;
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, ORB.h); ctx.clip();
+  ctx.setLineDash(dash||[]); ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineJoin = "round";
+  ctx.beginPath();
+  var stride = Math.max(1, Math.floor(pts.length/12000)), p = oxy(pts[0][0], pts[0][1]), i;
+  ctx.moveTo(p[0], p[1]);
+  for (i=stride;i<pts.length;i+=stride){ p = oxy(pts[i][0], pts[i][1]); ctx.lineTo(p[0], p[1]); }
+  p = oxy(pts[pts.length-1][0], pts[pts.length-1][1]); ctx.lineTo(p[0], p[1]);
+  ctx.stroke(); ctx.restore(); ctx.setLineDash([]);
+}
+function dot(x, y, rad, fill, stroke, lw){
+  ctx.beginPath(); ctx.arc(x, y, rad, 0, 2*Math.PI);
+  if (fill){ ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke){ ctx.lineWidth = lw || 2; ctx.strokeStyle = stroke; ctx.stroke(); }
+}
+function drawOrbit(){
+  ctx.fillStyle = WHITE; ctx.fillRect(0, 0, W, ORB.h);
+  circ(6, BLUE, 1.4, [7,6]);                 // ISCO, to scale
+  circ(3, GREY, 1.3, [2,4]);                 // photon orbit
+  circ(2, null, 0, null, INK);               // horizon
+  var g = S.gr, n = S.nw;
+  if (P.newt && n) path(n.trail, GREY, 2, [6,5]);
+  if (g){
+    path(g.trail, BLUE, 2.6);
+    if (g.inside.length > 1) path([g.trail[g.trail.length-1]].concat(g.inside), PALE, 2.2);
+  }
+  // launch marker before the run; moving markers during it
+  if (g && g.tau === 0){ var q0 = oxy(P.r0, 0); dot(q0[0], q0[1], 8, WHITE, BLUE, 2.5); }
+  if (P.newt && n && n.tau > 0 && n.end !== "escaped"){ var qn = oxy(n.r, n.ph); dot(qn[0], qn[1], 6, WHITE, GREY); }
+  if (g && g.tau > 0 && g.end !== "escaped"){ var qg = oxy(g.r, g.ph); dot(qg[0], qg[1], 7.5, g.crossTau===null ? BLUE : PALE, WHITE); }
+  // legend (top-left) and reference key (top-right), on backing boxes
+  ctx.fillStyle = "rgba(255,255,255,0.93)";
+  ctx.fillRect(8, 8, 262, P.newt ? 64 : 36); ctx.fillRect(W-292, 8, 284, 96);
+  ctx.lineWidth = 2.6; ctx.strokeStyle = BLUE; ctx.beginPath(); ctx.moveTo(20,26); ctx.lineTo(56,26); ctx.stroke();
+  run(66, 32, [["GR geodesic","l",INK]]);
+  if (P.newt){
+    ctx.lineWidth = 2; ctx.strokeStyle = GREY; ctx.setLineDash([6,5]);
+    ctx.beginPath(); ctx.moveTo(20,56); ctx.lineTo(56,56); ctx.stroke(); ctx.setLineDash([]);
+    run(66, 62, [["Newton, same launch","l",INK]]);
+  }
+  dot(1062, 26, 8, INK);
+  run(1040, 32, [["horizon  ","l",MUTE2],["r","v",MUTE2],[" = 2","l",MUTE2],["M","v",MUTE2]], "right");
+  ctx.lineWidth = 1.3; ctx.strokeStyle = GREY; ctx.setLineDash([2,4]);
+  ctx.beginPath(); ctx.moveTo(1048,56); ctx.lineTo(1078,56); ctx.stroke(); ctx.setLineDash([]);
+  run(1040, 62, [["photon orbit  ","l",MUTE2],["r","v",MUTE2],[" = 3","l",MUTE2],["M","v",MUTE2]], "right");
+  ctx.lineWidth = 1.4; ctx.strokeStyle = BLUE; ctx.setLineDash([7,6]);
+  ctx.beginPath(); ctx.moveTo(1048,86); ctx.lineTo(1078,86); ctx.stroke(); ctx.setLineDash([]);
+  run(1040, 92, [["ISCO  ","l",MUTE2],["r","v",MUTE2],[" = 6","l",MUTE2],["M","v",MUTE2]], "right");
+  // outcome line (bottom-left), only once it has happened
+  var st = null;
+  if (g && g.end === "origin" && g.crossTau !== null)
+    st = [["Crossed ","l"],["r","v"],[" = 2","l"],["M","v"],[" at ","l"],["τ","v"],[" = "+fmt(g.crossTau,1),"l"],["M","v"],
+          [", reached ","l"],["r","v"],[" = 0 at ","l"],["τ","v"],[" = "+fmt(g.tau,1),"l"],["M","v"],
+          [". The far-away clock never sees the crossing.","l"]];
+  else if (g && g.crossTau !== null) st = [["Inside the horizon: ","l"],["r","v"],[" = 0 is now unavoidable.","l"]];
+  else if (g && g.end === "escaped") st = [["The GR particle has escaped to large ","l"],["r","v"],[".","l"]];
+  if (st){ st.forEach(function(p){ p[2] = MUTE2; }); run(20, ORB.h - 18, st, "left", "rgba(255,255,255,0.93)"); }
+  ctx.fillStyle = DIM; ctx.fillRect(0, ORB.h + 6, W, 1.5);
+}
+
+// ---- potential panel: fixed ranges per frame, one scale per axis
+function potRange(){
+  if (dragging && dragR) return dragR;       // freeze the axes while the ring is dragged
+  var l = P.l, ex = extrema(l);
+  var rhi = Math.max(24, Math.min(P.view*1.05, 60), P.r0*1.08);
+  // scale to the features that decide the orbit: the energy, the well, the barrier top
+  var lo = Math.min(P.E, Veff(rhi, l)), hi = Math.max(P.E, 0);
+  if (ex){
+    lo = Math.min(lo, Veff(ex.rmin, l));
+    if (Veff(ex.rmax, l) < 0.6) hi = Math.max(hi, Veff(ex.rmax, l));
+  }
+  var span = Math.max(hi - lo, 0.03);
+  var vlo = Math.max(lo - 0.45*span, -0.6), vhi = Math.min(hi + 0.35*span, 0.7);
+  // keep the energy label (left margin) clear of the axis title above it
+  var need = 44/(POT.bot - POT.top)*(vhi - vlo);
+  if (vhi - P.E < need) vhi = P.E + need;
+  return {rhi:rhi, vlo:vlo, vhi:vhi};
+}
+function PX(r, R){ return POT.left + r/R.rhi*(POT.right - POT.left); }
+function PY(v, R){ return POT.bot - (v - R.vlo)/(R.vhi - R.vlo)*(POT.bot - POT.top); }
+function iPX(x, R){ return (x - POT.left)/(POT.right - POT.left)*R.rhi; }
+function iPY(y, R){ return R.vlo + (POT.bot - y)/(POT.bot - POT.top)*(R.vhi - R.vlo); }
+function curve(fn, R, color, lw, dash){
+  ctx.save(); ctx.beginPath(); ctx.rect(POT.left, POT.top, POT.right - POT.left, POT.bot - POT.top); ctx.clip();
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash||[]);
+  ctx.beginPath();
+  for (var i=0;i<=1000;i++){
+    var r = Math.max(0.3, R.rhi*i/1000), y = Math.max(POT.top-300, Math.min(POT.bot+300, PY(fn(r), R)));
+    if (i === 0) ctx.moveTo(PX(r,R), y); else ctx.lineTo(PX(r,R), y);
+  }
+  ctx.stroke(); ctx.restore(); ctx.setLineDash([]);
+}
+function drawPot(){
+  var R = potRange(), l = P.l;
+  ctx.fillStyle = WHITE; ctx.fillRect(0, ORB.h + 8, W, H - ORB.h - 8);
+  ctx.fillStyle = "rgba(21,36,60,0.07)";
+  ctx.fillRect(POT.left, POT.top, PX(2,R) - POT.left, POT.bot - POT.top);    // r < 2M
+  // frame: left and bottom axes; V = 0 as a light reference line
+  ctx.strokeStyle = GREY; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(POT.left, POT.top); ctx.lineTo(POT.left, POT.bot); ctx.lineTo(POT.right, POT.bot); ctx.stroke();
+  var y0 = PY(0, R);
+  if (y0 > POT.top && y0 < POT.bot){
+    ctx.strokeStyle = DIM; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(POT.left, y0); ctx.lineTo(POT.right, y0); ctx.stroke();
+  }
+  // r ticks on the bottom axis, labels below it (outside the data region)
+  var stepR = R.rhi > 40 ? 10 : 5;
+  for (var r = stepR; r < R.rhi; r += stepR){
+    var x = PX(r, R);
+    if (x > POT.right - 40) break;
+    ctx.strokeStyle = GREY; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(x, POT.bot); ctx.lineTo(x, POT.bot + 6); ctx.stroke();
+    run(x, POT.bot + 26, [[String(r),"l",GREY],["M","v",GREY]], "center");
+  }
+  run(POT.right, POT.bot + 26, [["r","V",GREY]], "right");
+  // axis title top-left, energy and zero labels in the left margin
+  run(10, POT.top + 16, [["V","V",GREY],["eff","I",GREY]], "left");
+  var yE = PY(P.E, R);
+  run(POT.left - 10, yE + 7, [["ℰ","V",BLUE]], "right");
+  if (y0 > POT.top + 8 && y0 < POT.bot - 4 && Math.abs(y0 - yE) > 24) run(POT.left - 10, y0 + 6, [["0","l",GREY]], "right");
+  // curves
+  if (P.newt) curve(function(r){ return VN(r,l); }, R, GREY, 2, [6,5]);
+  curve(function(r){ return Veff(r,l); }, R, INK, 2.6);
+  var ex = extrema(l);
+  if (ex){
+    if (Math.abs(ex.rmin - ex.rmax) < 1e-3) dot(PX(ex.rmin,R), PY(Veff(ex.rmin,l),R), 6.5, WHITE, INK);
+    else {
+      if (PY(Veff(ex.rmax,l),R) > POT.top) dot(PX(ex.rmax,R), PY(Veff(ex.rmax,l),R), 6.5, BROWN);
+      if (ex.rmin < R.rhi) dot(PX(ex.rmin,R), PY(Veff(ex.rmin,l),R), 6.5, BLUE);
+    }
+  }
+  // Newtonian energy level (same launch)
+  if (P.newt && S.nw){
+    var yN = PY(S.nw.E0, R);
+    if (yN > POT.top && yN < POT.bot){
+      ctx.strokeStyle = GREY; ctx.lineWidth = 1.1; ctx.setLineDash([2,4]);
+      ctx.beginPath(); ctx.moveTo(POT.left, yN); ctx.lineTo(POT.right, yN); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  // energy level: thin across, thick where motion is allowed (E >= V_eff)
+  ctx.strokeStyle = BLUE; ctx.lineWidth = 1; ctx.setLineDash([3,4]);
+  ctx.beginPath(); ctx.moveTo(POT.left, yE); ctx.lineTo(POT.right, yE); ctx.stroke(); ctx.setLineDash([]);
+  ctx.lineWidth = 4; ctx.beginPath(); var on = false;
+  for (var i=0;i<=1100;i++){
+    var rr = Math.max(0.3, R.rhi*i/1100), ok = Veff(rr,l) <= P.E, xx = PX(rr,R);
+    if (ok && !on){ ctx.moveTo(xx, yE); on = true; } else if (ok) ctx.lineTo(xx, yE); else on = false;
+  }
+  ctx.stroke();
+  // markers: launch handle (ring) before the run, particles during it
+  var g = S.gr, n = S.nw;
+  if (g && g.tau === 0) dot(PX(P.r0,R), yE, 9, WHITE, BLUE, 3);
+  if (P.newt && n && n.tau > 0 && n.end !== "escaped" && n.r < R.rhi) dot(PX(n.r,R), PY(n.E0,R), 5.5, WHITE, GREY);
+  if (g && g.tau > 0 && g.end !== "escaped" && g.r < R.rhi) dot(PX(Math.max(g.r,0),R), yE, 7.5, g.crossTau===null ? BLUE : PALE, WHITE);
+  run(POT.right, POT.top - 10, [["drag the ring to set the launch radius and energy","l",GREY]], "right");
+}
+
+function draw(){ ctx.fillStyle = WHITE; ctx.fillRect(0, 0, W, H); drawOrbit(); drawPot(); sync(); }
+
+// ================================================================ readouts
+var $ = function(id){ return document.getElementById(id); };
+function sync(){
+  $("vl").textContent = fmt(P.l,3) + (Math.abs(P.l - SQ12) < 1e-9 ? " (√12)" : "");
+  $("vr").textContent = fmt(P.r0,2);
+  $("vE").textContent = fmt(P.E,4);
+  $("vsp").textContent = "×" + fmt(P.speed,2) + " (" + fmt(18*P.speed,1) + " M/s)";
+  $("vz").textContent = fmt(P.view,1);
+  $("r0").value = P.r0; $("E").value = P.E; $("l").value = P.l; $("zoom").value = P.view;
+  $("inward").classList.toggle("on", P.dir < 0); $("outward").classList.toggle("on", P.dir > 0);
+  $("newt").checked = P.newt;
+  var g = S.gr;
+  var vd = $("verdict"), c0 = S.cls0 || {circular:false};
+  if (S.revealed && S.nudged && c0.circular)
+    vd.innerHTML = "<b>" + S.cls0.v + "</b><br>After the nudge: " + S.cls.v.toLowerCase() + ". " + S.cls.w;
+  else if (S.revealed) vd.innerHTML = "<b>" + S.cls.v + "</b><br>" + S.cls.w;
+  else if (S.nudged)
+    vd.innerHTML = "<span class='ask'>Nudged: d<i>r</i>/d&tau; kicked by +0.012. Does it stay near this radius or run away?</span>";
+  else if (c0.circular && g && g.tau > 0)
+    vd.innerHTML = "<span class='ask'>It circles. Predict what a small outward nudge will do, then press Nudge.</span>";
+  else
+    vd.innerHTML = "<span class='ask'>Predict first from the V<sub>eff</sub> plot: does the particle come back out, circle, or fall in? Then press Launch.</span>";
+  $("ne").textContent = g ? fmt(g.e, 4) : "—";
+  var ex = extrema(P.l);
+  $("nx").textContent = ex ? (fmt(ex.rmax,2) + ", " + fmt(ex.rmin,2)) : "none";
+  if (g){
+    $("nt").textContent = fmt(g.tau,1) + " / " + (g.crossTau === null ? fmt(g.t,1) : "∞");
+    $("nd").textContent = g.tau > 0 ? g.drift.toExponential(1) : "—";
+    // only for a launch that IS a circular orbit (not a momentary turning point), before any nudge
+    var r = g.r, circular = S.cls0 && S.cls0.circular && !S.nudged && g.crossTau === null && r > 3;
+    if (circular){
+      var dtdtau = g.e/(1 - 2*M/r), dphidtau = g.l/(r*r);
+      $("nk").textContent = fmt(dphidtau/dtdtau,5) + " vs " + fmt(Math.sqrt(M/(r*r*r)),5);
+      $("nu").textContent = fmt(dtdtau,4) + " vs " + fmt(1/Math.sqrt(1 - 3*M/r),4);
+    } else { $("nk").textContent = "not circular"; $("nu").textContent = "not circular"; }
+  }
+  var over = g && g.done && (!P.newt || S.nw.done);
+  $("go").textContent = S.running ? "Pause" : (over ? "Relaunch" : (g && g.tau > 0 ? "Resume" : "Launch"));
+  $("nudge").disabled = !g || g.done || g.crossTau !== null;
+}
+
+// ================================================================ animation (rAF only while running)
+var REDUCED = false, raf = null, last = 0;
+function frame(ts){
+  if (!S.running){ raf = null; return; }
+  var dt = Math.min(0.05, last ? (ts - last)/1000 : 0.016); last = ts;   // cap at 50 ms
+  var dT = 18*P.speed*dt;
+  advance(S.gr, dT); if (P.newt) advance(S.nw, dT);
+  checkReveal();
+  if (S.gr.done && (!P.newt || S.nw.done)) S.running = false;
+  draw();
+  raf = S.running ? requestAnimationFrame(frame) : null;
+}
+function play(){
+  var g = S.gr;
+  if (g && g.done && (!P.newt || S.nw.done)) launchState();
+  if (REDUCED){                      // no animation: integrate and show the outcome
+    var cap = S.gr.tau + 1500;
+    while (S.gr.tau < cap && !S.gr.done){ advance(S.gr, 5); if (P.newt) advance(S.nw, 5); checkReveal(); }
+    if (!S.gr.done) S.revealed = true;
+    S.running = false; draw(); return;
+  }
+  S.running = true; last = 0;
+  if (raf === null) raf = requestAnimationFrame(frame);
+  sync();
+}
+function pause(){ S.running = false; if (raf !== null){ cancelAnimationFrame(raf); raf = null; } sync(); }
+
+// ================================================================ controls
+function setLaunch(r0, E){
+  P.r0 = Math.max(2.1, Math.min(60, r0));
+  P.E = Math.max(Math.min(E, 0.5), Veff(P.r0, P.l), -0.5);
+  launchState(); pause(); draw();
+}
+function placeCircular(which){
+  var ex = extrema(P.l); if (!ex) return;
+  var r = which === "max" ? ex.rmax : ex.rmin;
+  P.dir = -1; P.r0 = r; P.E = Veff(r, P.l); launchState(); pause(); draw();
+}
+var PRESETS = {
+  lowl:  function(){ P.l = 3.3; P.dir = -1; P.view = 22; P.newt = true;  setLaunch(20, Veff(20, 3.3)); },
+  c10:   function(){ P.l = Math.sqrt(10/0.7); P.view = 16; P.newt = true;  placeCircular("min"); },
+  c5:    function(){ P.l = Math.sqrt(5/0.4);  P.view = 16; P.newt = false; placeCircular("max"); },
+  c6:    function(){ P.l = SQ12;              P.view = 12; P.newt = false; placeCircular("min"); },
+  whirl: function(){ P.l = 4.3; P.dir = -1; P.view = 30; P.newt = true;  setLaunch(30, 0.035); },
+  bound: function(){ P.l = 4.0; P.dir = -1; P.view = 26; P.newt = true;  setLaunch(22.5, -0.03); }
+};
+
+var dragging = false, dragR = null;
+function logical(ev){
+  var b = cv.getBoundingClientRect();
+  return {x:(ev.clientX - b.left)*(W/b.width), y:(ev.clientY - b.top)*(H/b.height)};
+}
+function inPlot(p){ return p.x >= POT.left - 10 && p.x <= POT.right + 10 && p.y >= POT.top - 10 && p.y <= POT.bot + 10; }
+function nearHandle(p){
+  var R = potRange();
+  return S.gr && S.gr.tau === 0 && Math.hypot(p.x - PX(P.r0,R), p.y - PY(P.E,R)) < 26;
+}
+function dragTo(p){
+  var R = dragR || potRange();
+  setLaunch(Math.min(Math.max(iPX(p.x, R), 2.1), R.rhi), iPY(p.y, R));
+}
+
+function init(){
+  if (typeof window !== "undefined" && window.matchMedia){
+    try { REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ REDUCED = false; }
+  }
+  cv = $("c"); ctx = fit(cv, W, H);
+  $("l").addEventListener("input", function(e){
+    P.l = +e.target.value; if (Math.abs(P.l - SQ12) < 0.02) P.l = SQ12;       // snap to the ISCO value
+    setLaunch(P.r0, P.E);
+  });
+  $("r0").addEventListener("input", function(e){ setLaunch(+e.target.value, P.E); });
+  $("E").addEventListener("input", function(e){ setLaunch(P.r0, +e.target.value); });
+  $("speed").addEventListener("input", function(e){ P.speed = Math.pow(10, +e.target.value); sync(); });
+  $("zoom").addEventListener("input", function(e){ P.view = +e.target.value; draw(); });
+  $("inward").onclick = function(){ P.dir = -1; setLaunch(P.r0, P.E); };
+  $("outward").onclick = function(){ P.dir = 1; setLaunch(P.r0, P.E); };
+  $("go").onclick = function(){ if (S.running) pause(); else play(); };
+  $("rs").onclick = function(){ setLaunch(P.r0, P.E); };
+  $("nudge").onclick = function(){
+    var g = S.gr, k = 0.012;
+    if (!g || g.done || g.crossTau !== null) return;
+    g.pr += k; g.E0 = 0.5*g.pr*g.pr + Veff(g.r, g.l); g.e = Math.sqrt(Math.max(1 + 2*g.E0, 0));
+    g.phRef = g.ph; g.rRef = g.r; g.turned = false; g.drift = 0;
+    if (S.nw && !S.nw.done){ S.nw.pr += k; S.nw.E0 = 0.5*S.nw.pr*S.nw.pr + VN(S.nw.r, S.nw.l); }
+    S.cls = classify(g.r, g.E0, 1, g.l, false); S.nudged = true; S.revealed = false;
+    if (!S.cls0.circular) S.cls0 = S.cls;
+    play();
+  };
+  $("newt").onchange = function(e){ P.newt = e.target.checked; draw(); };
+  document.querySelectorAll(".presets .btn").forEach(function(b){
+    b.onclick = function(){ PRESETS[b.dataset.p](); };
+  });
+  cv.addEventListener("pointermove", function(ev){
+    var p = logical(ev);
+    if (dragging){ dragTo(p); return; }
+    cv.style.cursor = nearHandle(p) ? "grab" : (inPlot(p) ? "crosshair" : "default");
+  });
+  cv.addEventListener("pointerdown", function(ev){
+    var p = logical(ev);
+    if (!inPlot(p)) return;
+    dragging = true; dragR = potRange(); cv.style.cursor = "grabbing";
+    if (cv.setPointerCapture) cv.setPointerCapture(ev.pointerId);
+    dragTo(p);
+  });
+  cv.addEventListener("pointerup", function(ev){
+    dragging = false; dragR = null; cv.style.cursor = "grab";
+    if (cv.releasePointerCapture) cv.releasePointerCapture(ev.pointerId);
+  });
+
+  // Load in an informative state: the bound, precessing orbit already run for
+  // about three radial periods beside its closed Newtonian ellipse.
+  PRESETS.bound();
+  for (var i=0;i<2600/5;i++){ advance(S.gr, 5); advance(S.nw, 5); }
+  S.revealed = true; draw();
+}
+
+if (typeof window !== "undefined") window.__demo = {P:P, S:S, launchState:launchState, advance:advance,
+  draw:draw, Veff:Veff, VN:VN, extrema:extrema, classify:classify, PRESETS:PRESETS, setLaunch:setLaunch,
+  play:play, pause:pause, checkReveal:checkReveal, potRange:potRange, PX:PX, PY:PY, POT:POT, ORB:ORB,
+  W:W, H:H};
+init();
+})();
+</script>
+</body>
+</html>
