@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 8: Why the Ball Goes as High as It Does — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+  --green:#2E7D57; --red:#A43B34;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px;
+   color:var(--ink)}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;aspect-ratio:1100/1040;display:block;touch-action:none}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:14px 16px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 10px;color:var(--ink)}
+.ctl{margin:0 0 12px}
+.ctl:last-child{margin-bottom:0}
+.ctl label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 4px}
+.ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+          font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+
+.readout{display:table;width:100%;border-collapse:collapse}
+.readout .r{display:table-row}
+.readout .r > span{display:table-cell;padding:3px 0;vertical-align:baseline}
+.readout .k{font-size:12.5px;color:var(--mute2);padding-right:10px}
+.readout .v{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+            font-size:12.5px;color:var(--ink);text-align:right;white-space:nowrap}
+.readout .v.good{color:var(--green)}
+.readout .v.warn{color:var(--brown)}
+
+button{font:inherit;font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer;
+       border:1px solid var(--blued);background:#fff;color:var(--blued);width:100%}
+button:hover{background:var(--panel)}
+.chk{font-size:12.5px;color:var(--mute2);display:block;margin-top:10px}
+.chk input{accent-color:var(--blue);margin-right:6px;vertical-align:-1px}
+
+.note{font-size:12.5px;line-height:1.55;color:var(--grey);margin:0}
+.note b{color:var(--mute2);font-weight:600}
+.eq{font-family:Georgia,"Times New Roman",serif;font-size:14px;color:var(--ink);
+    text-align:center;margin:2px 0 8px}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 · Lecture 8</div>
+    <h1>Why the Ball Goes as High as It Does</h1>
+    <div class="sub">Bend the world line of a ball thrown between two fixed events and watch its
+      proper time. The path that ages the most is the geodesic — and it is exactly the path on
+      which &#8214;&nabla;<sub>U</sub>U&#8214; vanishes.</div>
+  </header>
+
+  <main>
+    <div class="canvasWrap">
+      <canvas id="c" width="1100" height="1040"></canvas>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Shape of the world line</h2>
+        <div class="ctl">
+          <label>Apex height <span class="val" id="vh">—</span></label>
+          <input type="range" id="sh" min="0" max="2.5" step="0.005" value="0.45">
+        </div>
+        <div class="ctl">
+          <label>Extra wiggle <span class="val" id="va">—</span></label>
+          <input type="range" id="sa" min="-0.8" max="0.8" step="0.005" value="0">
+        </div>
+        <button id="snap">Snap to the geodesic</button>
+        <label class="chk"><input type="checkbox" id="ts"> Draw the height axis at true scale</label>
+      </div>
+
+      <div class="panel">
+        <h2>Setting</h2>
+        <div class="ctl">
+          <label>Surface gravity <span class="val" id="vg">—</span></label>
+          <input type="range" id="sg" min="1" max="30" step="0.1" value="9.81">
+        </div>
+        <div class="ctl">
+          <label>Time between the two events <span class="val" id="vT">—</span></label>
+          <input type="range" id="sT" min="0.5" max="6" step="0.05" value="2">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Readout</h2>
+        <div class="readout">
+          <div class="r"><span class="k">extra aging, this path</span><span class="v" id="rdt">—</span></div>
+          <div class="r"><span class="k">extra aging, geodesic</span><span class="v" id="rdtg">—</span></div>
+          <div class="r"><span class="k">geodesic apex height</span><span class="v" id="rhg">—</span></div>
+          <div class="r"><span class="k">max &#8214;&nabla;<sub>U</sub>U&#8214;</span><span class="v" id="rres">—</span></div>
+          <div class="r"><span class="k">height axis magnified</span><span class="v" id="rmag">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>The metric</h2>
+        <div class="eq">ds&sup2; = &minus;(1 + 2gz/c&sup2;) c&sup2;dt&sup2; + dz&sup2;</div>
+        <p class="note">The weak-field metric from Lecture 5. Aging is a competition:
+          climbing higher runs your clock <b>faster</b> (the gz term), but you must move faster to
+          get there, which runs it <b>slower</b> (the &#380;&sup2; term). The geodesic is the
+          compromise — and it is the ordinary Newtonian parabola.</p>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor · Vanderbilt University</span>
+    <span>ASTR 3900/8090 · Lecture 8</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+  var C_LIGHT = 299792458;
+  var cv = document.getElementById('c');
+  var ctx = cv.getContext('2d');
+
+  var st = { hf:0.45, af:0.0, g:9.81, T:2.0, trueScale:false };
+
+  // ---- geometry of the trial world line -------------------------------
+  // z(t) = 4h u(1-u) + a sin(2 pi u),  u = t/T.  Both terms vanish at the
+  // two fixed events, so every trial path joins A and B.
+  function hGeoApprox(){ return st.g*st.T*st.T/8; }          // first order
+  function zOf(u,h,a){ return 4*h*u*(1-u) + a*Math.sin(2*Math.PI*u); }
+  function zdOf(u,h,a,T){ return (4*h/T)*(1-2*u) + a*(2*Math.PI/T)*Math.cos(2*Math.PI*u); }
+  function zddOf(u,h,a,T){ return -8*h/(T*T) - a*Math.pow(2*Math.PI/T,2)*Math.sin(2*Math.PI*u); }
+
+  // ---- extra proper time, computed WITHOUT catastrophic cancellation ---
+  // dtau/dt = sqrt(1+x),  x = (2 g z - zdot^2)/c^2  ~ 1e-16.
+  // Forming tau then subtracting T destroys every significant digit, so
+  // integrate (sqrt(1+x) - 1) = x/(1+sqrt(1+x)) directly instead.
+  function excess(x){ return x/(1+Math.sqrt(1+x)); }
+  function xOf(u,h,a,T,g){
+    var z = zOf(u,h,a), zd = zdOf(u,h,a,T);
+    return (2*g*z - zd*zd)/(C_LIGHT*C_LIGHT);
+  }
+  function dTau(h,a,T,g){                       // Simpson on u in [0,1]
+    var N = 600, s = 0;
+    for(var i=0;i<=N;i++){
+      var u = i/N, w = (i===0||i===N)?1:(i%2?4:2);
+      s += w*excess(xOf(u,h,a,T,g));
+    }
+    return s*(1/(3*N))*T;                       // dt = T du
+  }
+
+  // numeric maximum over h (golden section) -- honest about the full metric
+  function hGeodesic(a,T,g){
+    var lo = 0, hi = Math.max(1e-9, g*T*T/4), gr = (Math.sqrt(5)-1)/2;
+    var b = hi - gr*(hi-lo), c2 = lo + gr*(hi-lo);
+    var fb = dTau(b,a,T,g), fc = dTau(c2,a,T,g);
+    for(var k=0;k<80;k++){
+      if(fb > fc){ hi=c2; c2=b; fc=fb; b=hi-gr*(hi-lo); fb=dTau(b,a,T,g); }
+      else       { lo=b;  b=c2;  fb=fc; c2=lo+gr*(hi-lo); fc=dTau(c2,a,T,g); }
+    }
+    return 0.5*(lo+hi);
+  }
+
+  // ---- || nabla_U U ||: the proper acceleration of the trial world line -
+  // Gamma^z_tt = g/c^2 for this metric, so the spatial geodesic equation is
+  // d2z/dtau2 + g (dt/dtau)^2 = 0.  Nonzero residual = the rocket thrust the
+  // ball would need to follow this path.
+  function maxResidual(h,a,T,g){
+    var N = 400, m = 0;
+    for(var i=0;i<=N;i++){
+      var u=i/N;
+      var z=zOf(u,h,a), zd=zdOf(u,h,a,T), zdd=zddOf(u,h,a,T);
+      var x=(2*g*z - zd*zd)/(C_LIGHT*C_LIGHT), L=Math.sqrt(1+x);
+      var Ldot = zd*(g - zdd)/(L*C_LIGHT*C_LIGHT);
+      var R = (zdd*L - zd*Ldot)/(L*L*L) + g/(L*L);
+      if(Math.abs(R)>m) m=Math.abs(R);
+    }
+    return m;
+  }
+
+  // ---- formatting ------------------------------------------------------
+  function fmtTime(s){
+    var a=Math.abs(s);
+    if(a<1e-18) return '0 s';
+    if(a<1e-12) return (s*1e15).toFixed(3)+' fs';
+    if(a<1e-9)  return (s*1e12).toFixed(3)+' ps';
+    return (s*1e9).toFixed(3)+' ns';
+  }
+  function fmtLen(m){
+    var a=Math.abs(m);
+    if(a<1e-9) return '0';
+    if(a<1) return (m*100).toFixed(1)+' cm';
+    if(a<1000) return m.toFixed(2)+' m';
+    return (m/1000).toFixed(2)+' km';
+  }
+
+  // ---- drawing ---------------------------------------------------------
+  var PAD={l:96,r:38,t:34,b:58};
+  var PANEL_A={y0:8,  y1:632};
+  var PANEL_B={y0:690,y1:1032};
+
+  function line(x0,y0,x1,y1,col,w,dash){
+    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=w||1;
+    ctx.setLineDash(dash||[]); ctx.beginPath();
+    ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke(); ctx.restore();
+  }
+  function text(s,x,y,col,size,align,baseline,ital){
+    ctx.save(); ctx.fillStyle=col;
+    ctx.font=(ital?'italic ':'')+size+'px -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+    ctx.textAlign=align||'left'; ctx.textBaseline=baseline||'alphabetic';
+    ctx.fillText(s,x,y); ctx.restore();
+  }
+
+  function draw(){
+    var g=st.g, T=st.T;
+    var hg = hGeodesic(st.af*hGeoApprox(), T, g);
+    var h  = st.hf*hGeoApprox();
+    var a  = st.af*hGeoApprox();
+
+    var dt  = dTau(h,a,T,g);
+    var dtg = dTau(hg,0,T,g);
+    var res = maxResidual(h,a,T,g);
+
+    ctx.clearRect(0,0,cv.width,cv.height);
+
+    // ============================ PANEL A: spacetime diagram ============
+    var Ax0=PAD.l, Ax1=cv.width-PAD.r, Ay0=PANEL_A.y0+PAD.t, Ay1=PANEL_A.y1-PAD.b;
+
+    // z window fixed from the slider CLAMPS, not from the current values, so
+    // nothing can ever be clipped by moving a control.
+    var hgA = hGeoApprox();
+    var zHi = 2.5*hgA + 0.8*hgA;      // h at max + wiggle at max
+    var zLo = -0.8*hgA;               // h at 0, wiggle fully negative
+    var pad = 0.08*(zHi-zLo);
+    zHi+=pad; zLo-=pad;
+
+    var pxPerM, zc;
+    var ctSpan = C_LIGHT*T;                       // metres of ct across the plot
+    var pxPerCt = (Ay1-Ay0)/ctSpan;               // px per metre of ct
+    var pxPerMExag = (Ax1-Ax0)/(zHi-zLo);         // the exaggerated-view scale
+    if(st.trueScale){
+      pxPerM = pxPerCt; zc = (Ax0+Ax1)/2;
+    } else {
+      pxPerM = pxPerMExag; zc = Ax0 - zLo*pxPerM;
+    }
+    var mag = pxPerM/pxPerCt;                     // 1 in true scale
+    var magExag = pxPerMExag/pxPerCt;             // what the default view uses
+
+    function PX(z){ return zc + z*pxPerM; }
+    function PY(u){ return Ay1 - u*(Ay1-Ay0); }
+
+    text('World line in spacetime', Ax0, PANEL_A.y0+16, '#15243C', 15.5, 'left', 'top');
+
+    // axes
+    line(Ax0-10,Ay1,Ax1,Ay1,'#5A6B7B',1.2);
+    line(PX(0),Ay1+8,PX(0),Ay0-14,'#5A6B7B',1.2);
+    text('height z', (Ax0+Ax1)/2, Ay1+44, '#5A6B7B', 12.5, 'center');
+    ctx.save(); ctx.translate(Ax0-62, (Ay0+Ay1)/2); ctx.rotate(-Math.PI/2);
+    text('time t', 0, 0, '#5A6B7B', 12.5, 'center'); ctx.restore();
+
+    // time ticks
+    var nt=4;
+    for(var i=0;i<=nt;i++){
+      var u=i/nt, y=PY(u);
+      line(PX(0)-6,y,PX(0)+6,y,'#C4CBD8',1);
+      text((u*T).toFixed(2)+' s', Ax0-16, y+4, '#5A6B7B', 11.5, 'right');
+    }
+    // height ticks
+    if(!st.trueScale){
+      var step = niceStep((zHi-zLo)/6);
+      for(var z=Math.ceil(zLo/step)*step; z<=zHi; z+=step){
+        if(Math.abs(z)<1e-12) continue;
+        line(PX(z),Ay1-5,PX(z),Ay1+5,'#C4CBD8',1);
+        text(fmtLen(z), PX(z), Ay1+22, '#5A6B7B', 11, 'center');
+      }
+    }
+
+    // the ball left on the ground (held there -- NOT a geodesic)
+    line(PX(0),Ay0,PX(0),Ay1,'#C4CBD8',5);
+    if(!st.trueScale)
+      text('held on the ground', PX(0)-12, PY(0.62), '#5A6B7B', 11.5, 'right');
+
+    // geodesic (ghost)
+    ctx.save(); ctx.strokeStyle='#0F6E93'; ctx.lineWidth=2.2; ctx.setLineDash([7,5]);
+    ctx.beginPath();
+    for(var i2=0;i2<=300;i2++){ var u2=i2/300, X=PX(zOf(u2,hg,0)), Y=PY(u2);
+      i2?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+    ctx.stroke(); ctx.restore();
+
+    // trial world line
+    var near = res < 1e-6*Math.max(1,g);
+    ctx.save(); ctx.strokeStyle = near ? '#2E7D57' : '#8A5A18'; ctx.lineWidth=3.2;
+    ctx.beginPath();
+    for(var i3=0;i3<=400;i3++){ var u3=i3/400, X=PX(zOf(u3,h,a)), Y=PY(u3);
+      i3?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+    ctx.stroke(); ctx.restore();
+
+    // events A and B
+    [[0,'A'],[1,'B']].forEach(function(p){
+      var X=PX(0), Y=PY(p[0]);
+      ctx.save(); ctx.fillStyle='#15243C'; ctx.beginPath();
+      ctx.arc(X,Y,5,0,6.2832); ctx.fill(); ctx.restore();
+      text(p[1], X-14, Y+(p[0]?-6:16), '#15243C', 14, 'right');
+    });
+
+    // labels for the two curves (placed off the curves, never on them)
+    if(!st.trueScale){
+      var uL=0.5;
+      text('geodesic', PX(zOf(uL,hg,0))+12, PY(uL)-8, '#0F6E93', 12.5, 'left');
+      text('your path', PX(zOf(0.30,h,a))+12, PY(0.30)+14, near?'#2E7D57':'#8A5A18', 12.5, 'left');
+      text('height axis magnified '+fmtMag(mag)+' \u00d7 relative to ct',
+           Ax1, PANEL_A.y0+16, '#8A5A18', 12, 'right', 'top');
+    } else {
+      text('true scale \u2014 the default view magnifies height '+fmtMag(magExag)+' \u00d7',
+           Ax1, PANEL_A.y0+16, '#8A5A18', 12, 'right', 'top');
+      text('at true scale every world line here is straight to the eye',
+           (Ax0+Ax1)/2, Ay0+30, '#5A6B7B', 13, 'center');
+    }
+
+    // ============================ PANEL B: aging vs apex height =========
+    var Bx0=PAD.l, Bx1=cv.width-PAD.r, By0=PANEL_B.y0+PAD.t, By1=PANEL_B.y1-PAD.b;
+    text('Extra aging vs. apex height', Bx0, PANEL_B.y0+10, '#15243C', 15.5, 'left', 'top');
+
+    var N=140, hs=[], ys=[], ymax=-1e99, ymin=1e99;
+    for(var i4=0;i4<=N;i4++){
+      var hh=(i4/N)*2.65*hgA, yy=dTau(hh,a,T,g);
+      hs.push(hh); ys.push(yy);
+      if(yy>ymax)ymax=yy; if(yy<ymin)ymin=yy;
+    }
+    var span=Math.max(ymax-ymin,1e-30), yTop=ymax+0.15*span, yBot=ymin-0.12*span;
+    function BX(hh){ return Bx0 + (hh/(2.65*hgA))*(Bx1-Bx0); }
+    function BY(yy){ return By1 - ((yy-yBot)/(yTop-yBot))*(By1-By0); }
+
+    line(Bx0,By1,Bx1,By1,'#5A6B7B',1.2);
+    line(Bx0,By1+8,Bx0,By0-12,'#5A6B7B',1.2);
+    text('apex height', (Bx0+Bx1)/2, By1+44, '#5A6B7B', 12.5, 'center');
+    ctx.save(); ctx.translate(Bx0-62,(By0+By1)/2); ctx.rotate(-Math.PI/2);
+    text('extra aging', 0, 0, '#5A6B7B', 12.5, 'center'); ctx.restore();
+
+    if(yBot<0 && yTop>0){
+      line(Bx0,BY(0),Bx1,BY(0),'#C4CBD8',1,[4,4]);
+      text('0', Bx0-12, BY(0)+4, '#5A6B7B', 11, 'right');
+    }
+
+    var hstep=niceStep(2.65*hgA/5);
+    for(var hh2=0; hh2<=2.65*hgA+1e-9; hh2+=hstep){
+      line(BX(hh2),By1-5,BX(hh2),By1+5,'#C4CBD8',1);
+      text(fmtLen(hh2), BX(hh2), By1+22, '#5A6B7B', 11, 'center');
+    }
+    [yBot+0.02*(yTop-yBot), ymax].forEach(function(yy){
+      text(fmtTime(yy), Bx0-12, BY(yy)+4, '#5A6B7B', 11, 'right');
+    });
+
+    ctx.save(); ctx.strokeStyle='#0F6E93'; ctx.lineWidth=2.6; ctx.beginPath();
+    for(var i5=0;i5<=N;i5++){ var X=BX(hs[i5]), Y=BY(ys[i5]); i5?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+    ctx.stroke(); ctx.restore();
+
+    // maximum
+    line(BX(hg),By1,BX(hg),BY(dTau(hg,a,T,g)),'#0F6E93',1,[3,4]);
+    ctx.save(); ctx.fillStyle='#0F6E93'; ctx.beginPath();
+    ctx.arc(BX(hg),BY(dTau(hg,a,T,g)),5.5,0,6.2832); ctx.fill(); ctx.restore();
+    text('geodesic', Math.min(Math.max(BX(hg), Bx0+38), Bx1-38),
+         BY(dTau(hg,a,T,g))-14, '#0F6E93', 12, 'center');
+
+    // current position
+    ctx.save(); ctx.fillStyle=near?'#2E7D57':'#8A5A18'; ctx.beginPath();
+    ctx.arc(BX(h),BY(dt),6,0,6.2832); ctx.fill(); ctx.restore();
+    var lx=Math.min(Math.max(BX(h), Bx0+42), Bx1-42);
+    var ly=(BY(dt) > By1-46) ? BY(dt)-16 : BY(dt)+26;   // flip up near the floor
+    text('your path', lx, ly, near?'#2E7D57':'#8A5A18', 12, 'center');
+
+    if(Math.abs(a)>1e-12)
+      text('wiggle is on, so every height ages less than it would without it',
+           Bx1, By0-4, '#8A5A18', 11.5, 'right');
+
+    // ---- sidebar readouts ----
+    document.getElementById('vh').textContent  = fmtLen(h);
+    document.getElementById('va').textContent  = fmtLen(a);
+    document.getElementById('vg').textContent  = g.toFixed(2)+' m/s\u00b2';
+    document.getElementById('vT').textContent  = T.toFixed(2)+' s';
+    document.getElementById('rdt').textContent = fmtTime(dt);
+    document.getElementById('rdtg').textContent= fmtTime(dtg);
+    document.getElementById('rhg').textContent = fmtLen(hg);
+    var rr=document.getElementById('rres');
+    rr.textContent = res.toExponential(2)+' m/s\u00b2';
+    rr.className = 'v '+(near?'good':'warn');
+    document.getElementById('rmag').textContent = st.trueScale ? '1 \u00d7 (true)' : fmtMag(mag)+' \u00d7';
+  }
+
+  function niceStep(raw){
+    var e=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)), f=raw/e;
+    return (f<1.5?1:f<3.5?2:f<7.5?5:10)*e;
+  }
+  function fmtMag(m){
+    if(m<1000) return m.toFixed(0);
+    var ex=Math.floor(Math.log(m)/Math.LN10);
+    return (m/Math.pow(10,ex)).toFixed(1)+'e'+ex;
+  }
+
+  // ---- wiring ----------------------------------------------------------
+  function bind(id,key,fn){
+    var el=document.getElementById(id);
+    el.oninput=function(){ st[key]=parseFloat(el.value); if(fn)fn(); draw(); };
+  }
+  bind('sh','hf'); bind('sa','af'); bind('sg','g'); bind('sT','T');
+  document.getElementById('ts').onchange=function(e){ st.trueScale=e.target.checked; draw(); };
+  document.getElementById('snap').onclick=function(){
+    var hg=hGeodesic(st.af*hGeoApprox(), st.T, st.g);
+    st.hf = hg/hGeoApprox(); st.af = 0;
+    document.getElementById('sh').value=st.hf;
+    document.getElementById('sa').value=0;
+    draw();
+  };
+
+  draw();
+  window.__demo = { st:st, draw:draw, dTau:dTau, hGeodesic:hGeodesic,
+                    maxResidual:maxResidual, hGeoApprox:hGeoApprox };
+})();
+</script>
+</body>
+</html>
