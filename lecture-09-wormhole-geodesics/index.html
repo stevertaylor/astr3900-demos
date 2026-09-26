@@ -33,18 +33,25 @@ aside{display:flex;flex-direction:column;gap:12px}
 .panel p{margin:0 0 8px;font-size:13px;line-height:1.5;color:var(--mute2)}
 .panel p:last-child{margin-bottom:0}
 
-.ctl{margin-bottom:12px}
+/* ---- component kit (STYLE_GUIDE §14.1) ---- */
+.btn{font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:8px 14px;border-radius:8px;border:1px solid var(--blued);background:#fff;color:var(--blued);cursor:pointer}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0 0}
+.ctl{margin:0 0 12px}
 .ctl:last-child{margin-bottom:0}
-.ctl label{display:block;font-size:12.5px;color:var(--mute2);margin-bottom:3px}
+.ctl label{display:block;font-size:12.5px;color:var(--mute2)}
 .ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
-          font-size:12.5px;color:var(--blue)}
-input[type=range]{width:100%;accent-color:var(--blue);margin:0}
+  font-size:12.5px;color:var(--blue)}
 
-.btnrow{margin-top:12px}
-button{font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;
-       border:1px solid var(--blued);background:#fff;color:var(--blued);margin-right:8px}
-button.primary{background:var(--blued);color:#fff}
-button:disabled{opacity:.45;cursor:default}
+/* critical-l marker under the l slider */
+.lcstrip{position:relative;height:12px;margin-top:-3px}
+.lcmark{position:absolute;top:0;padding:1px 0 0 5px;font-size:11px;line-height:1;color:var(--brown);white-space:nowrap}
+.lcmark::before{content:"";position:absolute;left:-1px;top:0;width:2px;height:9px;background:var(--brown)}
 
 .read{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px;align-items:baseline}
 .read .k{color:var(--grey)}
@@ -68,18 +75,18 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
   <header>
     <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 9</div>
     <h1>Can You Get Through the Wormhole?</h1>
-    <div class="sub">Integrate a geodesic of ds&sup2; = &minus;dt&sup2; + dr&sup2; + (b&sup2;+r&sup2;)d&phi;&sup2; using the connection coefficient you computed in class, and find out when the throat lets you through.</div>
+    <div class="sub">Integrate a geodesic of ds<sup>2</sup> = &minus;dt<sup>2</sup> + dr<sup>2</sup> + (b<sup>2</sup>+r<sup>2</sup>)d&phi;<sup>2</sup> using the connection coefficient you computed in class, and find out when the throat lets you through.</div>
   </header>
 
   <main>
     <div class="col">
       <div class="canvasWrap">
-        <canvas id="c" width="1100" height="640"></canvas>
+        <canvas id="c"></canvas>
       </div>
       <div class="panel">
         <h2>What you are looking at</h2>
-        <p><b>Left:</b> the r&nbsp;=&nbsp;const, t&nbsp;=&nbsp;const surface embedded in flat space &mdash; the wormhole shape. The trajectory is drawn <span style="color:var(--blue)"><b>blue</b></span> while r&nbsp;&gt;&nbsp;0 (this side) and <span style="color:var(--brown)"><b>brown</b></span> once r&nbsp;&lt;&nbsp;0 (the far side).</p>
-        <p><b>Right:</b> radial motion obeys (dr/d&tau;)&sup2; = E&sup2; &minus; V(r) with V(r) = 1 + &#8467;&sup2;/(b&sup2;+r&sup2;). V peaks <i>at the throat</i>, so angular momentum builds a barrier there. The traveller gets through only if E&sup2; &gt; 1 + &#8467;&sup2;/b&sup2;.</p>
+        <p><b>Left:</b> the equatorial slice embedded in flat space (drag to rotate). A single traveller is <span style="color:var(--blue)"><b>blue</b></span> on this side (r&nbsp;&gt;&nbsp;0) and <span style="color:var(--brown)"><b>brown</b></span> on the far side (r&nbsp;&lt;&nbsp;0).</p>
+        <p><b>Right:</b> (dr/d&tau;)<sup>2</sup> = E<sup>2</sup> &minus; V(r), with V = 1 + &#8467;<sup>2</sup>/(b<sup>2</sup>+r<sup>2</sup>) peaking at the throat. Since E<sup>2</sup> = 1 + U<sup>2</sup> + &#8467;<sup>2</sup>/(b<sup>2</sup>+R<sup>2</sup>), you get through only if &#8467; &lt; &#8467;<sub>c</sub> = U&thinsp;/&thinsp;&radic;(1/b<sup>2</sup> &minus; 1/(b<sup>2</sup>+R<sup>2</sup>)). <b>Spray</b> launches 13 travellers with &#8467; = 0&hellip;1.6&thinsp;&#8467;<sub>c</sub>. With &#8467; = 0 the run must reproduce &Delta;&tau; = 2R/U exactly.</p>
       </div>
     </div>
 
@@ -101,35 +108,31 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
         <div class="ctl">
           <label for="L">angular momentum &#8467; <span class="val" id="Lv">0.00</span></label>
           <input type="range" id="L" min="0" max="6" step="0.05" value="0">
+          <div class="lcstrip"><span class="lcmark" id="lcmark">&#8467;<sub>c</sub></span></div>
         </div>
         <div class="btnrow">
-          <button class="primary" id="go">Launch</button>
-          <button id="rs">Reset</button>
+          <button class="btn primary" id="go">Launch</button>
+          <button class="btn" id="spray">Spray</button>
+          <button class="btn" id="rs">Reset</button>
         </div>
         <div class="status" id="st">ready</div>
       </div>
 
       <div class="panel">
         <h2>The connection at work</h2>
-        <div class="eqn">dU<sup>r</sup>/d&tau; = &minus;&Gamma;<sup>r</sup><sub>&phi;&phi;</sub>(d&phi;/d&tau;)&sup2;</div>
+        <div class="eqn">dU<sup>r</sup>/d&tau; = &minus;&Gamma;<sup>r</sup><sub>&phi;&phi;</sub>(d&phi;/d&tau;)<sup>2</sup></div>
         <div class="read">
-          <span class="k">&Gamma;<sup>r</sup><sub>&phi;&phi;</sub> = &minus;r sin&sup2;&theta; &rarr; &minus;r</span><span class="v" id="gam">0.000</span>
+          <span class="k">&Gamma;<sup>r</sup><sub>&phi;&phi;</sub> = &minus;r sin<sup>2</sup>&theta; &rarr; &minus;r</span><span class="v" id="gam">0.000</span>
           <span class="k">r</span><span class="v" id="rr">4.000</span>
           <span class="k">E = dt/d&tau;</span><span class="v" id="ee">1.118</span>
           <span class="k">proper time &tau;</span><span class="v" id="tau">0.000</span>
           <span class="k">coordinate time t</span><span class="v" id="tt">0.000</span>
+          <span class="k">critical &#8467;<sub>c</sub></span><span class="v" id="lc">&mdash;</span>
+          <span class="k">&Delta;&tau; / &Delta;t measured</span><span class="v"><span id="dta">&mdash;</span> / <span id="dtb">&mdash;</span></span>
+          <span class="k">2R/U (radial result)</span><span class="v" id="ana">16.000</span>
         </div>
       </div>
 
-      <div class="panel">
-        <h2>Crossing times</h2>
-        <div class="read">
-          <span class="k">&Delta;&tau; measured</span><span class="v" id="dta">&mdash;</span>
-          <span class="k">&Delta;t measured</span><span class="v" id="dtb">&mdash;</span>
-          <span class="k">2R/U (radial result)</span><span class="v" id="ana">16.000</span>
-        </div>
-        <p style="margin-top:9px">With &#8467; = 0 the integration must reproduce the lecture&rsquo;s &Delta;&tau; = 2R/U exactly. Turn &#8467; up and watch where it fails.</p>
-      </div>
     </aside>
   </main>
 
@@ -143,56 +146,103 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
 var CV = {bg:"#FBFBF8", panel:"#EDF1F6", ink:"#15243C", blue:"#0F6E93",
           blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B", mute2:"#33465C",
           dim:"#C4CBD8", red:"#A43B34", green:"#2E7D57"};
+var W = 1100, H = 640;
+var SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
+// ----- kit helpers (STYLE_GUIDE §14.2, §14.3) --------------------------------
+function hidpi(cv, W, H){
+  var dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+function mtext(ctx, x, y, base, sub, sup, size, col, align){
+  size = size || 15; col = col || '#15243C';
+  var fb = 'italic ' + size + 'px Georgia,"Times New Roman",serif';
+  var fs = Math.round(size*0.68) + 'px Georgia,"Times New Roman",serif';
+  ctx.save(); ctx.fillStyle = col; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  ctx.font = fb; var wb = ctx.measureText(base).width;
+  ctx.font = fs; var ws = Math.max(sub ? ctx.measureText(sub).width : 0, sup ? ctx.measureText(sup).width : 0);
+  var x0 = align === 'center' ? x - (wb+ws)/2 : align === 'right' ? x - wb - ws : x;
+  ctx.font = fb; ctx.fillText(base, x0, y);
+  ctx.font = fs;
+  if(sub) ctx.fillText(sub, x0 + wb + 1, y + size*0.28);
+  if(sup) ctx.fillText(sup, x0 + wb + 1, y - size*0.42);
+  ctx.restore(); return wb + ws;
+}
+// A run of plain (sans) strings and [base, sub, sup] math pieces on one baseline.
+function rich(ctx, x, y, parts, size, col, weight){
+  var i, p, w;
+  for(i=0;i<parts.length;i++){
+    p = parts[i];
+    if(typeof p === 'string'){
+      ctx.save(); ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.font = (weight ? weight + ' ' : '') + size + 'px ' + SANS;
+      ctx.fillText(p, x, y); w = ctx.measureText(p).width; ctx.restore();
+      x += w;
+    } else {
+      x += mtext(ctx, x, y, p[0], p[1], p[2], size + 1, col) + 1.5;
+    }
+  }
+  return x;
+}
+
+// ----- state -------------------------------------------------------------------
 var P = {b:1.0, R:4.0, U:0.5, L:0.0};
-var S = {r:4.0, u:-0.5, phi:0.0, t:0.0, tau:0.0, E:1.0,
-         trail:[], running:false, status:"ready", dtau:null, dt:null};
+var S = null;          // the single traveller
+var SPRAY = null;      // array of travellers, or null
+var VIEW = {az:0.0, el:Math.asin(0.375)};
+var VIEW0 = {az:VIEW.az, el:VIEW.el};
 
 var cvs = null, ctx = null;
 
-// ----- geometry ------------------------------------------------------------
+// ----- geometry ------------------------------------------------------------------
 function rho(r){ return Math.sqrt(P.b*P.b + r*r); }
-function zz(r){ return P.b*Math.asinh(r/P.b); }
-function Veff(r){ return 1 + P.L*P.L/(P.b*P.b + r*r); }
-function energy(){ return Math.sqrt(1 + P.U*P.U + P.L*P.L/(P.b*P.b + P.R*P.R)); }
+function zz(r){ return P.b*Math.asinh(r/P.b); }          // embedding: dz/dr = b/rho
+function Veff(r, L){ if(L === undefined) L = P.L; return 1 + L*L/(P.b*P.b + r*r); }
+function energyFor(L){ return Math.sqrt(1 + P.U*P.U + L*L/(P.b*P.b + P.R*P.R)); }
+// E^2 > 1 + l^2/b^2  with  E^2 = 1 + U^2 + l^2/(b^2+R^2)
+function lCrit(){ return P.U/Math.sqrt(1/(P.b*P.b) - 1/(P.b*P.b + P.R*P.R)); }
 
 // geodesic equations, theta = pi/2, affine parameter tau:
 //   dr/dtau   = u
 //   du/dtau   = -Gamma^r_phiphi (dphi/dtau)^2 = r (dphi/dtau)^2
-//   dphi/dtau = L/(b^2+r^2)
+//   dphi/dtau = l/(b^2+r^2)
 //   dt/dtau   = E
-function deriv(y){
+function deriv(p, y){
   var r = y[0], u = y[1];
-  var w = P.L/(P.b*P.b + r*r);
-  return [u, r*w*w, w, S.E];
+  var w = p.L/(P.b*P.b + r*r);
+  return [u, r*w*w, w, p.E];
 }
-function rk4(y, h){
-  var k1 = deriv(y), i;
+function rk4(p, y, h){
+  var k1 = deriv(p, y), i;
   var y2 = [], y3 = [], y4 = [];
   for(i=0;i<4;i++) y2[i] = y[i] + 0.5*h*k1[i];
-  var k2 = deriv(y2);
+  var k2 = deriv(p, y2);
   for(i=0;i<4;i++) y3[i] = y[i] + 0.5*h*k2[i];
-  var k3 = deriv(y3);
+  var k3 = deriv(p, y3);
   for(i=0;i<4;i++) y4[i] = y[i] + h*k3[i];
-  var k4 = deriv(y4);
+  var k4 = deriv(p, y4);
   var out = [];
   for(i=0;i<4;i++) out[i] = y[i] + (h/6)*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i]);
   return out;
 }
 
-function reset(){
-  S.E = energy();
-  S.r = P.R; S.u = -P.U; S.phi = 0; S.t = 0; S.tau = 0;
-  S.trail = [[S.r, S.phi]];
-  S.running = false; S.status = "ready"; S.dtau = null; S.dt = null;
+function makePath(L){
+  return {L:L, E:energyFor(L), r:P.R, u:-P.U, phi:0, t:0, tau:0,
+          trail:[[P.R, 0]], lr:P.R, lp:0,
+          running:false, status:"ready", dtau:null, dt:null};
 }
 
-function advance(dtau){
-  if(!S.running) return;
-  var h = 0.02, n = Math.max(1, Math.round(dtau/h)), i, k;
-  for(i=0;i<n && S.running;i++){
-    var y0 = [S.r, S.u, S.phi, S.t];
-    var y = rk4(y0, h);
+function advancePath(p, dtau){
+  var done = 0, k;
+  while(done < dtau - 1e-12 && p.running){
+    var w = Math.abs(p.L)/(P.b*P.b + p.r*p.r);
+    // at most ~0.06 rad of phi per step, and never more than 0.02 in tau
+    var h = Math.min(0.02, 0.06/Math.max(w, 1e-9), dtau - done);
+    var y0 = [p.r, p.u, p.phi, p.t];
+    var y = rk4(p, y0, h);
     var hit = (y[0] <= -P.R) ? -P.R : ((y[0] >= P.R && y[1] > 0) ? P.R : null);
     if(hit !== null){
       // land exactly on the boundary: secant on the step length, using
@@ -201,114 +251,192 @@ function advance(dtau){
       for(k=0;k<3;k++){
         hh = hh - (y[0] - hit)/y[1];
         hh = Math.max(1e-9, Math.min(h, hh));
-        y = rk4(y0, hh);
+        y = rk4(p, y0, hh);
       }
-      S.r = y[0]; S.u = y[1]; S.phi = y[2]; S.t = y[3]; S.tau += hh;
-      S.trail.push([S.r, S.phi]);
-      S.running = false;
-      S.status = (hit < 0) ? "through" : "bounced";
-      S.dtau = S.tau; S.dt = S.t;
+      p.r = y[0]; p.u = y[1]; p.phi = y[2]; p.t = y[3]; p.tau += hh;
+      p.trail.push([p.r, p.phi]);
+      p.running = false;
+      p.status = (hit < 0) ? "through" : "bounced";
+      p.dtau = p.tau; p.dt = p.t;
       break;
     }
-    S.r = y[0]; S.u = y[1]; S.phi = y[2]; S.t = y[3]; S.tau += h;
-    S.trail.push([S.r, S.phi]);
-    if(S.tau > 400){ S.running = false; S.status = "stalled"; }
+    p.r = y[0]; p.u = y[1]; p.phi = y[2]; p.t = y[3]; p.tau += h; done += h;
+    if(Math.abs(p.r - p.lr) > 0.03 || Math.abs(p.phi - p.lp) > 0.035){
+      p.trail.push([p.r, p.phi]); p.lr = p.r; p.lp = p.phi;
+    }
+    if(p.tau > 400){ p.running = false; p.status = "stalled"; p.trail.push([p.r, p.phi]); }
   }
 }
 
-// ----- drawing -------------------------------------------------------------
-var EL = {sx:0, sy:0, cx:0, cy:0};   // surface-panel transform
-var SIN_E = 0.375, COS_E = 0.927;
-
-function proj(r, phi){
-  var q = rho(r);
-  return [q*Math.cos(phi), COS_E*zz(r) + SIN_E*q*Math.sin(phi)];
+// run a path to completion without animation (used by the self-check)
+function runToEnd(L){
+  var p = makePath(L); p.running = true;
+  while(p.running) advancePath(p, 1.0);
+  return p;
 }
+
+function reset(){
+  S = makePath(P.L);
+  SPRAY = null;
+  buildMesh();
+}
+
+// ----- surface mesh + rotatable view ------------------------------------------------
+var MESH = {nr:30, np:48, verts:null, rs:null};
+function buildMesh(){
+  var rm = P.R + 0.35, i, j, r, q, ph;
+  MESH.verts = []; MESH.rs = [];
+  for(i=0;i<=MESH.nr;i++){
+    r = -rm + 2*rm*i/MESH.nr; q = rho(r);
+    MESH.rs.push(r);
+    var row = [];
+    for(j=0;j<MESH.np;j++){
+      ph = 2*Math.PI*j/MESH.np;
+      row.push([q*Math.cos(ph), q*Math.sin(ph), zz(r)]);
+    }
+    MESH.verts.push(row);
+  }
+}
+// world (X,Y,Z) -> [screen-x, screen-y (up), depth (toward viewer)]
+function view3(X, Y, Z){
+  var ca = Math.cos(VIEW.az), sa = Math.sin(VIEW.az);
+  var ce = Math.cos(VIEW.el), se = Math.sin(VIEW.el);
+  var X1 = X*ca - Y*sa, Y1 = X*sa + Y*ca;
+  return [X1, Z*ce + Y1*se, -Y1*ce + Z*se];
+}
+function viewRP(r, phi){
+  var q = rho(r);
+  return view3(q*Math.cos(phi), q*Math.sin(phi), zz(r));
+}
+
+var EL = {s:1, cx:0, cy:0};
 function setSurfaceView(x0, y0, w, h){
+  // one scale for every view angle, so rotating never zooms
   var rm = P.R + 0.35;
   var qm = rho(rm), zm = zz(rm);
-  var halfW = qm, halfH = COS_E*zm + SIN_E*qm;
-  var s = Math.min((w - 24)/(2*halfW), (h - 24)/(2*halfH));
-  EL.s = s; EL.cx = x0 + w/2; EL.cy = y0 + h/2;
-  return s;
+  var halfW = qm, halfH = Math.sqrt(qm*qm + zm*zm);
+  EL.s = Math.min((w - 24)/(2*halfW), (h - 40)/(2*halfH));
+  EL.cx = x0 + w/2; EL.cy = y0 + h/2 + 8;
 }
 function SX(p){ return EL.cx + p[0]*EL.s; }
 function SY(p){ return EL.cy - p[1]*EL.s; }
 
-function drawSurface(x0, y0, w, h){
-  var rm = P.R + 0.35, i, j, r, phi, p;
+var SURF = {x0:8, y0:8, w:672, h:624};
+// spray colours: in flight, a light-to-dark ramp in l (semi-transparent);
+// finished, the outcome colour
+function outcomeCol(p, k){
+  if(p.status === "through") return CV.green;
+  if(p.status === "bounced") return CV.red;
+  var f = k/12, a = [160,178,196], b = [21,36,60];
+  return "rgba(" + Math.round(a[0]+(b[0]-a[0])*f) + "," + Math.round(a[1]+(b[1]-a[1])*f) + "," +
+         Math.round(a[2]+(b[2]-a[2])*f) + ",0.6)";
+}
+var LIGHT = (function(){ var v=[-0.45, 0.65, 0.62], n=Math.hypot(v[0],v[1],v[2]); return [v[0]/n, v[1]/n, v[2]/n]; })();
+
+function drawSurface(){
+  var x0 = SURF.x0, y0 = SURF.y0, w = SURF.w, h = SURF.h;
+  var i, j, k, a, b2, c, d, items = [];
   setSurfaceView(x0, y0, w, h);
+  var nr = MESH.nr, np = MESH.np;
+
+  // project every vertex once
+  var PV = [];
+  for(i=0;i<=nr;i++){
+    var row = [];
+    for(j=0;j<np;j++){ var v = MESH.verts[i][j]; row.push(view3(v[0], v[1], v[2])); }
+    PV.push(row);
+  }
+  // shaded quads
+  for(i=0;i<nr;i++){
+    var farSheet = (MESH.rs[i] + MESH.rs[i+1]) < 0;
+    for(j=0;j<np;j++){
+      var j2 = (j+1) % np;
+      a = PV[i][j]; b2 = PV[i+1][j]; c = PV[i+1][j2]; d = PV[i][j2];
+      var e1 = [b2[0]-a[0], b2[1]-a[1], b2[2]-a[2]];
+      var e2 = [d[0]-a[0], d[1]-a[1], d[2]-a[2]];
+      var n = [e1[1]*e2[2]-e1[2]*e2[1], e1[2]*e2[0]-e1[0]*e2[2], e1[0]*e2[1]-e1[1]*e2[0]];
+      var nl = Math.hypot(n[0], n[1], n[2]) || 1;
+      var lam = Math.abs((n[0]*LIGHT[0] + n[1]*LIGHT[1] + n[2]*LIGHT[2])/nl);
+      items.push({d:(a[2]+b2[2]+c[2]+d[2])/4, k:0, p:[a,b2,c,d], lam:lam, far:farSheet,
+                  ring:(i % 3 === 0), mer:(j % 4 === 0)});
+    }
+  }
+  var BIAS = 0.18;   // lines lying on the surface sort just in front of it
+  // throat ring
+  var prev = viewRP(0, 0);
+  for(k=1;k<=96;k++){
+    var cur = viewRP(0, 2*Math.PI*k/96);
+    items.push({d:(prev[2]+cur[2])/2 + BIAS, k:1, a:prev, b:cur, col:CV.mute2, lw:1.8});
+    prev = cur;
+  }
+  // trajectories
+  function addTrail(p, colFn, lw){
+    var tr = p.trail, q0 = viewRP(tr[0][0], tr[0][1]), m;
+    for(m=1;m<tr.length;m++){
+      var q1 = viewRP(tr[m][0], tr[m][1]);
+      items.push({d:(q0[2]+q1[2])/2 + BIAS, k:1, a:q0, b:q1, col:colFn(tr[m-1][0], tr[m][0]), lw:lw});
+      q0 = q1;
+    }
+  }
+  if(SPRAY){
+    SPRAY.forEach(function(p, k){
+      var col = outcomeCol(p, k), lw = p.running ? 1.4 : 2.0;
+      addTrail(p, function(){ return col; }, lw);
+    });
+  } else {
+    addTrail(S, function(r0, r1){ return (r0 + r1) >= 0 ? CV.blue : CV.brown; }, 3.0);
+  }
+
+  items.sort(function(u, v){ return u.d - v.d; });
 
   ctx.save();
   ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
-
-  // rings of constant r
-  ctx.strokeStyle = CV.blued; ctx.lineWidth = 0.9;
-  for(i=0;i<=18;i++){
-    r = -rm + 2*rm*i/18;
-    ctx.globalAlpha = 0.34;
-    ctx.beginPath();
-    for(j=0;j<=120;j++){
-      phi = 2*Math.PI*j/120; p = proj(r, phi);
-      if(j===0) ctx.moveTo(SX(p), SY(p)); else ctx.lineTo(SX(p), SY(p));
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  for(k=0;k<items.length;k++){
+    var it = items[k];
+    if(it.k === 0){
+      var f = 0.62 + 0.38*it.lam;
+      var base = it.far ? [241, 233, 220] : [228, 236, 245];
+      ctx.fillStyle = "rgba(" + Math.round(base[0]*f) + "," + Math.round(base[1]*f) + "," +
+                      Math.round(base[2]*f) + ",0.9)";
+      ctx.beginPath();
+      ctx.moveTo(SX(it.p[0]), SY(it.p[0])); ctx.lineTo(SX(it.p[1]), SY(it.p[1]));
+      ctx.lineTo(SX(it.p[2]), SY(it.p[2])); ctx.lineTo(SX(it.p[3]), SY(it.p[3]));
+      ctx.closePath(); ctx.fill();
+      // hairline seam against neighbours, then the faint coordinate grid
+      ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 0.6; ctx.stroke();
+      ctx.strokeStyle = "rgba(46,109,164,0.30)"; ctx.lineWidth = 0.7;
+      if(it.ring){ ctx.beginPath(); ctx.moveTo(SX(it.p[0]), SY(it.p[0])); ctx.lineTo(SX(it.p[3]), SY(it.p[3])); ctx.stroke(); }
+      if(it.mer){ ctx.beginPath(); ctx.moveTo(SX(it.p[0]), SY(it.p[0])); ctx.lineTo(SX(it.p[1]), SY(it.p[1])); ctx.stroke(); }
+    } else {
+      ctx.strokeStyle = it.col; ctx.lineWidth = it.lw;
+      ctx.beginPath(); ctx.moveTo(SX(it.a), SY(it.a)); ctx.lineTo(SX(it.b), SY(it.b)); ctx.stroke();
     }
-    ctx.stroke();
   }
-  // meridians
-  ctx.lineWidth = 0.8;
-  for(i=0;i<24;i++){
-    phi = 2*Math.PI*i/24;
-    ctx.globalAlpha = 0.22;
-    ctx.beginPath();
-    for(j=0;j<=80;j++){
-      r = -rm + 2*rm*j/80; p = proj(r, phi);
-      if(j===0) ctx.moveTo(SX(p), SY(p)); else ctx.lineTo(SX(p), SY(p));
-    }
-    ctx.stroke();
+
+  // travellers on top
+  function dotAt(p, col, rad){
+    var q = viewRP(p.r, p.phi);
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(SX(q), SY(q), rad, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
   }
-  ctx.globalAlpha = 1;
-
-  // throat highlight
-  ctx.strokeStyle = CV.mute2; ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  for(j=0;j<=120;j++){
-    phi = 2*Math.PI*j/120; p = proj(0, phi);
-    if(j===0) ctx.moveTo(SX(p), SY(p)); else ctx.lineTo(SX(p), SY(p));
+  if(SPRAY){
+    SPRAY.forEach(function(p, k){ if(!p.running) dotAt(p, outcomeCol(p, k), 4); });
+    SPRAY.forEach(function(p, k){ if(p.running) dotAt(p, outcomeCol(p, k), 3); });
+  } else {
+    dotAt(S, S.r >= 0 ? CV.blue : CV.brown, 6);
   }
-  ctx.stroke();
-
-  // trajectory, coloured by which sheet it is on
-  ctx.lineWidth = 3.2; ctx.lineJoin = "round"; ctx.lineCap = "round";
-  var seg = null, col = null;
-  for(i=0;i<S.trail.length;i++){
-    var c = S.trail[i][0] >= 0 ? CV.blue : CV.brown;
-    if(c !== col){
-      if(seg) ctx.stroke();
-      ctx.strokeStyle = c; col = c; ctx.beginPath(); seg = 1;
-      if(i>0){ p = proj(S.trail[i-1][0], S.trail[i-1][1]); ctx.moveTo(SX(p), SY(p)); }
-    }
-    p = proj(S.trail[i][0], S.trail[i][1]);
-    if(i===0) ctx.moveTo(SX(p), SY(p)); else ctx.lineTo(SX(p), SY(p));
-  }
-  if(seg) ctx.stroke();
-
-  // traveller
-  p = proj(S.r, S.phi);
-  ctx.fillStyle = S.r >= 0 ? CV.blue : CV.brown;
-  ctx.beginPath(); ctx.arc(SX(p), SY(p), 6, 0, 2*Math.PI); ctx.fill();
-  ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
-
   ctx.restore();
 
-  ctx.fillStyle = CV.mute2; ctx.font = "13px Georgia, serif";
+  ctx.fillStyle = CV.mute2; ctx.font = "20px Georgia, serif";
   ctx.textAlign = "left"; ctx.textBaseline = "top";
   ctx.fillText("embedded spatial slice", x0 + 6, y0 + 4);
-  ctx.fillStyle = CV.grey; ctx.font = "12px -apple-system, Helvetica, Arial, sans-serif";
-  ctx.fillText("grey ring = throat (r = 0)", x0 + 6, y0 + 24);
+  ctx.fillStyle = CV.grey; ctx.font = "17px " + SANS;
+  ctx.fillText("dark ring = throat (r = 0)  ·  drag to rotate, double-click to reset", x0 + 6, y0 + 30);
 }
 
 function drawPotential(x0, y0, w, h){
-  var padL = 54, padR = 16, padT = 34, padB = 40;
+  var padL = 60, padR = 16, padT = 40, padB = 50;
   var gx = x0 + padL, gy = y0 + padT;
   var gw = w - padL - padR, gh = h - padT - padB;
   var E2 = S.E*S.E;
@@ -342,54 +470,60 @@ function drawPotential(x0, y0, w, h){
   ctx.beginPath(); ctx.moveTo(X(0), gy); ctx.lineTo(X(0), gy+gh); ctx.stroke();
   ctx.setLineDash([]);
 
-  // current position
+  // current position of the single traveller
   var rr = Math.max(-P.R, Math.min(P.R, S.r));
   var dx = Math.max(gx + 6, Math.min(gx + gw - 6, X(rr)));
   ctx.fillStyle = S.r >= 0 ? CV.blue : CV.brown;
   ctx.beginPath(); ctx.arc(dx, Y(Veff(rr)), 5.5, 0, 2*Math.PI); ctx.fill();
   ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.4; ctx.stroke();
 
-  // axes text
-  ctx.fillStyle = CV.mute2; ctx.font = "13px Georgia, serif";
+  // labels
+  ctx.fillStyle = CV.mute2; ctx.font = "20px Georgia, serif";
   ctx.textAlign = "left"; ctx.textBaseline = "top";
   ctx.fillText("effective potential", x0 + 6, y0 + 4);
-  ctx.font = "12px -apple-system, Helvetica, Arial, sans-serif";
-  ctx.fillStyle = CV.grey;
-  ctx.textAlign = "center"; ctx.textBaseline = "top";
-  ctx.fillText("r", gx + gw/2, gy + gh + 20);
+  ctx.font = "17px " + SANS; ctx.fillStyle = CV.grey;
   ctx.textAlign = "right"; ctx.textBaseline = "middle";
   ctx.fillText(vmax.toFixed(2), gx - 8, gy + 2);
   ctx.fillText(vmin.toFixed(2), gx - 8, gy + gh - 2);
-  ctx.fillStyle = CV.brown; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
-  ctx.fillText("E\u00b2", gx + gw - 6, Y(E2) - 5);
-  ctx.fillStyle = CV.ink; ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.fillText("V(r)", X(0) + 9, Y(Veff(0)) + 6);
-  ctx.fillStyle = CV.grey; ctx.textAlign = "center"; ctx.textBaseline = "top";
-  ctx.fillText("\u2212R", gx, gy + gh + 4);
-  ctx.fillText("0", X(0), gy + gh + 4);
-  ctx.fillText("R", gx + gw, gy + gh + 4);
+  mtext(ctx, gx + gw/2, gy + gh + 44, "r", null, null, 18, CV.grey, "center");
+  mtext(ctx, gx + gw - 6, Y(E2) - 8, "E", null, "2", 19, CV.brown, "right");
+  var vx = X(0) + 10, vy = Y(Veff(0)) + 24;
+  rich(ctx, vx, vy, [["V"], "(", ["r"], ")"], 17, CV.ink);
+  rich(ctx, gx - 15, gy + gh + 21, ["−", ["R"]], 17, CV.grey);
+  ctx.fillStyle = CV.grey; ctx.font = "17px " + SANS; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillText("0", X(0), gy + gh + 21);
+  mtext(ctx, gx + gw - 4, gy + gh + 21, "R", null, null, 17, CV.grey, "center");
+}
+
+function drawVerdict(){
+  var x = 700, E2 = S.E*S.E, Vp = Veff(0), ok = E2 > Vp, lc = lCrit();
+  rich(ctx, x, 474, [["E", null, "2"], " = " + E2.toFixed(3) + "     1 + ", ["ℓ", null, "2"], "/", ["b", null, "2"], " = " + Vp.toFixed(3)], 17, CV.mute2);
+  rich(ctx, x, 506, [["E", null, "2"], ok ? " > barrier: throat open" : " < barrier: throat closed"],
+       18, ok ? CV.green : CV.red, 600);
+  rich(ctx, x, 540, [["ℓ", "c"], " = " + lc.toFixed(3) + "   (through iff ", ["ℓ"], " < ", ["ℓ", "c"], ")"],
+       17, CV.brown);
+  if(SPRAY){
+    var nT = 0, nB = 0, nF = 0;
+    SPRAY.forEach(function(p){ if(p.status === "through") nT++; else if(p.status === "bounced") nB++; else nF++; });
+    var y = 580, xx = x;
+    [[CV.green, "through " + nT], [CV.red, "bounced " + nB], [CV.grey, "in flight " + nF]].forEach(function(e){
+      ctx.fillStyle = e[0]; ctx.beginPath(); ctx.arc(xx + 6, y - 5, 6, 0, 2*Math.PI); ctx.fill();
+      ctx.fillStyle = CV.mute2; ctx.font = "17px " + SANS; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(e[1], xx + 17, y); xx += 17 + ctx.measureText(e[1]).width + 20;
+    });
+    rich(ctx, x, 612, ["in flight: light → dark = low → high ", ["ℓ"]], 17, CV.grey);
+  }
 }
 
 function draw(){
-  ctx.fillStyle = CV.bg; ctx.fillRect(0, 0, 1100, 640);
-  drawSurface(8, 8, 672, 624);
+  ctx.fillStyle = CV.bg; ctx.fillRect(0, 0, W, H);
+  drawSurface();
   drawPotential(692, 40, 400, 400);
-
-  // verdict strip under the potential panel
-  var E2 = S.E*S.E, Vp = Veff(0), ok = E2 > Vp;
-  ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.font = "13px -apple-system, Helvetica, Arial, sans-serif";
-  ctx.fillStyle = CV.mute2;
-  ctx.fillText("E\u00b2 = " + E2.toFixed(3), 706, 470);
-  ctx.fillText("1 + \u2113\u00b2/b\u00b2 = " + Vp.toFixed(3), 706, 492);
-  ctx.fillStyle = ok ? CV.green : CV.red;
-  ctx.font = "600 14px -apple-system, Helvetica, Arial, sans-serif";
-  ctx.fillText(ok ? "E\u00b2 > barrier \u2014 the throat is open"
-                  : "E\u00b2 < barrier \u2014 the throat is closed", 706, 522);
+  drawVerdict();
 }
 
-// ----- DOM -----------------------------------------------------------------
-function fmt(x, n){ return (x===null || x===undefined) ? "\u2014" : x.toFixed(n); }
+// ----- DOM -----------------------------------------------------------------------
+function fmt(x, n){ return (x===null || x===undefined) ? "—" : x.toFixed(n); }
 
 function sync(){
   var g = function(id){ return document.getElementById(id); };
@@ -405,13 +539,27 @@ function sync(){
   g("dta").textContent = fmt(S.dtau, 2);
   g("dtb").textContent = fmt(S.dt, 2);
   g("ana").textContent = (2*P.R/P.U).toFixed(2);
-  var st = g("st");
-  var txt = {ready:"ready", through:"made it through to r = \u2212R",
-             bounced:"bounced back \u2014 never reached the far side",
-             stalled:"stalled near the throat", running:"falling\u2026"}[S.status];
+  var lc = lCrit();
+  g("lc").textContent = lc.toFixed(3);
+  var f = Math.max(0, Math.min(1, lc/6));
+  var mk = g("lcmark");
+  mk.style.left = "calc(10px + (100% - 20px) * " + f.toFixed(4) + ")";
+  mk.style.display = lc <= 6 ? "" : "none";
+
+  var st = g("st"), txt, cls = "";
+  if(SPRAY){
+    var nT = 0, nB = 0, nF = 0;
+    SPRAY.forEach(function(p){ if(p.status === "through") nT++; else if(p.status === "bounced") nB++; else nF++; });
+    txt = nF ? "spraying… " + nT + " through, " + nB + " bounced"
+             : nT + " of 13 got through, " + nB + " bounced";
+  } else {
+    txt = {ready:"ready", through:"made it through to r = −R",
+           bounced:"bounced back — never reached the far side",
+           stalled:"stalled near the throat", running:"falling…"}[S.status];
+    cls = S.status === "through" ? " ok" : (S.status === "bounced" ? " no" : "");
+  }
   st.textContent = txt;
-  st.className = "status" + (S.status === "through" ? " ok"
-                  : (S.status === "bounced" ? " no" : ""));
+  st.className = "status" + cls;
 }
 
 function readControls(){
@@ -419,35 +567,90 @@ function readControls(){
   P.b = g("b"); P.R = g("R"); P.U = g("U"); P.L = g("L");
 }
 
-var last = 0;
+// ----- render scheduling: draw on demand, animate only while something moves ----------
+var rafId = null, last = null;
+function anyRunning(){
+  if(SPRAY) return SPRAY.some(function(p){ return p.running; });
+  return S.running;
+}
 function frame(ts){
-  if(S.running){
-    var dt = Math.min(0.05, (ts - last)/1000 || 0.016);
-    advance(dt*8);
+  rafId = null;
+  if(last !== null && anyRunning()){
+    var dt = Math.min(0.05, (ts - last)/1000);
+    var dtau = dt*8;
+    if(SPRAY) SPRAY.forEach(function(p){ advancePath(p, dtau); });
+    else advancePath(S, dtau);
   }
   last = ts;
   draw(); sync();
-  requestAnimationFrame(frame);
+  if(anyRunning()) rafId = requestAnimationFrame(frame);
+  else last = null;
 }
+function requestDraw(){ if(rafId === null) rafId = requestAnimationFrame(frame); }
 
 function init(){
   cvs = document.getElementById("c");
-  ctx = cvs.getContext("2d");
+  ctx = hidpi(cvs, W, H);
   var ids = ["b","R","U","L"], i;
   for(i=0;i<ids.length;i++){
     document.getElementById(ids[i]).addEventListener("input", function(){
-      readControls(); reset(); draw(); sync();
+      readControls(); reset(); requestDraw();
     });
   }
   document.getElementById("go").addEventListener("click", function(){
-    if(S.status !== "ready") reset();
+    readControls(); reset();
     S.running = true; S.status = "running";
+    requestDraw();
+  });
+  document.getElementById("spray").addEventListener("click", function(){
+    readControls(); reset();
+    var lc = lCrit(), N = 13;
+    SPRAY = [];
+    for(var k=0;k<N;k++){
+      var p = makePath(1.6*lc*k/(N - 1));
+      p.running = true; p.status = "running";
+      SPRAY.push(p);
+    }
+    requestDraw();
   });
   document.getElementById("rs").addEventListener("click", function(){
-    readControls(); reset(); draw(); sync();
+    readControls(); reset(); requestDraw();
   });
-  readControls(); reset(); draw(); sync();
-  requestAnimationFrame(frame);
+
+  // rotate the embedding by dragging on the left panel
+  var drag = null;
+  function toLogical(ev){
+    var r = cvs.getBoundingClientRect();
+    return {x:(ev.clientX - r.left)*W/r.width, y:(ev.clientY - r.top)*H/r.height};
+  }
+  function inSurf(m){ return m.x >= SURF.x0 && m.x <= SURF.x0 + SURF.w && m.y >= SURF.y0 && m.y <= SURF.y0 + SURF.h; }
+  cvs.addEventListener("pointerdown", function(ev){
+    var m = toLogical(ev);
+    if(!inSurf(m)) return;
+    drag = m; cvs.setPointerCapture(ev.pointerId); cvs.style.cursor = "grabbing"; ev.preventDefault();
+  });
+  cvs.addEventListener("pointermove", function(ev){
+    var m = toLogical(ev);
+    if(drag){
+      VIEW.az += (m.x - drag.x)*0.008;
+      VIEW.el = Math.max(0.0, Math.min(1.45, VIEW.el + (m.y - drag.y)*0.006));
+      drag = m; requestDraw(); ev.preventDefault();
+    } else {
+      cvs.style.cursor = inSurf(m) ? "grab" : "default";
+    }
+  });
+  function endDrag(){ drag = null; cvs.style.cursor = "default"; }
+  cvs.addEventListener("pointerup", endDrag);
+  cvs.addEventListener("pointercancel", endDrag);
+  cvs.addEventListener("dblclick", function(ev){
+    if(!inSurf(toLogical(ev))) return;
+    VIEW.az = VIEW0.az; VIEW.el = VIEW0.el; requestDraw();
+  });
+  window.matchMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)").addEventListener("change", function(){
+    ctx = hidpi(cvs, W, H); requestDraw();
+  });
+
+  readControls(); reset(); requestDraw();
 }
 
 if(typeof document !== "undefined" && document.getElementById){ init(); }

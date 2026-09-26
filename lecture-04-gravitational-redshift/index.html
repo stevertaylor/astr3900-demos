@@ -5,156 +5,143 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lecture 4: Gravitational Time Dilation &amp; Redshift — ASTR 3900/8090</title>
 <style>
-  :root {
-    --bg: #FBFBF8;
-    --panel: #EDF1F6;
-    --ink: #15243C;
-    --blue: #0F6E93;
-    --blued: #2E6DA4;
-    --brown: #8A5A18;
-    --grey: #5A6B7B;
-    --mute2: #33465C;
-    --dim: #C4CBD8;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; background: var(--bg); color: var(--ink);
-    font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
-  }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 28px 40px; }
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
 
-  header.hdr { margin-bottom: 6px; }
-  .step-label {
-    color: var(--blue); font-weight: bold; font-size: 12px; letter-spacing: 0.08em;
-    text-transform: uppercase; margin: 0 0 6px;
-  }
-  h1 {
-    font-family: Georgia, "Times New Roman", serif; font-weight: 400;
-    font-size: 30px; color: var(--ink); margin: 0 0 8px;
-  }
-  .rule { border: none; border-top: 1.4px solid var(--blued); opacity: 0.7; width: 240px; margin: 0 0 14px; }
-  .sub {
-    font-style: normal; color: var(--grey);
-    font-size: 14px; line-height: 1.5; margin: 0 0 22px;
-  }
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 22px;
-    align-items: start;
-  }
-  @media (max-width: 880px) {
-    .grid { grid-template-columns: 1fr; }
-  }
+main{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;padding-top:16px;align-items:start}
+@media (max-width:900px){ main{grid-template-columns:1fr} }
+.col{display:flex;flex-direction:column;gap:12px}
 
-  .panel {
-    background: var(--panel);
-    border: 1px solid #dde3ec;
-    border-radius: 10px;
-    padding: 14px 16px 16px;
-  }
-  .panel h2 {
-    font-family: 'DejaVu Serif', Georgia, serif; font-weight: 400; font-size: 16px;
-    color: var(--ink); margin: 0 0 8px;
-  }
-  canvas { display: block; width: 100%; height: auto; background: transparent; }
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:14px 16px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 10px}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:10px;padding:6px}
+.canvasWrap canvas{width:100%;height:auto;display:block}
+#scene{aspect-ratio:620/400}
+#chart{aspect-ratio:450/210}
 
-  .controls {
-    margin-top: 14px;
-  }
-  .row { display: flex; align-items: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
-  .row label { font-size: 13.5px; color: var(--mute2); min-width: 128px; }
-  input[type=range] {
-    flex: 1; min-width: 160px; accent-color: var(--blue);
-  }
-  .chiVal { font-variant-numeric: tabular-nums; color: var(--ink); font-size: 13.5px; min-width: 92px; text-align: right; }
+/* ---- component kit (STYLE_GUIDE §14.1) ---- */
+.btn{font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:8px 14px;border-radius:8px;border:1px solid var(--blued);background:#fff;color:var(--blued);cursor:pointer}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0 0}
+.ctl{margin:0 0 12px}
+.ctl:last-child{margin-bottom:0}
+.ctl label{display:block;font-size:12.5px;color:var(--mute2)}
+.ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-size:12.5px;color:var(--blue)}
+input[type=checkbox]{accent-color:var(--blue)}
 
-  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-  button.preset {
-    font-family: 'DejaVu Sans', sans-serif; font-size: 12.5px; color: var(--ink);
-    background: #fff; border: 1px solid var(--dim); border-radius: 6px;
-    padding: 6px 10px; cursor: pointer; transition: border-color .15s, color .15s;
-  }
-  button.preset:hover { border-color: var(--blue); color: var(--blue); }
-  button.preset.active { border-color: var(--blued); color: #fff; background: var(--blued); }
+.chk{display:block;font-size:12.5px;color:var(--mute2);margin-top:12px}
+.chk input{margin-right:6px;vertical-align:-2px}
 
-  table.readout { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
-  table.readout td { padding: 5px 4px; border-bottom: 1px solid #dde3ec; }
-  table.readout td.k { color: var(--grey); }
-  table.readout td.v { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
-  table.readout tr.hero td.v { color: var(--blued); font-size: 15px; }
-  table.readout tr.exact td.v { color: var(--brown); }
+.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.cell{background:#fff;border:1px solid var(--dim);border-radius:8px;padding:8px 10px;text-align:center}
+.cell .k{font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.cell .v{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:18px;
+  font-weight:600;color:var(--ink)}
+.cell.hero .v{color:var(--blued)}
+.countnote{font-size:12px;color:var(--grey);margin:6px 0 0;line-height:1.45}
 
-  .note {
-    font-size: 12.5px; color: var(--grey); margin-top: 10px; line-height: 1.45;
-  }
-  .callout {
-    margin-top: 10px; font-size: 12.5px; color: var(--blue); font-style: italic;
-    border-left: 3px solid var(--blued); padding-left: 8px;
-  }
+table.readout{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+table.readout td{padding:4px 2px;border-bottom:1px solid #dde3ec}
+table.readout td.k{color:var(--grey)}
+table.readout td.v{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600;
+  font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:12.5px}
+table.readout tr.hero td.v{color:var(--blued)}
+table.readout tr.exact td.v{color:var(--brown)}
 
-  .legend { display:flex; gap:16px; font-size:12px; color: var(--grey); margin-top:6px; flex-wrap: wrap;}
-  .legend span.sw { display:inline-block; width:14px; height:3px; margin-right:5px; vertical-align:middle; }
+.note{font-size:12.5px;color:var(--grey);margin:8px 0 0;line-height:1.45}
+.callout{margin:10px 0 0;font-size:12.5px;color:var(--blue);line-height:1.45;
+  border-left:3px solid var(--blued);padding-left:8px}
+.callout:empty{display:none}
+.exag{margin:10px 0 0;font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px}
+.exag.on{background:#FCEFE3;color:#7A4300;border:1px solid #F0C79A}
+.exag.lit{background:#EAF3EC;color:#2A6B3B;border:1px solid #BFE0C6}
 
-  footer {
-    display: flex; justify-content: space-between; font-size: 11.5px; color: var(--grey);
-    border-top: 1px solid #dde3ec; margin-top: 24px; padding-top: 14px; flex-wrap: wrap; gap: 6px;
-  }
+.legend{font-size:12px;color:var(--grey);margin-top:8px;line-height:1.9}
+.legend span{margin-right:16px;white-space:nowrap}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="hdr">
-    <div class="step-label">ASTR 3900/8090 · Lecture 4</div>
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 · Lecture 4</div>
     <h1>Gravitational Time Dilation &amp; Redshift</h1>
-    <hr class="rule">
-    <p class="sub">A photon climbing out of a gravitational well is redshifted; a clock deep in the well runs slow.</p>
+    <div class="sub">Clock B on the surface sends one wave crest up the well every time it ticks. Count them
+      at A, far away: fewer crests arrive per tick of A&rsquo;s clock. The redshift and the slow surface
+      clock are the same fact.</div>
   </header>
 
-  <div class="grid">
+  <main>
     <div class="panel">
-      <h2>Clock B (surface) and Clock A (far away)</h2>
-      <canvas id="scene" width="1040" height="880"></canvas>
+      <h2>One crest per tick of clock B</h2>
+      <div class="canvasWrap"><canvas id="scene"></canvas></div>
       <div class="legend">
-        <span><span class="sw" style="background:var(--blue)"></span>emitted wave</span>
-        <span><span class="sw" style="background:var(--brown)"></span>received wave (redshifted)</span>
+        <span><i style="background:var(--blue)"></i>crest leaving B</span>
+        <span><i style="background:#A43B34"></i>crest arriving at A (colour exaggerated)</span>
       </div>
+      <div class="counts">
+        <div class="cell"><div class="k">ticks of A</div><div class="v" id="cN">0</div></div>
+        <div class="cell"><div class="k">crests received</div><div class="v" id="cM">0</div></div>
+        <div class="cell hero"><div class="k">received / ticks</div><div class="v" id="cR">—</div></div>
+      </div>
+      <p class="countnote">B has been emitting all along. The spacetime is static, so every crest takes the same coordinate time to climb: crests arrive exactly as often as B ticks, and A counts them against its own, faster clock.</p>
+      <div class="btnrow">
+        <button class="btn primary" id="play">&#10074;&#10074;&nbsp; Pause</button>
+        <button class="btn" id="restart">Restart the count</button>
+      </div>
+      <p class="exag" id="exagNote"></p>
     </div>
 
-    <div>
+    <div class="col">
       <div class="panel">
-        <h2>Compactness GM / Rc&sup2;</h2>
-        <div class="controls">
-          <div class="row">
-            <label for="chiSlider">compactness &chi;</label>
-            <input type="range" id="chiSlider" min="0" max="1000" step="1">
-            <span class="chiVal" id="chiValLabel">—</span>
-          </div>
-          <div class="presets" id="presets"></div>
+        <h2>Compactness GM/Rc&sup2;</h2>
+        <div class="ctl">
+          <label for="chiSlider">compactness &chi; <span class="val" id="chiValLabel">—</span></label>
+          <input type="range" id="chiSlider" min="0" max="1000" step="1">
         </div>
+        <div class="btnrow" id="presets"></div>
+        <label class="chk"><input type="checkbox" id="exag" checked>Exaggerate small rate differences in the animation</label>
 
         <table class="readout">
-          <tr><td class="k">&Delta;&Phi; = &chi; = GM/Rc&sup2;</td><td class="v" id="rChi">—</td></tr>
+          <tr><td class="k">&chi; = GM/Rc&sup2;</td><td class="v" id="rChi">—</td></tr>
           <tr class="exact"><td class="k">exact: &nu;<sub>&infin;</sub>/&nu;<sub>*</sub> = &radic;(1&minus;2&chi;)</td><td class="v" id="rNuExact">—</td></tr>
           <tr><td class="k">weak-field: &nu;<sub>&infin;</sub>/&nu;<sub>*</sub> &asymp; 1&minus;&chi;</td><td class="v" id="rNuWeak">—</td></tr>
           <tr class="exact hero"><td class="k">exact: &Delta;&tau;<sub>A</sub>/&Delta;&tau;<sub>B</sub> = 1/&radic;(1&minus;2&chi;)</td><td class="v" id="rTauExact">—</td></tr>
           <tr><td class="k">weak-field: &Delta;&tau;<sub>A</sub>/&Delta;&tau;<sub>B</sub> &asymp; 1+&chi;</td><td class="v" id="rTauWeak">—</td></tr>
-          <tr><td class="k">&lambda;<sub>emit</sub></td><td class="v" id="rLamEmit">—</td></tr>
-          <tr class="exact"><td class="k">&lambda;<sub>obs</sub> (exact)</td><td class="v" id="rLamObs">—</td></tr>
+          <tr class="exact"><td class="k">&lambda;<sub>obs</sub> for &lambda;<sub>emit</sub> = 500 nm</td><td class="v" id="rLamObs">—</td></tr>
         </table>
         <p class="callout" id="callout"></p>
       </div>
 
-      <div class="panel" style="margin-top:14px;">
+      <div class="panel">
         <h2>Weak-field vs. exact GR</h2>
-        <canvas id="chart" width="820" height="520"></canvas>
-        <div class="note">Dashed line: weak-field approximation (1&minus;&chi;), used while GM/Rc&sup2; &ll; 1. Solid line: exact Schwarzschild result. They visibly part ways once &chi; climbs past a few percent.</div>
+        <div class="canvasWrap"><canvas id="chart"></canvas></div>
+        <p class="note">Dashed: weak-field 1&minus;&chi;. Solid: exact Schwarzschild. They part ways once &chi; passes a few percent.</p>
       </div>
-
-      <p class="note">Colour and fringe spacing in the wave are stretched for legibility — a white dwarf's true shift is a few parts in 10<sup>4</sup>, far too small to show literally. All numeric readouts above are exact, unexaggerated.</p>
     </div>
-  </div>
+  </main>
 
   <footer>
     <span>S. Taylor &middot; Vanderbilt University</span>
@@ -163,362 +150,396 @@
 </div>
 
 <script>
-// ---------- Palette ----------
-const COL = {
-  bg: '#FBFBF8', panel: '#EDF1F6', ink: '#15243C', blue: '#0F6E93',
-  blued: '#2E6DA4', brown: '#8A5A18', grey: '#5A6B7B', mute2: '#33465C', dim: '#C4CBD8'
+// ---------- palette & fonts ----------
+var COL = {
+  bg:'#FBFBF8', panel:'#EDF1F6', ink:'#15243C', blue:'#0F6E93', blued:'#2E6DA4',
+  brown:'#8A5A18', grey:'#5A6B7B', mute2:'#33465C', dim:'#C4CBD8'
 };
+var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
 
-// ---------- Physics ----------
-// chi = GM / (R c^2). Valid range (0, 0.5) for the exact formula to stay real.
-function physics(chi, lambdaEmit) {
-  const weakFactor = 1 - chi;                    // nu_inf / nu_star, weak field
-  const exactFactor = Math.sqrt(Math.max(1 - 2 * chi, 1e-8)); // nu_inf / nu_star, exact
-  const tauExact = exactFactor;                   // dTau_B / dTau_A, exact
-  const tauWeakInv = 1 + chi;                      // dTau_A / dTau_B, weak field
-  const lamObsWeak = lambdaEmit / weakFactor;
-  const lamObsExact = lambdaEmit / exactFactor;
-  return { weakFactor, exactFactor, tauExact, tauWeakInv, lamObsWeak, lamObsExact };
+// ---------- kit helpers (STYLE_GUIDE §14.2, §14.3) ----------
+var DPR = 1;
+function hidpi(cv, W, H){
+  var dpr = Math.min(window.devicePixelRatio || 1, 3);
+  DPR = dpr;
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+function mtext(ctx, x, y, base, sub, sup, size, col, align){
+  size = size || 15; col = col || '#15243C';
+  var fb = 'italic ' + size + 'px Georgia,"Times New Roman",serif';
+  var fs = Math.round(size*0.68) + 'px Georgia,"Times New Roman",serif';
+  ctx.save(); ctx.fillStyle = col; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  ctx.font = fb; var wb = ctx.measureText(base).width;
+  ctx.font = fs; var ws = Math.max(sub ? ctx.measureText(sub).width : 0, sup ? ctx.measureText(sup).width : 0);
+  var x0 = align === 'center' ? x - (wb+ws)/2 : align === 'right' ? x - wb - ws : x;
+  ctx.font = fb; ctx.fillText(base, x0, y);
+  ctx.font = fs;
+  if(sub) ctx.fillText(sub, x0 + wb + 1, y + size*0.28);
+  if(sup) ctx.fillText(sup, x0 + wb + 1, y - size*0.42);
+  ctx.restore(); return wb + ws;
+}
+function stext(ctx, s, x, y, col, size, align, weight){
+  ctx.save(); ctx.fillStyle = col; ctx.font = (weight ? weight + ' ' : '') + size + 'px ' + SANS;
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, y); ctx.restore();
 }
 
-// Smooth (0,1) mapping of a fractional shift onto a display blend factor.
-// Used ONLY for colour / visual fringe-spacing exaggeration, never for the numeric readouts.
-function shiftToT(fracShift) {
-  const s = 0.06;
-  const t = fracShift / (fracShift + s);
-  return Math.min(Math.max(t, 0), 1);
+// ---------- physics ----------
+// chi = GM/(R c^2); the exact formula needs chi < 1/2.
+function physics(chi, lambdaEmit){
+  var exactFactor = Math.sqrt(Math.max(1 - 2*chi, 1e-12));   // nu_inf/nu_star = dtau_B/dtau_A
+  return {
+    weakFactor: 1 - chi,
+    exactFactor: exactFactor,
+    tauWeakInv: 1 + chi,
+    lamObsExact: lambdaEmit/exactFactor
+  };
+}
+// 1 - sqrt(1-2 chi) without cancellation (Earth: ~7e-10).
+function rateDeficit(chi){ var r = Math.sqrt(Math.max(1 - 2*chi, 0)); return 2*chi/(1 + r); }
+
+// Rate ratio used by the ANIMATION. Literal (= sqrt(1-2chi)) unless the deficit is below
+// EX_MAX and exaggeration is on; then the deficit is mapped monotonically on a log scale onto
+// (0, EX_MAX], continuous at EX_MAX. Numeric readouts never use this.
+var EX_MAX = 0.2;
+function displayRatio(chi, exaggerate){
+  var d = rateDeficit(chi), r = 1 - d;
+  if(!exaggerate || d >= EX_MAX) return {r:r, d:d, rd:r, dd:d, ex:false};
+  var L = Math.log10(Math.max(d, 1e-10));
+  var dd = EX_MAX*(L + 10)/(Math.log10(EX_MAX) + 10);
+  dd = Math.max(dd, d);
+  return {r:r, d:d, rd:1 - dd, dd:dd, ex:true};
 }
 
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-function shiftColor(t) {
-  // t=0 -> emitted (cool blue-cyan), t=1 -> deep red / fading toward the horizon
-  const hue = lerp(196, 4, t);
-  const light = lerp(46, 28, t);
-  const sat = lerp(55, 78, t);
-  return `hsl(${hue.toFixed(1)}, ${sat.toFixed(0)}%, ${light.toFixed(0)}%)`;
+// ---------- crest bookkeeping (coordinate time t = proper time of A, far away) ----------
+// Steady state: B has been emitting forever. Crest k (any integer) reaches A at t = k/r and
+// left B at t = k/r - TRANSIT -- static spacetime, so every crest takes the same coordinate
+// time to climb, and arrivals are spaced exactly as B's ticks: 1/r units of A-time.
+// Counting starts at t = 0, when crest 0 arrives.
+var TRANSIT = 3.0;
+function counts(t, r){
+  if(t <= 0) return {N:0, M:0};
+  return {N: Math.floor(t + 1e-9), M: Math.floor(t*r + 1e-9)};
 }
 
-// ---------- Scene drawing ----------
-// state = { chi, lambdaEmit, phase }  phase in [0,1), advances with time for animation
-function drawScene(ctx, W, H, state) {
+// ---------- colour for the display ----------
+function shiftToT(fracShift){ var s = 0.06; return Math.min(Math.max(fracShift/(fracShift + s), 0), 1); }
+function lerp(a, b, t){ return a + (b - a)*t; }
+// blue (#0F6E93) -> grey -> red (#A43B34), matching the legend
+function shiftColor(t){
+  var A = [15,110,147], G = [138,148,160], R = [164,59,52], u = Math.min(Math.max(t,0),1), a, b, v;
+  if(u < 0.5){ a = A; b = G; v = u/0.5; } else { a = G; b = R; v = (u - 0.5)/0.5; }
+  return 'rgb(' + Math.round(lerp(a[0],b[0],v)) + ',' + Math.round(lerp(a[1],b[1],v)) + ',' + Math.round(lerp(a[2],b[2],v)) + ')';
+}
+
+// ---------- scene ----------
+var SW = 620, SH = 400;
+var GEO = {cx:200, yA:56, yB:290, starR:110};
+GEO.starCy = GEO.yB + GEO.starR;
+
+function drawScene(ctx, st){
+  var W = SW, H = SH, g = GEO, cx = g.cx;
   ctx.clearRect(0, 0, W, H);
-  ctx.save();
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  var rd = st.disp.rd, tCol = shiftToT(1/rd - 1);
 
-  const p = physics(state.chi, state.lambdaEmit);
-  const fracShift = p.lamObsExact / state.lambdaEmit - 1;
-  const t = shiftToT(fracShift);
-
-  const cx = W * 0.34;
-  const yTop = H * 0.08;     // observer A
-  const yBot = H * 0.58;     // surface, point B
-  const starR = W * 0.115;
-  const starCy = yBot + starR * 0.55;
-  // Analytic check: circle bottom (starCy + starR) and its caption baseline
-  // (starCy + starR + 26 + ~15 for text height) must both stay below H at every
-  // W,H this is called with -- verified in verify.js across all preset/phase combos.
-
-  // --- gravity-well guide line ---
-  ctx.strokeStyle = COL.dim;
-  ctx.setLineDash([2, 6]);
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(cx, yTop + 26);
-  ctx.lineTo(cx, yBot - 8);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // --- compact object ---
-  const grad = ctx.createRadialGradient(cx, starCy - starR * 0.3, starR * 0.1, cx, starCy, starR);
-  grad.addColorStop(0, '#2E6DA4');
-  grad.addColorStop(1, COL.ink);
+  // compact object: the top of a large sphere, B sits on its surface
+  var grad = ctx.createRadialGradient(cx - 40, g.starCy - 90, 10, cx, g.starCy, g.starR);
+  grad.addColorStop(0, '#3B7BB3'); grad.addColorStop(1, COL.ink);
   ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(cx, starCy, starR, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = COL.grey;
-  ctx.font = '15px "DejaVu Sans"';
-  ctx.textAlign = 'center';
-  ctx.fillText('compact object, radius R', cx, starCy + starR + 26);
+  ctx.beginPath(); ctx.arc(cx, g.starCy, g.starR, 0, 2*Math.PI); ctx.fill();
+  stext(ctx, 'compact object,', cx + g.starR + 26, g.yB + 72, COL.grey, 13);
+  stext(ctx, 'mass M, radius R', cx + g.starR + 26, g.yB + 90, COL.grey, 13);
 
-  // --- point B (surface) ---
-  const bx = cx, by = yBot;
-  ctx.fillStyle = COL.brown;
-  ctx.beginPath();
-  ctx.arc(bx, by, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = COL.ink;
-  ctx.font = 'italic 17px "DejaVu Serif"';
-  ctx.textAlign = 'left';
-  ctx.fillText('B', bx + 12, by + 6);
+  // path guide
+  ctx.save(); ctx.strokeStyle = COL.dim; ctx.setLineDash([2, 6]); ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(cx, g.yA + 12); ctx.lineTo(cx, g.yB - 8); ctx.stroke(); ctx.restore();
 
-  // --- point A (far away) ---
-  const ax = cx, ay = yTop;
-  ctx.fillStyle = COL.blue;
-  ctx.beginPath();
-  ctx.arc(ax, ay, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = COL.ink;
-  ctx.font = 'italic 17px "DejaVu Serif"';
-  ctx.textAlign = 'left';
-  ctx.fillText('A  (far away)', ax + 12, ay + 6);
-
-  // --- travelling wave from B to A ---
-  const pathTop = ay + 22, pathBot = by - 14;
-  const pxWaveEmit = W * 0.040;
-  const pxWaveObs = lerp(W * 0.040, W * 0.135, t);
-  const waveAmp = W * 0.028;
-  const nSeg = 220;
-  ctx.lineWidth = 2.6;
-  ctx.beginPath();
-  for (let i = 0; i <= nSeg; i++) {
-    const f = i / nSeg;                 // 0 at B, 1 at A
-    const y = lerp(pathBot, pathTop, f);
-    const localLam = lerp(pxWaveEmit, pxWaveObs, f);
-    const phaseShift = state.phase * Math.PI * 2;
-    const x = cx + Math.sin((y / localLam) * Math.PI * 2 - phaseShift) * waveAmp;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  // crests: wavefronts are spheres about the object's centre, drawn as arcs on the path
+  var r = rd, t = st.t;
+  var kLo = Math.ceil(t*r - 1e-9), kHi = Math.floor((t + TRANSIT)*r + 1e-9);
+  for(var k = kLo; k <= kHi; k++){
+    var f = 1 - (k/r - t)/TRANSIT;               // 0 at B, 1 at A
+    if(f < 0 || f > 1) continue;
+    var y = lerp(g.yB - 6, g.yA + 10, f);
+    var rho = g.starCy - y, half = 46/rho;
+    ctx.save();
+    ctx.strokeStyle = shiftColor(tCol*f);
+    ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+    ctx.globalAlpha = f < 0.04 ? f/0.04 : (f > 0.97 ? (1 - f)/0.03 : 1);
+    ctx.beginPath(); ctx.arc(cx, g.starCy, rho, -Math.PI/2 - half, -Math.PI/2 + half); ctx.stroke();
+    ctx.restore();
   }
-  // colour the stroke with a gradient along its own path (blue near B -> shifted colour near A)
-  const wgrad = ctx.createLinearGradient(0, pathBot, 0, pathTop);
-  wgrad.addColorStop(0, COL.blue);
-  wgrad.addColorStop(1, shiftColor(t));
-  ctx.strokeStyle = wgrad;
-  ctx.stroke();
 
-  // --- clock faces ---
-  drawClock(ctx, ax + W * 0.30, ay + 8, 34, state.phase, COL.blue, 'A');
-  drawClock(ctx, bx + W * 0.30, by - 8, 34, state.phase * p.tauExact, COL.brown, 'B');
+  // emission / arrival flashes
+  flash(ctx, cx, g.yB, st.flashB, COL.blue);
+  flash(ctx, cx, g.yA, st.flashA, shiftColor(tCol));
 
-  ctx.restore();
+  // points A and B
+  dotLabel(ctx, cx, g.yA, COL.blue, 'A');
+  stext(ctx, 'far away', cx - 60, g.yA + 5, COL.grey, 13, 'right');
+  dotLabel(ctx, cx, g.yB, COL.brown, 'B');
+  stext(ctx, 'on the surface', cx - 60, g.yB + 5, COL.grey, 13, 'right');
+
+  // clocks: hands driven by each clock's own proper time (12 ticks per revolution)
+  var clx = 470;
+  drawClock(ctx, clx, g.yA + 4, 40, st.t, COL.blue, st.tickA);
+  drawClock(ctx, clx, g.yB - 8, 40, (st.t + TRANSIT)*rd, COL.brown, st.tickB);
+  var wA = mtext(ctx, clx - 26, g.yA + 70, 'τ', 'A', null, 15, COL.ink);
+  stext(ctx, ' = ' + st.t.toFixed(1), clx - 26 + wA + 1, g.yA + 70, COL.ink, 13);
+  var wB = mtext(ctx, clx - 26, g.yB + 58, 'τ', 'B', null, 15, COL.ink);
+  stext(ctx, ' = ' + ((st.t + TRANSIT)*rd).toFixed(1), clx - 26 + wB + 1, g.yB + 58, COL.ink, 13);
+
+  // annotation between the clocks
+  stext(ctx, 'equal coordinate time between', clx, (g.yA + g.yB)/2 - 8, COL.grey, 12.5, 'center');
+  stext(ctx, 'crests, all the way up', clx, (g.yA + g.yB)/2 + 9, COL.grey, 12.5, 'center');
 }
 
-function drawClock(ctx, cx, cy, r, phaseFraction, color, label) {
+function flash(ctx, x, y, a, col){
+  if(a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a*0.55; ctx.strokeStyle = col; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, 8 + (1 - a)*18, 0, 2*Math.PI); ctx.stroke(); ctx.restore();
+}
+function dotLabel(ctx, x, y, col, lab, dy){
+  ctx.save(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 6, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
+  mtext(ctx, x - 52, y + (dy || 6), lab, null, null, 17, COL.ink);
+}
+function drawClock(ctx, cx, cy, r, ticks, color, pulse){
   ctx.save();
-  ctx.lineWidth = 2.2;
-  ctx.strokeStyle = color;
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  // tick marks
-  ctx.strokeStyle = COL.dim;
-  ctx.lineWidth = 1.2;
-  for (let k = 0; k < 12; k++) {
-    const a = (k / 12) * Math.PI * 2;
+  if(pulse > 0){
+    ctx.globalAlpha = pulse*0.35; ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(cx, cy, r + 7, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  ctx.lineWidth = 2.2; ctx.strokeStyle = color; ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = COL.dim; ctx.lineWidth = 1.3;
+  for(var k = 0; k < 12; k++){
+    var a = k/12*2*Math.PI;
     ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(a) * (r - 4), cy + Math.sin(a) * (r - 4));
-    ctx.lineTo(cx + Math.cos(a) * (r - 8), cy + Math.sin(a) * (r - 8));
-    ctx.stroke();
+    ctx.moveTo(cx + Math.cos(a)*(r - 4), cy + Math.sin(a)*(r - 4));
+    ctx.lineTo(cx + Math.cos(a)*(r - 9), cy + Math.sin(a)*(r - 9)); ctx.stroke();
   }
-  // hand
-  const ang = (phaseFraction % 1) * Math.PI * 2 - Math.PI / 2;
-  ctx.strokeStyle = COL.ink;
-  ctx.lineWidth = 2.4;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(ang) * (r - 7), cy + Math.sin(ang) * (r - 7));
-  ctx.stroke();
-  ctx.fillStyle = COL.ink;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 2, 0, Math.PI * 2);
-  ctx.fill();
-  // label
-  ctx.fillStyle = color;
-  ctx.font = 'bold 13px "DejaVu Sans"';
-  ctx.textAlign = 'center';
-  ctx.fillText(label, cx, cy + r + 18);
+  var ang = (ticks/12 % 1)*2*Math.PI - Math.PI/2;
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(ang)*(r - 8), cy + Math.sin(ang)*(r - 8)); ctx.stroke();
+  ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(cx, cy, 2.2, 0, 2*Math.PI); ctx.fill();
   ctx.restore();
 }
 
-// ---------- Chart drawing ----------
-const CHI_MIN = 1e-4, CHI_MAX = 0.499;
-function chartX(chi, W, marginL, marginR) {
-  const lo = Math.log10(CHI_MIN), hi = Math.log10(CHI_MAX);
-  const f = (Math.log10(Math.max(chi, CHI_MIN)) - lo) / (hi - lo);
-  return marginL + f * (W - marginL - marginR);
+// ---------- chart ----------
+var CW = 450, CH = 210;
+var CHI_MIN = 1e-4, CHI_MAX = 0.499;
+var CM = {l:48, r:14, t:14, b:46};
+function chartX(chi){
+  var lo = Math.log10(CHI_MIN), hi = Math.log10(CHI_MAX);
+  var f = (Math.log10(Math.max(chi, CHI_MIN)) - lo)/(hi - lo);
+  return CM.l + f*(CW - CM.l - CM.r);
 }
-function chartY(val, H, marginT, marginB) {
-  const f = (val - 0) / (1 - 0);
-  return H - marginB - f * (H - marginT - marginB);
-}
+function chartY(v){ return CH - CM.b - v*(CH - CM.t - CM.b); }
 
-function drawChart(ctx, W, H, state) {
-  ctx.clearRect(0, 0, W, H);
-  const marginL = 46, marginR = 16, marginT = 16, marginB = 34;
+function drawChart(ctx, chi){
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, CW, CH);
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.1;
+  ctx.beginPath(); ctx.moveTo(CM.l, CM.t); ctx.lineTo(CM.l, CH - CM.b); ctx.lineTo(CW - CM.r, CH - CM.b); ctx.stroke();
 
-  // axes
-  ctx.strokeStyle = COL.grey;
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(marginL, marginT); ctx.lineTo(marginL, H - marginB); ctx.lineTo(W - marginR, H - marginB);
-  ctx.stroke();
-
-  ctx.fillStyle = COL.grey;
-  ctx.font = '11px "DejaVu Sans"';
-  ctx.textAlign = 'center';
-  [1e-4, 1e-3, 1e-2, 1e-1].forEach(v => {
-    const x = chartX(v, W, marginL, marginR);
-    ctx.beginPath(); ctx.moveTo(x, H - marginB); ctx.lineTo(x, H - marginB + 4); ctx.strokeStyle = COL.grey; ctx.stroke();
-    ctx.fillText(v.toExponential(0), x, H - marginB + 16);
+  [-4, -3, -2, -1].forEach(function(e){
+    var x = chartX(Math.pow(10, e));
+    ctx.beginPath(); ctx.moveTo(x, CH - CM.b); ctx.lineTo(x, CH - CM.b + 4); ctx.stroke();
+    ctx.save(); ctx.font = '11px ' + SANS; var w10 = ctx.measureText('10').width; ctx.restore();
+    stext(ctx, '10', x - 6, CH - CM.b + 17, COL.grey, 11, 'center');
+    stext(ctx, '−' + (-e), x - 6 + w10/2 + 1, CH - CM.b + 11, COL.grey, 8.5, 'left');
   });
-  ctx.textAlign = 'right';
-  [0, 0.25, 0.5, 0.75, 1.0].forEach(v => {
-    const y = chartY(v, H, marginT, marginB);
-    ctx.beginPath(); ctx.moveTo(marginL - 4, y); ctx.lineTo(marginL, y); ctx.strokeStyle = COL.grey; ctx.stroke();
-    ctx.fillText(v.toFixed(2), marginL - 7, y + 3);
+  [0, 0.25, 0.5, 0.75, 1].forEach(function(v){
+    var y = chartY(v);
+    ctx.beginPath(); ctx.moveTo(CM.l - 4, y); ctx.lineTo(CM.l, y); ctx.stroke();
+    stext(ctx, v.toFixed(2), CM.l - 7, y + 3.5, COL.grey, 11, 'right');
   });
-  ctx.save();
-  ctx.translate(12, H / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.textAlign = 'center';
-  ctx.fillStyle = COL.mute2;
-  ctx.font = '11px "DejaVu Sans"';
-  ctx.fillText('\u03BD\u221E / \u03BD*', 0, 0);
+
+  // axis labels
+  var xm = (CW + CM.l - CM.r)/2 - 60;
+  var w = stext2(ctx, 'compactness ', xm, CH - 8, COL.mute2, 12);
+  w += mtext(ctx, xm + w, CH - 8, 'χ', null, null, 13, COL.mute2);
+  stext(ctx, '(log scale)', xm + w + 6, CH - 8, COL.mute2, 12);
+  ctx.save(); ctx.translate(14, CH/2 + 22); ctx.rotate(-Math.PI/2);
+  var wv = mtext(ctx, 0, 0, 'ν', '∞', null, 13, COL.mute2);
+  wv += stext2(ctx, ' / ', wv, 0, COL.mute2, 12);
+  mtext(ctx, wv, 0, 'ν', '*', null, 13, COL.mute2);
   ctx.restore();
-  ctx.textAlign = 'center';
-  ctx.fillStyle = COL.mute2;
-  ctx.fillText('compactness \u03C7 = GM/Rc\u00B2  (log scale)', (W + marginL - marginR) / 2, H - 6);
 
-  // weak-field curve (dashed)
-  ctx.beginPath();
-  ctx.setLineDash([5, 4]);
-  ctx.strokeStyle = COL.grey;
-  ctx.lineWidth = 2;
-  for (let i = 0; i <= 200; i++) {
-    const chi = Math.pow(10, lerp(Math.log10(CHI_MIN), Math.log10(CHI_MAX), i / 200));
-    const x = chartX(chi, W, marginL, marginR);
-    const y = chartY(1 - chi, H, marginT, marginB);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  function curve(fn, col, lw, dash){
+    ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    for(var i = 0; i <= 200; i++){
+      var c = Math.pow(10, lerp(Math.log10(CHI_MIN), Math.log10(CHI_MAX), i/200));
+      var x = chartX(c), y = chartY(fn(c));
+      if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke(); ctx.restore();
   }
-  ctx.stroke();
-  ctx.setLineDash([]);
+  curve(function(c){ return 1 - c; }, COL.grey, 1.8, [5, 4]);
+  curve(function(c){ return Math.sqrt(Math.max(1 - 2*c, 0)); }, COL.blued, 2.3);
 
-  // exact curve (solid)
-  ctx.beginPath();
-  ctx.strokeStyle = COL.blued;
-  ctx.lineWidth = 2.4;
-  for (let i = 0; i <= 200; i++) {
-    const chi = Math.pow(10, lerp(Math.log10(CHI_MIN), Math.log10(CHI_MAX), i / 200));
-    const x = chartX(chi, W, marginL, marginR);
-    const y = chartY(Math.sqrt(Math.max(1 - 2 * chi, 0)), H, marginT, marginB);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // current-chi marker
-  const chiClamped = Math.min(Math.max(state.chi, CHI_MIN), CHI_MAX);
-  const mx = chartX(chiClamped, W, marginL, marginR);
-  ctx.strokeStyle = COL.brown;
-  ctx.setLineDash([3, 3]);
-  ctx.lineWidth = 1.4;
-  ctx.beginPath(); ctx.moveTo(mx, marginT); ctx.lineTo(mx, H - marginB); ctx.stroke();
-  ctx.setLineDash([]);
-
-  const yExact = chartY(Math.sqrt(Math.max(1 - 2 * chiClamped, 0)), H, marginT, marginB);
-  const yWeak = chartY(1 - chiClamped, H, marginT, marginB);
-  ctx.fillStyle = COL.blued;
-  ctx.beginPath(); ctx.arc(mx, yExact, 4.2, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = COL.grey;
-  ctx.beginPath(); ctx.arc(mx, yWeak, 4.2, 0, Math.PI * 2); ctx.fill();
+  var cc = Math.min(Math.max(chi, CHI_MIN), CHI_MAX), mx = chartX(cc);
+  ctx.save(); ctx.strokeStyle = COL.brown; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(mx, CM.t); ctx.lineTo(mx, CH - CM.b); ctx.stroke(); ctx.restore();
+  ctx.fillStyle = COL.blued; ctx.beginPath(); ctx.arc(mx, chartY(Math.sqrt(Math.max(1 - 2*cc, 0))), 4, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = COL.grey; ctx.beginPath(); ctx.arc(mx, chartY(1 - cc), 4, 0, 2*Math.PI); ctx.fill();
+  if(chi < CHI_MIN) stext(ctx, '← current χ is off the left edge', CM.l + 8, CM.t + 12, COL.brown, 11);
+}
+function stext2(ctx, s, x, y, col, size){
+  stext(ctx, s, x, y, col, size);
+  ctx.save(); ctx.font = size + 'px ' + SANS; var w = ctx.measureText(s).width; ctx.restore(); return w;
 }
 
-// ---------- Wiring (skipped in headless verification) ----------
-function initUI() {
-  const PRESETS = [
-    { name: 'Earth (office floors)', chi: 6.960415080041184e-10 },
-    { name: 'White dwarf', chi: 0.0002320454018489533 },
-    { name: 'Neutron star', chi: 0.18901152732423832 },
-    { name: 'Near horizon', chi: 0.499 }
+// ---------- wiring ----------
+function initUI(){
+  var PRESETS = [
+    {name:'Earth', chi:6.960415080041184e-10},
+    {name:'White dwarf', chi:0.0002320454018489533},
+    {name:'Neutron star', chi:0.18901152732423832},
+    {name:'Near horizon', chi:0.499}
   ];
+  var LAMBDA = 500;
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const state = { chi: PRESETS[1].chi, lambdaEmit: 500, phase: 0 };
+  var st = {chi:PRESETS[1].chi, t:0, exaggerate:true, disp:null, playing:!reduceMotion,
+            flashA:0, flashB:0, tickA:0, tickB:0};
+  st.disp = displayRatio(st.chi, st.exaggerate);
 
-  const sceneCanvas = document.getElementById('scene');
-  const chartCanvas = document.getElementById('chart');
-  const sceneCtx = sceneCanvas.getContext('2d');
-  const chartCtx = chartCanvas.getContext('2d');
+  var sceneCtx = hidpi(document.getElementById('scene'), SW, SH);
+  var chartCtx = hidpi(document.getElementById('chart'), CW, CH);
+  var slider = document.getElementById('chiSlider');
+  var presetsDiv = document.getElementById('presets');
+  var playBtn = document.getElementById('play');
 
-  const slider = document.getElementById('chiSlider');
-  const chiValLabel = document.getElementById('chiValLabel');
-  const presetsDiv = document.getElementById('presets');
+  var LOG_MIN = Math.log10(1e-9), LOG_MAX = Math.log10(0.499);
+  function chiToSlider(chi){ return Math.round((Math.log10(chi) - LOG_MIN)/(LOG_MAX - LOG_MIN)*1000); }
+  function sliderToChi(v){ return Math.pow(10, lerp(LOG_MIN, LOG_MAX, v/1000)); }
 
-  const LOG_MIN = Math.log10(1e-9), LOG_MAX = Math.log10(0.499);
-  function chiToSlider(chi) {
-    const f = (Math.log10(chi) - LOG_MIN) / (LOG_MAX - LOG_MIN);
-    return Math.round(f * 1000);
-  }
-  function sliderToChi(v) {
-    const f = v / 1000;
-    return Math.pow(10, lerp(LOG_MIN, LOG_MAX, f));
-  }
-
-  let activeBtn = null;
-  PRESETS.forEach(pr => {
-    const b = document.createElement('button');
-    b.className = 'preset';
-    b.textContent = pr.name;
-    b.onclick = () => {
-      state.chi = pr.chi;
-      slider.value = chiToSlider(pr.chi);
-      if (activeBtn) activeBtn.classList.remove('active');
-      b.classList.add('active');
-      activeBtn = b;
-      updateReadouts();
+  var buttons = [];
+  PRESETS.forEach(function(pr){
+    var b = document.createElement('button');
+    b.className = 'btn'; b.textContent = pr.name;
+    b.onclick = function(){
+      st.chi = pr.chi; slider.value = chiToSlider(pr.chi);
+      setActive(b); restart(); updateReadouts();
     };
-    presetsDiv.appendChild(b);
-    if (pr === PRESETS[1]) { activeBtn = b; b.classList.add('active'); }
+    presetsDiv.appendChild(b); buttons.push({b:b, chi:pr.chi});
   });
+  function setActive(btn){ buttons.forEach(function(o){ o.b.classList.toggle('primary', o.b === btn); }); }
+  setActive(buttons[1].b);
 
-  slider.value = chiToSlider(state.chi);
-  slider.addEventListener('input', () => {
-    state.chi = sliderToChi(+slider.value);
-    if (activeBtn) activeBtn.classList.remove('active');
-    activeBtn = null;
-    updateReadouts();
+  slider.value = chiToSlider(st.chi);
+  slider.addEventListener('input', function(){
+    st.chi = sliderToChi(+slider.value); setActive(null); restart(); updateReadouts();
   });
+  document.getElementById('exag').addEventListener('change', function(e){
+    st.exaggerate = e.target.checked; restart(); updateReadouts();
+  });
+  document.getElementById('restart').addEventListener('click', function(){ restart(); redraw(); });
+  playBtn.addEventListener('click', function(){
+    st.playing = !st.playing; setPlayLabel();
+    if(st.playing){ last = null; requestAnimationFrame(frame); }
+  });
+  function setPlayLabel(){ playBtn.innerHTML = st.playing ? '&#10074;&#10074;&nbsp; Pause' : '&#9654;&nbsp; Play'; }
 
-  function fmt(x, d = 6) {
-    if (Math.abs(x) < 1e-3 || Math.abs(x) >= 1e5) return x.toExponential(3);
-    return x.toFixed(d);
+  function restart(){
+    st.disp = displayRatio(st.chi, st.exaggerate);
+    st.t = 0; st.flashA = st.flashB = st.tickA = st.tickB = 0;
+    prevN = 0; prevM = 0; prevE = Math.floor(TRANSIT*st.disp.rd + 1e-9);
+    updateCounts(); redraw();
   }
 
-  function updateReadouts() {
-    const p = physics(state.chi, state.lambdaEmit);
-    document.getElementById('rChi').textContent = state.chi.toExponential(3);
-    document.getElementById('rNuExact').textContent = fmt(p.exactFactor, 6);
-    document.getElementById('rNuWeak').textContent = fmt(p.weakFactor, 6);
-    document.getElementById('rTauExact').textContent = fmt(1 / p.tauExact, 6);
-    document.getElementById('rTauWeak').textContent = fmt(p.tauWeakInv, 6);
-    document.getElementById('rLamEmit').textContent = state.lambdaEmit.toFixed(1) + ' nm';
-    document.getElementById('rLamObs').textContent = p.lamObsExact.toFixed(4) + ' nm';
+  function fmt(x, d){ if(Math.abs(x) < 1e-3 || Math.abs(x) >= 1e5) return x.toExponential(3); return x.toFixed(d); }
+  function fmtInt(n){ return Math.round(n).toLocaleString('en-US'); }
 
-    const callout = document.getElementById('callout');
-    if (Math.abs(state.chi - 0.0002320454018489533) < 1e-9) {
-      callout.innerHTML = 'M \u2243 M\u2609, R \u2243 R\u2295 \u2014 matches the white-dwarf example in Step 18 (\u03BB<sub>emit</sub> \u2243 479.9 nm for \u03BB<sub>obs</sub> = 480 nm).';
-    } else if (state.chi < 1e-6) {
-      callout.textContent = 'At Earth\u2019s compactness the clocks and the wave colour are visually indistinguishable \u2014 exactly the point of "a deliberately small effect." The numbers above are exact.';
-    } else if (state.chi > 0.3) {
-      callout.textContent = 'Close to \u03C7 = 0.5 (the Schwarzschild horizon) the exact and weak-field curves are far apart \u2014 the weak-field formula is no longer usable here.';
+  function updateReadouts(){
+    var p = physics(st.chi, LAMBDA), D = st.disp;
+    document.getElementById('rChi').textContent = st.chi.toExponential(3);
+    // write sqrt(1-2chi) as 1 - deficit when the deficit is tiny, so the digits are honest
+    document.getElementById('rNuExact').textContent = D.d < 1e-4 ? '1 − ' + D.d.toExponential(3) : fmt(p.exactFactor, 6);
+    document.getElementById('rNuWeak').textContent = st.chi < 1e-4 ? '1 − ' + st.chi.toExponential(3) : fmt(p.weakFactor, 6);
+    document.getElementById('rTauExact').textContent = D.d < 1e-4 ? '1 + ' + (D.d/(1 - D.d)).toExponential(3) : fmt(1/p.exactFactor, 6);
+    document.getElementById('rTauWeak').textContent = st.chi < 1e-4 ? '1 + ' + st.chi.toExponential(3) : fmt(p.tauWeakInv, 6);
+    document.getElementById('rLamObs').textContent = p.lamObsExact < 1e5 ? p.lamObsExact.toFixed(4) + ' nm' : p.lamObsExact.toExponential(3) + ' nm';
+    document.getElementById('chiValLabel').textContent = st.chi.toExponential(3);
+
+    var callout = document.getElementById('callout');
+    if(Math.abs(st.chi - 0.0002320454018489533) < 1e-9){
+      callout.innerHTML = 'M &asymp; M<sub>&#9737;</sub>, R &asymp; R<sub>&#8853;</sub> &mdash; the white-dwarf example in Step 18 (&lambda;<sub>emit</sub> &asymp; 479.9 nm for &lambda;<sub>obs</sub> = 480 nm).';
+    } else if(st.chi < 1e-6){
+      callout.textContent = 'At Earth’s compactness the effect is a deliberately small one: about one crest in a billion goes missing. The numbers above are exact.';
+    } else if(st.chi > 0.3){
+      callout.textContent = 'Close to χ = 0.5 (the Schwarzschild horizon) the exact and weak-field curves are far apart — the weak-field formula is no longer usable here.';
     } else {
       callout.textContent = '';
     }
-    chiValLabel.textContent = '\u03C7 = ' + state.chi.toExponential(3);
+
+    var note = document.getElementById('exagNote');
+    var every = 1/D.d;
+    var everyTxt = every < 1e6 ? fmtInt(every) : every.toExponential(1).replace('e+', ' × 10^');
+    if(D.ex){
+      note.className = 'exag on';
+      note.innerHTML = '<b>Animation exaggerated.</b> Clock B is animated at ' + D.rd.toFixed(3) +
+        ' of clock A&rsquo;s rate; the true ratio &radic;(1&minus;2&chi;) is 1 &minus; ' + D.d.toExponential(2) +
+        ', so one crest goes missing every ' + everyTxt + ' ticks of A. The table is exact.';
+    } else if(D.d >= EX_MAX){
+      note.className = 'exag lit';
+      note.innerHTML = '<b>Animation literal.</b> Clock B really runs at ' + D.r.toFixed(3) +
+        ' of clock A&rsquo;s rate here, and the count converges to exactly that.';
+    } else {
+      note.className = 'exag lit';
+      note.innerHTML = '<b>Animation literal.</b> Clock B runs at 1 &minus; ' + D.d.toExponential(2) +
+        ' of clock A&rsquo;s rate: one crest goes missing every ' + everyTxt + ' ticks of A, too few to see here.';
+    }
+    redraw();
   }
 
-  function frame() {
-    state.phase = (state.phase + 0.004) % 1;
-    drawScene(sceneCtx, sceneCanvas.width, sceneCanvas.height, state);
-    drawChart(chartCtx, chartCanvas.width, chartCanvas.height, state);
+  var prevN = 0, prevM = 0, prevE = 0;
+  function updateCounts(){
+    var c = counts(st.t, st.disp.rd);
+    var e = Math.floor((st.t + TRANSIT)*st.disp.rd + 1e-9);        // crests emitted = B's ticks
+    if(c.N > prevN){ st.tickA = 1; }
+    if(c.M > prevM){ st.flashA = 1; }
+    if(e > prevE){ st.tickB = 1; st.flashB = 1; }
+    prevN = c.N; prevM = c.M; prevE = e;
+    document.getElementById('cN').textContent = c.N;
+    document.getElementById('cM').textContent = c.M;
+    document.getElementById('cR').textContent = c.N > 0 ? (c.M/c.N).toFixed(3) : '—';
+  }
+
+  function redraw(){ drawScene(sceneCtx, st); drawChart(chartCtx, st.chi); }
+
+  var RATE = 1.6;                    // coordinate-time units (ticks of A) per real second
+  var last = null;
+  function frame(now){
+    if(!st.playing) return;
+    if(last !== null){
+      var dt = Math.min(0.1, (now - last)/1000);
+      st.t += RATE*dt;
+      var decay = Math.exp(-dt*4);
+      st.flashA *= decay; st.flashB *= decay; st.tickA *= decay; st.tickB *= decay;
+      updateCounts();
+    }
+    last = now;
+    redraw();
     requestAnimationFrame(frame);
   }
 
-  updateReadouts();
-  requestAnimationFrame(frame);
+  setPlayLabel();
+  restart(); updateReadouts();
+  if(reduceMotion){ st.t = 2.5; updateCounts(); redraw(); }
+  if(st.playing) requestAnimationFrame(frame);
+
+  window.__demo = {st:st, displayRatio:displayRatio, counts:counts, rateDeficit:rateDeficit};
 }
 
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+if(typeof window !== 'undefined' && typeof document !== 'undefined'){
   window.addEventListener('DOMContentLoaded', initUI);
 }
 </script>

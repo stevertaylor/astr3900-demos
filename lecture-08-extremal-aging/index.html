@@ -25,17 +25,29 @@ main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding
 @media (max-width:980px){ main{grid-template-columns:1fr} }
 
 .canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
-.canvasWrap canvas{width:100%;height:auto;aspect-ratio:1100/1040;display:block;touch-action:none}
+.canvasWrap canvas{width:100%;height:auto;aspect-ratio:740/562;display:block;touch-action:none}
 
-aside{display:flex;flex-direction:column;gap:12px}
+aside,.col{display:flex;flex-direction:column;gap:12px}
+.metric{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.metric .eq{margin:0;font-size:15px;white-space:nowrap}
 .panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:14px 16px}
 .panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 10px;color:var(--ink)}
+
+/* ---- component kit (STYLE_GUIDE.md §14.1) ---- */
+.btn{font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:8px 14px;border-radius:8px;border:1px solid var(--blued);background:#fff;color:var(--blued);cursor:pointer}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0 0}
 .ctl{margin:0 0 12px}
 .ctl:last-child{margin-bottom:0}
-.ctl label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 4px}
+.ctl label{display:block;font-size:12.5px;color:var(--mute2)}
 .ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
-          font-size:12px;color:var(--ink)}
-input[type=range]{width:100%;accent-color:var(--blue)}
+  font-size:12.5px;color:var(--blue)}
+input[type=checkbox]{accent-color:var(--blue)}
 
 .readout{display:table;width:100%;border-collapse:collapse}
 .readout .r{display:table-row}
@@ -45,12 +57,11 @@ input[type=range]{width:100%;accent-color:var(--blue)}
             font-size:12.5px;color:var(--ink);text-align:right;white-space:nowrap}
 .readout .v.good{color:var(--green)}
 .readout .v.warn{color:var(--brown)}
+.readout .v.gain{color:var(--blue)}
+.readout .v.loss{color:var(--brown)}
 
-button{font:inherit;font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer;
-       border:1px solid var(--blued);background:#fff;color:var(--blued);width:100%}
-button:hover{background:var(--panel)}
 .chk{font-size:12.5px;color:var(--mute2);display:block;margin-top:10px}
-.chk input{accent-color:var(--blue);margin-right:6px;vertical-align:-1px}
+.chk input{margin-right:6px;vertical-align:-1px}
 
 .note{font-size:12.5px;line-height:1.55;color:var(--grey);margin:0}
 .note b{color:var(--mute2);font-weight:600}
@@ -74,8 +85,16 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
   </header>
 
   <main>
+    <div class="col">
     <div class="canvasWrap">
-      <canvas id="c" width="1100" height="1040"></canvas>
+      <canvas id="c" width="740" height="562"></canvas>
+    </div>
+      <div class="panel metric">
+        <div class="eq">ds&sup2; = &minus;(1 + 2gz/c&sup2;) c&sup2;dt&sup2; + dz&sup2;</div>
+        <p class="note">The weak-field metric from Lecture 5. Height runs your clock
+          <b>faster</b> (the gz term); the speed needed to get there runs it <b>slower</b>
+          (the &zdot;&sup2; term). The geodesic is the best compromise &mdash; the Newtonian parabola.</p>
+      </div>
     </div>
 
     <aside>
@@ -89,7 +108,8 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
           <label>Extra wiggle <span class="val" id="va">—</span></label>
           <input type="range" id="sa" min="-0.8" max="0.8" step="0.005" value="0">
         </div>
-        <button id="snap">Snap to the geodesic</button>
+        <p class="note">Or drag the two handles on the world line, or the dot on the aging curve.</p>
+        <div class="btnrow"><button class="btn primary" id="snap">Snap to the geodesic</button></div>
         <label class="chk"><input type="checkbox" id="ts"> Draw the height axis at true scale</label>
       </div>
 
@@ -109,6 +129,8 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
         <h2>Readout</h2>
         <div class="readout">
           <div class="r"><span class="k">extra aging, this path</span><span class="v" id="rdt">—</span></div>
+          <div class="r"><span class="k">&nbsp;&nbsp;height gain &int; gz/c<sup>2</sup> dt</span><span class="v gain" id="rgain">—</span></div>
+          <div class="r"><span class="k">&nbsp;&nbsp;speed loss &int; &zdot;<sup>2</sup>/2c<sup>2</sup> dt</span><span class="v loss" id="rloss">—</span></div>
           <div class="r"><span class="k">extra aging, geodesic</span><span class="v" id="rdtg">—</span></div>
           <div class="r"><span class="k">geodesic apex height</span><span class="v" id="rhg">—</span></div>
           <div class="r"><span class="k">max &#8214;&nabla;<sub>U</sub>U&#8214;</span><span class="v" id="rres">—</span></div>
@@ -116,14 +138,6 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
         </div>
       </div>
 
-      <div class="panel">
-        <h2>The metric</h2>
-        <div class="eq">ds&sup2; = &minus;(1 + 2gz/c&sup2;) c&sup2;dt&sup2; + dz&sup2;</div>
-        <p class="note">The weak-field metric from Lecture 5. Aging is a competition:
-          climbing higher runs your clock <b>faster</b> (the gz term), but you must move faster to
-          get there, which runs it <b>slower</b> (the &#380;&sup2; term). The geodesic is the
-          compromise — and it is the ordinary Newtonian parabola.</p>
-      </div>
     </aside>
   </main>
 
@@ -135,9 +149,23 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
 </div>
 <script>
 (function(){
-  var C_LIGHT = 299792458;
+  "use strict";
+  var C_LIGHT = 299792458, C2 = C_LIGHT*C_LIGHT;
+  var W = 740, H = 562;                       // logical canvas size
   var cv = document.getElementById('c');
-  var ctx = cv.getContext('2d');
+
+  // Backing store = logical size x devicePixelRatio; draw in logical units.
+  function hidpi(cv, W, H){
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    var ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+  }
+  var ctx = hidpi(cv, W, H), lastDpr = window.devicePixelRatio || 1;
+
+  var COL = { ink:'#15243C', blue:'#0F6E93', blued:'#2E6DA4', brown:'#8A5A18', grey:'#5A6B7B',
+              mute2:'#33465C', dim:'#C4CBD8', green:'#2E7D57', red:'#A43B34' };
 
   var st = { hf:0.45, af:0.0, g:9.81, T:2.0, trueScale:false };
 
@@ -156,15 +184,23 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
   function excess(x){ return x/(1+Math.sqrt(1+x)); }
   function xOf(u,h,a,T,g){
     var z = zOf(u,h,a), zd = zdOf(u,h,a,T);
-    return (2*g*z - zd*zd)/(C_LIGHT*C_LIGHT);
+    return (2*g*z - zd*zd)/C2;
   }
-  function dTau(h,a,T,g){                       // Simpson on u in [0,1]
-    var N = 600, s = 0;
-    for(var i=0;i<=N;i++){
-      var u = i/N, w = (i===0||i===N)?1:(i%2?4:2);
-      s += w*excess(xOf(u,h,a,T,g));
-    }
-    return s*(1/(3*N))*T;                       // dt = T du
+  function simpson(f,N){                         // integral of f(u) on [0,1]
+    var s = 0;
+    for(var i=0;i<=N;i++){ var w = (i===0||i===N)?1:(i%2?4:2); s += w*f(i/N); }
+    return s/(3*N);
+  }
+  function dTau(h,a,T,g){
+    return T*simpson(function(u){ return excess(xOf(u,h,a,T,g)); }, 600);
+  }
+
+  // The two competing first-order terms of dtau/dt - 1 = g z/c^2 - zdot^2/(2c^2).
+  function gainRate(u,h,a,T,g){ return g*zOf(u,h,a)/C2; }
+  function lossRate(u,h,a,T,g){ var zd = zdOf(u,h,a,T); return -zd*zd/(2*C2); }
+  function terms(h,a,T,g){
+    return { gain: T*simpson(function(u){ return gainRate(u,h,a,T,g); }, 600),
+             loss: T*simpson(function(u){ return lossRate(u,h,a,T,g); }, 600) };
   }
 
   // numeric maximum over h (golden section) -- honest about the full metric
@@ -179,20 +215,19 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
     return 0.5*(lo+hi);
   }
 
-  // ---- || nabla_U U ||: the proper acceleration of the trial world line -
-  // Gamma^z_tt = g/c^2 for this metric, so the spatial geodesic equation is
-  // d2z/dtau2 + g (dt/dtau)^2 = 0.  Nonzero residual = the rocket thrust the
-  // ball would need to follow this path.
+  // ---- nabla_U U: the proper acceleration the trial world line needs ----
+  // Gamma^z_tt = g for this metric (coordinate t), so the spatial geodesic
+  // equation is d2z/dtau2 + g (dt/dtau)^2 = 0.  A nonzero residual is the
+  // rocket thrust (per unit mass) needed to follow the path; sign = +z is up.
+  function residualAt(u,h,a,T,g){
+    var z=zOf(u,h,a), zd=zdOf(u,h,a,T), zdd=zddOf(u,h,a,T);
+    var x=(2*g*z - zd*zd)/C2, L=Math.sqrt(1+x);
+    var Ldot = zd*(g - zdd)/(L*C2);
+    return (zdd*L - zd*Ldot)/(L*L*L) + g/(L*L);
+  }
   function maxResidual(h,a,T,g){
     var N = 400, m = 0;
-    for(var i=0;i<=N;i++){
-      var u=i/N;
-      var z=zOf(u,h,a), zd=zdOf(u,h,a,T), zdd=zddOf(u,h,a,T);
-      var x=(2*g*z - zd*zd)/(C_LIGHT*C_LIGHT), L=Math.sqrt(1+x);
-      var Ldot = zd*(g - zdd)/(L*C_LIGHT*C_LIGHT);
-      var R = (zdd*L - zd*Ldot)/(L*L*L) + g/(L*L);
-      if(Math.abs(R)>m) m=Math.abs(R);
-    }
+    for(var i=0;i<=N;i++){ var R = Math.abs(residualAt(i/N,h,a,T,g)); if(R>m) m=R; }
     return m;
   }
 
@@ -211,203 +246,13 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
     if(a<1000) return m.toFixed(2)+' m';
     return (m/1000).toFixed(2)+' km';
   }
-
-  // ---- drawing ---------------------------------------------------------
-  var PAD={l:96,r:38,t:34,b:58};
-  var PANEL_A={y0:8,  y1:632};
-  var PANEL_B={y0:690,y1:1032};
-
-  function line(x0,y0,x1,y1,col,w,dash){
-    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=w||1;
-    ctx.setLineDash(dash||[]); ctx.beginPath();
-    ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke(); ctx.restore();
-  }
-  function text(s,x,y,col,size,align,baseline,ital){
-    ctx.save(); ctx.fillStyle=col;
-    ctx.font=(ital?'italic ':'')+size+'px -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
-    ctx.textAlign=align||'left'; ctx.textBaseline=baseline||'alphabetic';
-    ctx.fillText(s,x,y); ctx.restore();
-  }
-
-  function draw(){
-    var g=st.g, T=st.T;
-    var hg = hGeodesic(st.af*hGeoApprox(), T, g);
-    var h  = st.hf*hGeoApprox();
-    var a  = st.af*hGeoApprox();
-
-    var dt  = dTau(h,a,T,g);
-    var dtg = dTau(hg,0,T,g);
-    var res = maxResidual(h,a,T,g);
-
-    ctx.clearRect(0,0,cv.width,cv.height);
-
-    // ============================ PANEL A: spacetime diagram ============
-    var Ax0=PAD.l, Ax1=cv.width-PAD.r, Ay0=PANEL_A.y0+PAD.t, Ay1=PANEL_A.y1-PAD.b;
-
-    // z window fixed from the slider CLAMPS, not from the current values, so
-    // nothing can ever be clipped by moving a control.
-    var hgA = hGeoApprox();
-    var zHi = 2.5*hgA + 0.8*hgA;      // h at max + wiggle at max
-    var zLo = -0.8*hgA;               // h at 0, wiggle fully negative
-    var pad = 0.08*(zHi-zLo);
-    zHi+=pad; zLo-=pad;
-
-    var pxPerM, zc;
-    var ctSpan = C_LIGHT*T;                       // metres of ct across the plot
-    var pxPerCt = (Ay1-Ay0)/ctSpan;               // px per metre of ct
-    var pxPerMExag = (Ax1-Ax0)/(zHi-zLo);         // the exaggerated-view scale
-    if(st.trueScale){
-      pxPerM = pxPerCt; zc = (Ax0+Ax1)/2;
-    } else {
-      pxPerM = pxPerMExag; zc = Ax0 - zLo*pxPerM;
-    }
-    var mag = pxPerM/pxPerCt;                     // 1 in true scale
-    var magExag = pxPerMExag/pxPerCt;             // what the default view uses
-
-    function PX(z){ return zc + z*pxPerM; }
-    function PY(u){ return Ay1 - u*(Ay1-Ay0); }
-
-    text('World line in spacetime', Ax0, PANEL_A.y0+16, '#15243C', 15.5, 'left', 'top');
-
-    // axes
-    line(Ax0-10,Ay1,Ax1,Ay1,'#5A6B7B',1.2);
-    line(PX(0),Ay1+8,PX(0),Ay0-14,'#5A6B7B',1.2);
-    text('height z', (Ax0+Ax1)/2, Ay1+44, '#5A6B7B', 12.5, 'center');
-    ctx.save(); ctx.translate(Ax0-62, (Ay0+Ay1)/2); ctx.rotate(-Math.PI/2);
-    text('time t', 0, 0, '#5A6B7B', 12.5, 'center'); ctx.restore();
-
-    // time ticks
-    var nt=4;
-    for(var i=0;i<=nt;i++){
-      var u=i/nt, y=PY(u);
-      line(PX(0)-6,y,PX(0)+6,y,'#C4CBD8',1);
-      text((u*T).toFixed(2)+' s', Ax0-16, y+4, '#5A6B7B', 11.5, 'right');
-    }
-    // height ticks
-    if(!st.trueScale){
-      var step = niceStep((zHi-zLo)/6);
-      for(var z=Math.ceil(zLo/step)*step; z<=zHi; z+=step){
-        if(Math.abs(z)<1e-12) continue;
-        line(PX(z),Ay1-5,PX(z),Ay1+5,'#C4CBD8',1);
-        text(fmtLen(z), PX(z), Ay1+22, '#5A6B7B', 11, 'center');
-      }
-    }
-
-    // the ball left on the ground (held there -- NOT a geodesic)
-    line(PX(0),Ay0,PX(0),Ay1,'#C4CBD8',5);
-    if(!st.trueScale)
-      text('held on the ground', PX(0)-12, PY(0.62), '#5A6B7B', 11.5, 'right');
-
-    // geodesic (ghost)
-    ctx.save(); ctx.strokeStyle='#0F6E93'; ctx.lineWidth=2.2; ctx.setLineDash([7,5]);
-    ctx.beginPath();
-    for(var i2=0;i2<=300;i2++){ var u2=i2/300, X=PX(zOf(u2,hg,0)), Y=PY(u2);
-      i2?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
-    ctx.stroke(); ctx.restore();
-
-    // trial world line
-    var near = res < 1e-6*Math.max(1,g);
-    ctx.save(); ctx.strokeStyle = near ? '#2E7D57' : '#8A5A18'; ctx.lineWidth=3.2;
-    ctx.beginPath();
-    for(var i3=0;i3<=400;i3++){ var u3=i3/400, X=PX(zOf(u3,h,a)), Y=PY(u3);
-      i3?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
-    ctx.stroke(); ctx.restore();
-
-    // events A and B
-    [[0,'A'],[1,'B']].forEach(function(p){
-      var X=PX(0), Y=PY(p[0]);
-      ctx.save(); ctx.fillStyle='#15243C'; ctx.beginPath();
-      ctx.arc(X,Y,5,0,6.2832); ctx.fill(); ctx.restore();
-      text(p[1], X-14, Y+(p[0]?-6:16), '#15243C', 14, 'right');
-    });
-
-    // labels for the two curves (placed off the curves, never on them)
-    if(!st.trueScale){
-      var uL=0.5;
-      text('geodesic', PX(zOf(uL,hg,0))+12, PY(uL)-8, '#0F6E93', 12.5, 'left');
-      text('your path', PX(zOf(0.30,h,a))+12, PY(0.30)+14, near?'#2E7D57':'#8A5A18', 12.5, 'left');
-      text('height axis magnified '+fmtMag(mag)+' \u00d7 relative to ct',
-           Ax1, PANEL_A.y0+16, '#8A5A18', 12, 'right', 'top');
-    } else {
-      text('true scale \u2014 the default view magnifies height '+fmtMag(magExag)+' \u00d7',
-           Ax1, PANEL_A.y0+16, '#8A5A18', 12, 'right', 'top');
-      text('at true scale every world line here is straight to the eye',
-           (Ax0+Ax1)/2, Ay0+30, '#5A6B7B', 13, 'center');
-    }
-
-    // ============================ PANEL B: aging vs apex height =========
-    var Bx0=PAD.l, Bx1=cv.width-PAD.r, By0=PANEL_B.y0+PAD.t, By1=PANEL_B.y1-PAD.b;
-    text('Extra aging vs. apex height', Bx0, PANEL_B.y0+10, '#15243C', 15.5, 'left', 'top');
-
-    var N=140, hs=[], ys=[], ymax=-1e99, ymin=1e99;
-    for(var i4=0;i4<=N;i4++){
-      var hh=(i4/N)*2.65*hgA, yy=dTau(hh,a,T,g);
-      hs.push(hh); ys.push(yy);
-      if(yy>ymax)ymax=yy; if(yy<ymin)ymin=yy;
-    }
-    var span=Math.max(ymax-ymin,1e-30), yTop=ymax+0.15*span, yBot=ymin-0.12*span;
-    function BX(hh){ return Bx0 + (hh/(2.65*hgA))*(Bx1-Bx0); }
-    function BY(yy){ return By1 - ((yy-yBot)/(yTop-yBot))*(By1-By0); }
-
-    line(Bx0,By1,Bx1,By1,'#5A6B7B',1.2);
-    line(Bx0,By1+8,Bx0,By0-12,'#5A6B7B',1.2);
-    text('apex height', (Bx0+Bx1)/2, By1+44, '#5A6B7B', 12.5, 'center');
-    ctx.save(); ctx.translate(Bx0-62,(By0+By1)/2); ctx.rotate(-Math.PI/2);
-    text('extra aging', 0, 0, '#5A6B7B', 12.5, 'center'); ctx.restore();
-
-    if(yBot<0 && yTop>0){
-      line(Bx0,BY(0),Bx1,BY(0),'#C4CBD8',1,[4,4]);
-      text('0', Bx0-12, BY(0)+4, '#5A6B7B', 11, 'right');
-    }
-
-    var hstep=niceStep(2.65*hgA/5);
-    for(var hh2=0; hh2<=2.65*hgA+1e-9; hh2+=hstep){
-      line(BX(hh2),By1-5,BX(hh2),By1+5,'#C4CBD8',1);
-      text(fmtLen(hh2), BX(hh2), By1+22, '#5A6B7B', 11, 'center');
-    }
-    [yBot+0.02*(yTop-yBot), ymax].forEach(function(yy){
-      text(fmtTime(yy), Bx0-12, BY(yy)+4, '#5A6B7B', 11, 'right');
-    });
-
-    ctx.save(); ctx.strokeStyle='#0F6E93'; ctx.lineWidth=2.6; ctx.beginPath();
-    for(var i5=0;i5<=N;i5++){ var X=BX(hs[i5]), Y=BY(ys[i5]); i5?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
-    ctx.stroke(); ctx.restore();
-
-    // maximum
-    line(BX(hg),By1,BX(hg),BY(dTau(hg,a,T,g)),'#0F6E93',1,[3,4]);
-    ctx.save(); ctx.fillStyle='#0F6E93'; ctx.beginPath();
-    ctx.arc(BX(hg),BY(dTau(hg,a,T,g)),5.5,0,6.2832); ctx.fill(); ctx.restore();
-    text('geodesic', Math.min(Math.max(BX(hg), Bx0+38), Bx1-38),
-         BY(dTau(hg,a,T,g))-14, '#0F6E93', 12, 'center');
-
-    // current position
-    ctx.save(); ctx.fillStyle=near?'#2E7D57':'#8A5A18'; ctx.beginPath();
-    ctx.arc(BX(h),BY(dt),6,0,6.2832); ctx.fill(); ctx.restore();
-    var lx=Math.min(Math.max(BX(h), Bx0+42), Bx1-42);
-    var ly=(BY(dt) > By1-46) ? BY(dt)-16 : BY(dt)+26;   // flip up near the floor
-    text('your path', lx, ly, near?'#2E7D57':'#8A5A18', 12, 'center');
-
-    if(Math.abs(a)>1e-12)
-      text('wiggle is on, so every height ages less than it would without it',
-           Bx1, By0-4, '#8A5A18', 11.5, 'right');
-
-    // ---- sidebar readouts ----
-    document.getElementById('vh').textContent  = fmtLen(h);
-    document.getElementById('va').textContent  = fmtLen(a);
-    document.getElementById('vg').textContent  = g.toFixed(2)+' m/s\u00b2';
-    document.getElementById('vT').textContent  = T.toFixed(2)+' s';
-    document.getElementById('rdt').textContent = fmtTime(dt);
-    document.getElementById('rdtg').textContent= fmtTime(dtg);
-    document.getElementById('rhg').textContent = fmtLen(hg);
-    var rr=document.getElementById('rres');
-    rr.textContent = res.toExponential(2)+' m/s\u00b2';
-    rr.className = 'v '+(near?'good':'warn');
-    document.getElementById('rmag').textContent = st.trueScale ? '1 \u00d7 (true)' : fmtMag(mag)+' \u00d7';
-  }
-
   function niceStep(raw){
     var e=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)), f=raw/e;
     return (f<1.5?1:f<3.5?2:f<7.5?5:10)*e;
+  }
+  function niceCeil(v){                          // smallest {1,2,2.5,5,10}x10^n >= v
+    var e=Math.pow(10,Math.floor(Math.log(v)/Math.LN10)), f=v/e;
+    return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;
   }
   function fmtMag(m){
     if(m<1000) return m.toFixed(0);
@@ -415,24 +260,378 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
     return (m/Math.pow(10,ex)).toFixed(1)+'e'+ex;
   }
 
+  // ---- drawing helpers -------------------------------------------------
+  var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+  function line(x0,y0,x1,y1,col,w,dash){
+    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=w||1;
+    ctx.setLineDash(dash||[]); ctx.beginPath();
+    ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke(); ctx.restore();
+  }
+  function text(s,x,y,col,size,align,baseline,ital){
+    ctx.save(); ctx.fillStyle=col;
+    ctx.font=(ital?'italic ':'')+size+'px '+SANS;
+    ctx.textAlign=align||'left'; ctx.textBaseline=baseline||'alphabetic';
+    ctx.fillText(s,x,y); ctx.restore();
+  }
+  // number in scientific form, e.g. "2x10^-16" with a real raised exponent
+  function sciText(v,x,y,col,size,align){
+    ctx.save(); ctx.fillStyle=col; ctx.textBaseline='alphabetic'; ctx.textAlign='left';
+    var base, sup='';
+    if(v===0){ base='0'; }
+    else{
+      var e=Math.floor(Math.log(Math.abs(v))/Math.LN10+1e-9), m=v/Math.pow(10,e);
+      var ms=(Math.abs(m-Math.round(m))<1e-6)?String(Math.round(m)):m.toFixed(1);
+      ms=ms.replace('-','−');
+      base=(ms==='1'?'':ms==='−1'?'−':ms+'×')+'10';
+      sup=String(e).replace('-','−');
+    }
+    var fb=size+'px '+SANS, fs=Math.round(size*0.72)+'px '+SANS;
+    ctx.font=fb; var wb=ctx.measureText(base).width;
+    ctx.font=fs; var ws=sup?ctx.measureText(sup).width+1:0;
+    var x0 = align==='center' ? x-(wb+ws)/2 : align==='right' ? x-wb-ws : x;
+    ctx.font=fb; ctx.fillText(base,x0,y);
+    if(sup){ ctx.font=fs; ctx.fillText(sup,x0+wb+1,y-size*0.42); }
+    ctx.restore();
+  }
+  function hArrow(x,y,len,col){                   // horizontal arrow of signed length
+    if(Math.abs(len)<1.5) return;
+    var s=len>0?1:-1, hd=Math.min(7,Math.abs(len)*0.6);
+    ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+len-s*hd*0.8,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+len,y); ctx.lineTo(x+len-s*hd,y-hd*0.55);
+    ctx.lineTo(x+len-s*hd,y+hd*0.55); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  function handle(x,y,col){
+    ctx.save(); ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,6.5,0,2*Math.PI); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.6; ctx.stroke(); ctx.restore();
+  }
+
+  // ---- layout (logical px; the canvas displays at ~1:1 on a laptop) ------
+  // Panel A: world line (time up, height across).  Strip S: the two rate
+  // terms against the SAME time axis.  Panel B: aging vs apex height.
+  var A = {x0:70, x1:440, y0:0, y1:338, t:66, b:52};
+  var S = {x0:490, x1:730};
+  var B = {x0:70, x1:730, y0:350, y1:560, t:34, b:40};
+  var THRUST_PX = 36;                             // arrow length for thrust = g
+  var geo = {};                                   // current screen positions, for dragging
+
+  function draw(){
+    var g=st.g, T=st.T;
+    var hgA = hGeoApprox();
+    var hg = hGeodesic(st.af*hgA, T, g);
+    var h  = st.hf*hgA;
+    var a  = st.af*hgA;
+
+    var dt  = dTau(h,a,T,g);
+    var dtg = dTau(hg,0,T,g);
+    var res = maxResidual(h,a,T,g);
+    var tm  = terms(h,a,T,g);
+    var near = res < 1e-6*Math.max(1,g);
+    var pathCol = near ? COL.green : COL.brown;
+
+    ctx.clearRect(0,0,W,H);
+
+    // ============================ PANEL A: spacetime diagram ============
+    var Ax0=A.x0, Ax1=A.x1, Ay0=A.y0+A.t, Ay1=A.y1-A.b;
+
+    // z window fixed from the slider CLAMPS, not from the current values, so
+    // nothing can ever be clipped by moving a control.
+    var zHi = 2.5*hgA + 0.8*hgA;      // h at max + wiggle at max
+    var zLo = -0.8*hgA;               // h at 0, wiggle fully negative
+    var pad = 0.06*(zHi-zLo);
+    zHi+=pad; zLo-=pad;
+
+    var pxPerM, zc;
+    var ctSpan = C_LIGHT*T;                       // metres of ct across the plot
+    var pxPerCt = (Ay1-Ay0)/ctSpan;               // px per metre of ct
+    var pxPerMExag = (Ax1-Ax0)/(zHi-zLo);         // the exaggerated-view scale
+    if(st.trueScale){ pxPerM = pxPerCt; zc = (Ax0+Ax1)/2; }
+    else            { pxPerM = pxPerMExag; zc = Ax0 - zLo*pxPerM; }
+    var mag = pxPerM/pxPerCt;                     // 1 in true scale
+    var magExag = pxPerMExag/pxPerCt;             // what the default view uses
+
+    function PX(z){ return zc + z*pxPerM; }
+    function PY(u){ return Ay1 - u*(Ay1-Ay0); }
+
+    text('World line in spacetime', Ax0, A.y0+6, COL.ink, 14.5, 'left', 'top');
+    text(st.trueScale ? 'true scale (default view ×'+fmtMag(magExag)+')'
+                      : 'height ×'+fmtMag(mag)+' relative to ct',
+         Ax1, A.y0+8, COL.brown, 11.5, 'right', 'top');
+    if(near) text('no thrust needed — this world line is a geodesic', Ax0, A.y0+28, COL.green, 11.5, 'left', 'top');
+    else     text('red arrows: thrust needed to follow this path (g = '+THRUST_PX+' px)',
+                  Ax0, A.y0+28, COL.red, 11.5, 'left', 'top');
+
+    // axes
+    line(Ax0-8,Ay1,Ax1,Ay1,COL.grey,1.2);
+    line(PX(0),Ay1+6,PX(0),Ay0-10,COL.grey,1.2);
+    text('height z', (Ax0+Ax1)/2, Ay1+36, COL.grey, 12, 'center');
+    ctx.save(); ctx.translate(Ax0-56, (Ay0+Ay1)/2); ctx.rotate(-Math.PI/2);
+    text('time t', 0, 0, COL.grey, 12, 'center'); ctx.restore();
+
+    // time ticks (shared with the strip)
+    var nt=4, i, u;
+    for(i=0;i<=nt;i++){
+      u=i/nt; var y=PY(u);
+      line(PX(0)-5,y,PX(0)+5,y,COL.dim,1);
+      text((u*T).toFixed(2)+' s', Ax0-12, y+4, COL.grey, 11, 'right');
+    }
+    // height ticks
+    if(!st.trueScale){
+      var step = niceStep((zHi-zLo)/4.5);
+      for(var z=Math.ceil(zLo/step)*step; z<=zHi; z+=step){
+        if(Math.abs(z)<1e-12) continue;
+        line(PX(z),Ay1-4,PX(z),Ay1+4,COL.dim,1);
+        text(fmtLen(z), PX(z), Ay1+18, COL.grey, 11, 'center');
+      }
+    }
+
+    // the ball left on the ground (held there -- NOT a geodesic)
+    line(PX(0),Ay0,PX(0),Ay1,COL.dim,4);
+    if(!st.trueScale) text('held on the ground', PX(0)-10, PY(0.875), COL.grey, 11, 'right', 'middle');
+
+    // geodesic (ghost)
+    ctx.save(); ctx.strokeStyle=COL.blue; ctx.lineWidth=2.2; ctx.setLineDash([7,5]);
+    ctx.beginPath();
+    for(i=0;i<=300;i++){ u=i/300; var X=PX(zOf(u,hg,0)), Y=PY(u); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+    ctx.stroke(); ctx.restore();
+
+    // thrust arrows, drawn under the trial path
+    var thrustSign = 0;
+    if(!near){
+      for(i=1;i<=11;i++){
+        u=i/12;
+        var Ru = residualAt(u,h,a,T,g);
+        if(i===4||i===5) thrustSign += Ru;        // sign near the label position
+        var len = Math.max(-95, Math.min(95, THRUST_PX*Ru/g));
+        hArrow(PX(zOf(u,h,a)), PY(u), len, COL.red);
+      }
+    }
+
+    // trial world line
+    ctx.save(); ctx.strokeStyle = pathCol; ctx.lineWidth=3;
+    ctx.beginPath();
+    for(i=0;i<=400;i++){ u=i/400; var X3=PX(zOf(u,h,a)), Y3=PY(u); i?ctx.lineTo(X3,Y3):ctx.moveTo(X3,Y3); }
+    ctx.stroke(); ctx.restore();
+
+    // events A and B
+    [[0,'A'],[1,'B']].forEach(function(p){
+      var X=PX(0), Y=PY(p[0]);
+      ctx.save(); ctx.fillStyle=COL.ink; ctx.beginPath();
+      ctx.arc(X,Y,4.5,0,2*Math.PI); ctx.fill(); ctx.restore();
+      text(p[1], X-10, Y+(p[0]?0:14), COL.ink, 13, 'right', p[0]?'middle':'alphabetic');
+    });
+
+    // drag handles: apex (u = 1/2, z = h) and wiggle (u = 1/4, z = 3h/4 + a)
+    geo.apex = null; geo.wig = null;
+    if(!st.trueScale){
+      geo.apex = {x:PX(zOf(0.5,h,a)), y:PY(0.5)};
+      geo.wig  = {x:PX(zOf(0.25,h,a)), y:PY(0.25)};
+      handle(geo.apex.x, geo.apex.y, pathCol);
+      handle(geo.wig.x, geo.wig.y, pathCol);
+    }
+    geo.zc = zc; geo.pxPerM = pxPerM; geo.hgA = hgA;
+
+    // curve labels, placed off the curves and on the side away from the arrows
+    if(!st.trueScale){
+      var uG = 0.62, xG = PX(zOf(uG,hg,0));
+      text('geodesic', xG+10, PY(uG), COL.blue, 12, 'left', 'middle');
+      var uL = 0.375, xL = PX(zOf(uL,h,a));   // midway between two arrow rows
+      var leftRoom = xL - PX(0) > 78;
+      if(thrustSign > 0 && leftRoom) text('your path', xL-12, PY(uL), pathCol, 12, 'right', 'middle');
+      else if(thrustSign > 0)        text('your path', Math.max(xL+Math.min(95,THRUST_PX*thrustSign/(2*g)), PX(zOf(uL,hg,0)))+12, PY(uL), pathCol, 12, 'left', 'middle');
+      else                           text('your path', xL+12, PY(uL), pathCol, 12, 'left', 'middle');
+    } else {
+      text('at true scale every world line is straight to the eye',
+           (Ax0+Ax1)/2, Ay0+26, COL.grey, 12, 'center');
+    }
+
+    // ============================ STRIP: the two competing rates =========
+    var Sx0=S.x0, Sx1=S.x1, Sc=(Sx0+Sx1)/2, half=(Sx1-Sx0)/2-6;
+    var NS=200, gs=[], ls=[], M=0;
+    for(i=0;i<=NS;i++){
+      u=i/NS; var gv=gainRate(u,h,a,T,g), lv=lossRate(u,h,a,T,g);
+      gs.push(gv); ls.push(lv);
+      M=Math.max(M,Math.abs(gv),Math.abs(lv),Math.abs(gv+lv));
+    }
+    if(M===0) M=g*hgA/C2;                         // flat path: keep a sensible scale
+    M=niceCeil(M);
+    function SX(v){ return Sc + v/M*half; }
+
+    text('Clock rate along your path', Sx0, A.y0+6, COL.ink, 14.5, 'left', 'top');
+    text('dτ/dt − 1, first order in 1/c²', Sx0, A.y0+28, COL.grey, 11.5, 'left', 'top');
+
+    for(i=0;i<=nt;i++){                           // time guides, level with panel A's ticks
+      line(Sx0,PY(i/nt),Sx1,PY(i/nt),'#EDF0F4',1);
+      line(Sx0-5,PY(i/nt),Sx0,PY(i/nt),COL.dim,1);
+    }
+    function fillTerm(arr,fill,stroke){
+      ctx.save(); ctx.beginPath(); ctx.moveTo(Sc,PY(0));
+      for(var k=0;k<=NS;k++) ctx.lineTo(SX(arr[k]),PY(k/NS));
+      ctx.lineTo(Sc,PY(1)); ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
+      ctx.beginPath();
+      for(k=0;k<=NS;k++){ var x=SX(arr[k]), y=PY(k/NS); k?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+      ctx.strokeStyle=stroke; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore();
+    }
+    fillTerm(gs,'rgba(15,110,147,0.20)',COL.blue);
+    fillTerm(ls,'rgba(138,90,24,0.20)',COL.brown);
+    ctx.save(); ctx.strokeStyle=COL.ink; ctx.lineWidth=2.2; ctx.beginPath();
+    for(i=0;i<=NS;i++){ var xn=SX(gs[i]+ls[i]), yn=PY(i/NS); i?ctx.lineTo(xn,yn):ctx.moveTo(xn,yn); }
+    ctx.stroke(); ctx.restore();
+    var iu=Math.round(0.70*NS);
+    var xnet=SX(gs[iu]+ls[iu]);
+    if(xnet > Sx1-34) text('net', xnet-10, PY(0.70)+10, COL.ink, 12, 'right', 'middle');
+    else              text('net', xnet+10, PY(0.70)+10, COL.ink, 12, 'left', 'middle');
+
+    line(Sc,Ay0-6,Sc,Ay1,COL.grey,1.1);
+    line(Sx0,Ay1,Sx1,Ay1,COL.grey,1.2);
+    [-M,0,M].forEach(function(v){
+      line(SX(v),Ay1-4,SX(v),Ay1+4,COL.grey,1);
+      sciText(v, SX(v), Ay1+18, COL.grey, 11, v<0?'left':v>0?'right':'center');
+    });
+    text('−ż²/2c²', Sx0, Ay1+34, COL.brown, 12, 'left');
+    text('speed slows it', Sx0, Ay1+48, COL.grey, 11, 'left');
+    text('+gz/c²', Sx1, Ay1+34, COL.blue, 12, 'right');
+    text('height speeds it up', Sx1, Ay1+48, COL.grey, 11, 'right');
+
+    // ============================ PANEL B: aging vs apex height =========
+    var Bx0=B.x0, Bx1=B.x1, By0=B.y0+B.t, By1=B.y1-B.b;
+    text('Extra aging vs. apex height', Bx0, B.y0+4, COL.ink, 14.5, 'left', 'top');
+
+    var N=140, hs=[], ys=[], ymax=-1e99, ymin=1e99;
+    for(i=0;i<=N;i++){
+      var hh=(i/N)*2.65*hgA, yy=dTau(hh,a,T,g);
+      hs.push(hh); ys.push(yy);
+      if(yy>ymax)ymax=yy; if(yy<ymin)ymin=yy;
+    }
+    var span=Math.max(ymax-ymin,1e-30), yTop=ymax+0.18*span, yBot=ymin-0.10*span;
+    function BX(hh){ return Bx0 + (hh/(2.65*hgA))*(Bx1-Bx0); }
+    function BY(yy){ return By1 - ((yy-yBot)/(yTop-yBot))*(By1-By0); }
+
+    line(Bx0,By1,Bx1,By1,COL.grey,1.2);
+    line(Bx0,By1+6,Bx0,By0-8,COL.grey,1.2);
+    text('apex height', Bx1, By1+32, COL.grey, 12, 'right');
+
+    if(yBot<0 && yTop>0){
+      line(Bx0,BY(0),Bx1,BY(0),COL.dim,1,[4,4]);
+      text('0', Bx0-8, BY(0)+4, COL.grey, 11, 'right');
+    }
+
+    var hstep=niceStep(2.65*hgA/6);
+    for(var hh2=0; hh2<=2.65*hgA+1e-9; hh2+=hstep){
+      line(BX(hh2),By1-4,BX(hh2),By1+4,COL.dim,1);
+      text(fmtLen(hh2), BX(hh2), By1+17, COL.grey, 11, 'center');
+    }
+    [yBot+0.04*(yTop-yBot), ymax].forEach(function(yy){
+      text(fmtTime(yy), Bx0-8, BY(yy)+4, COL.grey, 11, 'right');
+    });
+
+    ctx.save(); ctx.strokeStyle=COL.blue; ctx.lineWidth=2.4; ctx.beginPath();
+    for(i=0;i<=N;i++){ var X5=BX(hs[i]), Y5=BY(ys[i]); i?ctx.lineTo(X5,Y5):ctx.moveTo(X5,Y5); }
+    ctx.stroke(); ctx.restore();
+
+    var dmax=dTau(hg,a,T,g);
+    line(BX(hg),By1,BX(hg),BY(dmax),COL.blue,1,[3,4]);
+    ctx.save(); ctx.fillStyle=COL.blue; ctx.beginPath();
+    ctx.arc(BX(hg),BY(dmax),5,0,2*Math.PI); ctx.fill(); ctx.restore();
+    text('geodesic', Math.min(Math.max(BX(hg), Bx0+34), Bx1-34), BY(dmax)-11, COL.blue, 12, 'center');
+
+    // current position (draggable)
+    geo.dotB = {x:BX(h), y:BY(dt)};
+    handle(geo.dotB.x, geo.dotB.y, pathCol);
+    var lx=Math.min(Math.max(BX(h), Bx0+40), Bx1-40);
+    var ly=(BY(dt) > By1-40) ? BY(dt)-14 : BY(dt)+22;   // flip up near the floor
+    if(Math.abs(BX(h)-BX(hg))<50) text('your path', BX(h)+12, BY(dt)+18, pathCol, 12, 'left');  // clear of the geodesic marker
+    else text('your path', lx, ly, pathCol, 12, 'center');
+    geo.B = {x0:Bx0, x1:Bx1, y0:By0-10, y1:By1+6, hMax:2.65*hgA};
+
+    if(Math.abs(a)>1e-12)
+      text('wiggle is on, so every height ages less than without it',
+           Bx1, B.y0+4, COL.brown, 11.5, 'right', 'top');
+
+    // ---- sidebar readouts ----
+    document.getElementById('vh').textContent  = fmtLen(h);
+    document.getElementById('va').textContent  = fmtLen(a);
+    document.getElementById('vg').textContent  = g.toFixed(2)+' m/s²';
+    document.getElementById('vT').textContent  = T.toFixed(2)+' s';
+    document.getElementById('rdt').textContent = fmtTime(dt);
+    document.getElementById('rgain').textContent = fmtTime(tm.gain);
+    document.getElementById('rloss').textContent = fmtTime(tm.loss);
+    document.getElementById('rdtg').textContent= fmtTime(dtg);
+    document.getElementById('rhg').textContent = fmtLen(hg);
+    var rr=document.getElementById('rres');
+    rr.textContent = res.toExponential(2)+' m/s²';
+    rr.className = 'v '+(near?'good':'warn');
+    document.getElementById('rmag').textContent = st.trueScale ? '1 × (true)' : fmtMag(mag)+' ×';
+  }
+
   // ---- wiring ----------------------------------------------------------
-  function bind(id,key,fn){
+  function syncSliders(){
+    document.getElementById('sh').value = st.hf;
+    document.getElementById('sa').value = st.af;
+  }
+  function bind(id,key){
     var el=document.getElementById(id);
-    el.oninput=function(){ st[key]=parseFloat(el.value); if(fn)fn(); draw(); };
+    el.oninput=function(){ st[key]=parseFloat(el.value); draw(); };
   }
   bind('sh','hf'); bind('sa','af'); bind('sg','g'); bind('sT','T');
   document.getElementById('ts').onchange=function(e){ st.trueScale=e.target.checked; draw(); };
   document.getElementById('snap').onclick=function(){
     var hg=hGeodesic(st.af*hGeoApprox(), st.T, st.g);
     st.hf = hg/hGeoApprox(); st.af = 0;
-    document.getElementById('sh').value=st.hf;
-    document.getElementById('sa').value=0;
-    draw();
+    syncSliders(); draw();
   };
 
+  // ---- dragging (logical coordinates) ----------------------------------
+  var drag = null;
+  function toLogical(e){
+    var r = cv.getBoundingClientRect();
+    return { x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height };
+  }
+  function near(p,q){ return q && Math.hypot(p.x-q.x, p.y-q.y) < 18; }
+  function hitTest(m){
+    if(near(m,geo.apex)) return 'apex';
+    if(near(m,geo.wig))  return 'wig';
+    if(near(m,geo.dotB)) return 'curve';
+    var b=geo.B;
+    if(b && m.x>=b.x0 && m.x<=b.x1 && m.y>=b.y0 && m.y<=b.y1) return 'curve';
+    return null;
+  }
+  function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+  function applyDrag(m){
+    var hgA=geo.hgA, z=(m.x-geo.zc)/geo.pxPerM;
+    if(drag==='apex'){
+      st.hf = clamp(z/hgA, 0, 2.5);                        // z(1/2) = h exactly
+    } else if(drag==='wig'){
+      st.af = clamp((z - 0.75*st.hf*hgA)/hgA, -0.8, 0.8);  // z(1/4) = 3h/4 + a
+    } else if(drag==='curve'){
+      var b=geo.B;
+      st.hf = clamp((m.x-b.x0)/(b.x1-b.x0)*b.hMax/hgA, 0, 2.5);
+    }
+    syncSliders(); draw();
+  }
+  cv.addEventListener('pointerdown', function(e){
+    var m=toLogical(e); drag=hitTest(m);
+    if(drag){ cv.setPointerCapture(e.pointerId); cv.style.cursor='grabbing'; applyDrag(m); e.preventDefault(); }
+  });
+  cv.addEventListener('pointermove', function(e){
+    var m=toLogical(e);
+    if(drag){ applyDrag(m); e.preventDefault(); return; }
+    var hit=hitTest(m);
+    cv.style.cursor = (hit==='apex'||hit==='wig'||near(m,geo.dotB)) ? 'grab' : (hit ? 'pointer' : 'default');
+  });
+  function endDrag(){ drag=null; cv.style.cursor='default'; }
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  // re-rasterize if the window moves to a screen with a different pixel ratio
+  window.addEventListener('resize', function(){
+    var d = window.devicePixelRatio || 1;
+    if(d !== lastDpr){ lastDpr = d; ctx = hidpi(cv, W, H); draw(); }
+  });
+
   draw();
-  window.__demo = { st:st, draw:draw, dTau:dTau, hGeodesic:hGeodesic,
-                    maxResidual:maxResidual, hGeoApprox:hGeoApprox };
+  window.__demo = { st:st, draw:draw, dTau:dTau, hGeodesic:hGeodesic, terms:terms,
+                    residualAt:residualAt, maxResidual:maxResidual, hGeoApprox:hGeoApprox };
 })();
 </script>
 </body>

@@ -1,253 +1,231 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 6: The Alcubierre Warp Drive — ASTR 3900/8090</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 6: Light Cones and the Warp Drive — ASTR 3900/8090</title>
 <style>
-  :root{
-    --bg:    #FBFBF8;
-    --panel: #EDF1F6;
-    --ink:   #15243C;
-    --blue:  #0F6E93;
-    --blued: #2E6DA4;
-    --brown: #8A5A18;
-    --grey:  #5A6B7B;
-    --mute2: #33465C;
-    --dim:   #C4CBD8;
-  }
-  *{ box-sizing: border-box; }
-  html,body{
-    margin:0; padding:0; background:var(--bg); color:var(--ink);
-    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  }
-  .wrap{ max-width:1200px; margin:0 auto; padding:24px 28px 40px; }
-  header{ margin-bottom:14px; }
-  .kicker{
-    color:var(--blue); font-weight:700; font-size:12px; letter-spacing:.08em;
-    text-transform:uppercase; margin:0 0 6px;
-  }
-  h1{
-    font-family: Georgia, "Times New Roman", serif; font-weight:400;
-    font-size:30px; margin:0 0 8px; color:var(--ink);
-  }
-  .sub{ color:var(--grey); font-size:14px; line-height:1.5; margin:0; }
-  .rule{ height:2px; width:210px; background:var(--blued); opacity:.7; margin:12px 0 18px; border:none; }
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
 
-  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
-  .stage{ flex:1 1 640px; min-width:320px; }
-  .panel{ flex:0 1 380px; min-width:300px; }
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px;
+   color:var(--ink)}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
 
-  .card{
-    background:#fff; border:1px solid #E4E8EF; border-radius:14px;
-    padding:16px 18px; margin-bottom:16px;
-  }
-  .card h2{
-    font-family: Georgia, serif; font-weight:400; font-size:17px; margin:0 0 10px;
-    color:var(--ink);
-  }
-  .card h2 .dot{ margin-right:8px; vertical-align:middle; }
-  .card h2 .dot{ width:9px; height:9px; border-radius:50%; background:var(--blue); display:inline-block; }
-  .hint{ color:var(--grey); font-size:13px; line-height:1.5; margin:0 0 12px; }
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
 
-  canvas{ display:block; width:100%; height:auto; background:var(--bg); border-radius:10px; }
-  #stageCanvas{ background: #FDFDFB; border:1px solid #E7EAF1; }
-  #profCanvas{ background:#fff; }
+.stack{display:flex;flex-direction:column;gap:16px}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:10px 12px 12px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+#stageCanvas{aspect-ratio:1100/560}
+#profCanvas{aspect-ratio:1100/300}
+#mapCanvas{aspect-ratio:1100/372}
+.view{display:none}.view.on{display:block}
 
-  .legend{ display:flex; flex-wrap:wrap; gap:12px 18px; font-size:12px; color:var(--mute2); margin-top:10px; }
-  .legend span{ display:inline-block; }
-  .legend span .swatch{ margin-right:6px; vertical-align:middle; }
-  .swatch{ width:16px; height:3px; border-radius:2px; display:inline-block; }
-  .sw-worldline{ background:var(--brown); height:3px; }
-  .sw-grid{ background:var(--dim); height:2px; }
-  .sw-cone{ background:var(--blue); height:3px; }
-  .sw-bubble{ width:12px; height:12px; border-radius:50%; background:rgba(138,90,24,.25); border:1.4px dashed var(--brown); }
+/* ---- component kit (STYLE_GUIDE s14.1) ---- */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.tabs button{font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:9px 14px;border:1px solid var(--dim);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+.tabs button:hover{border-color:var(--blued)}
+.tabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn{font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:8px 14px;border-radius:8px;border:1px solid var(--blued);background:#fff;color:var(--blued);cursor:pointer}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0 0}
+.ctl{margin:0 0 12px}
+.ctl:last-child{margin-bottom:0}
+.ctl label{display:block;font-size:12.5px;color:var(--mute2)}
+.ctl label b{color:var(--ink);font-weight:600}
+.ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-size:12.5px;color:var(--blue)}
+.ctl .val.warn{color:#B34700}
+input[type=checkbox]{accent-color:var(--blue)}
 
-  .ctrl{ margin-bottom:16px; }
-  .ctrl:last-child{ margin-bottom:0; }
-  .ctrl label{
-    display:flex; justify-content:space-between; align-items:baseline;
-    font-size:13.5px; color:var(--mute2); margin-bottom:6px;
-  }
-  .ctrl label b{ color:var(--ink); font-weight:600; }
-  .ctrl .val{
-    font-variant-numeric: tabular-nums; font-weight:700; color:var(--blue);
-    font-size:13.5px;
-  }
-  .ctrl .val.warn{ color:#B34700; }
-  input[type=range]{
-    width:100%; -webkit-appearance:none; appearance:none; height:6px; border-radius:4px;
-    background: linear-gradient(90deg, var(--blued), var(--dim)); outline:none; cursor:pointer;
-  }
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none; appearance:none; width:17px; height:17px; border-radius:50%;
-    background:#fff; border:2.5px solid var(--blue); cursor:pointer; margin-top:-1px;
-  }
-  input[type=range]::-moz-range-thumb{
-    width:15px; height:15px; border-radius:50%; background:#fff; border:2.5px solid var(--blue); cursor:pointer;
-  }
+.capt{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:2px 0 8px;color:var(--ink)}
+.capt em{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         font-style:normal;font-size:12.5px;color:var(--grey)}
+.hint{font-size:13px;line-height:1.5;color:var(--grey);margin:0 0 10px}
+.hint .math{font-size:14.5px;margin-right:6px;white-space:nowrap}
 
-  .row{ display:flex; gap:10px; align-items:center; }
-  button{
-    font-family: inherit; font-size:13.5px; font-weight:600; color:#fff;
-    background:var(--blue); border:none; border-radius:8px; padding:9px 14px;
-    cursor:pointer; transition:background .15s;
-  }
-  button:hover{ background:var(--blued); }
-  button.secondary{ background:#fff; color:var(--blue); border:1.4px solid var(--blue); }
-  button.secondary:hover{ background:#EEF5F8; }
+/* Legend: deliberately NOT display:flex with gap -- a flex container blockifies
+   inline children, and the gap then pries <sub> away from its base character
+   (STYLE_GUIDE.md s10). Inline-block swatch + margin-right instead. */
+.legend{font-size:12px;color:var(--mute2);margin-top:10px;line-height:2.0}
+.legend span{margin-right:18px;white-space:nowrap}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:6px;
+          vertical-align:middle}
+.sw-worldline{background:var(--brown)}
+.sw-grid{background:var(--dim)}
+.sw-cone{background:var(--blue)}
+.sw-bubble{width:12px !important;height:12px !important;border-radius:50% !important;
+           background:rgba(138,90,24,.25);border:1.4px dashed var(--brown)}
 
-  .checkline{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--mute2); margin-top:10px; }
-  .checkline input{ accent-color: var(--blue); width:15px; height:15px; }
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:14px 16px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 10px}
 
-  .readout{
-    background:var(--panel); border:1.4px solid var(--blued); border-radius:12px;
-    padding:14px 16px; font-size:13.5px; color:var(--mute2); line-height:1.65;
-  }
-  .readout .line{ display:flex; justify-content:space-between; margin-bottom:5px; }
-  .readout .line b{ color:var(--ink); }
-  .flag{
-    margin-top:8px; padding:8px 10px; border-radius:8px; font-size:12.8px; font-weight:600;
-    display:none;
-  }
-  .flag.on{ display:block; background:#FCEFE3; color:#8A4B00; border:1px solid #F0C79A; }
-  .flag.ok{ display:block; background:#EAF3EC; color:#2A6B3B; border:1px solid #BFE0C6; margin-top:8px; }
 
-  .math{ font-family: Georgia, "Times New Roman", serif; font-style:italic; font-size:14.5px; color:var(--ink); }
-  .math .op{ font-style:normal; }
-  .mathblock{
-    background:var(--panel); border:1px solid #DCE3EC; border-radius:10px;
-    padding:10px 14px; margin:8px 0; text-align:center; font-size:15.5px;
-  }
-  .mathrow{ margin:6px 0; }
-  .mathnote{ font-family:inherit; font-style:normal; color:var(--grey); font-size:11.5px; display:block; margin-top:2px; }
-  .cite{ color:var(--grey); font-style:italic; font-size:12px; text-align:right; margin-top:-4px; margin-bottom:8px;}
+.checkline{font-size:13px;color:var(--mute2);margin-top:10px}
+.checkline label{margin-right:14px;white-space:nowrap}
+.checkline input{width:15px;height:15px;vertical-align:-2px;margin-right:6px}
 
-  footer{
-    margin-top:26px; padding-top:14px; border-top:1px solid #E4E8EF;
-    display:flex; justify-content:space-between; font-size:11.5px; color:var(--grey);
-    flex-wrap:wrap; gap:6px;
-  }
-  @media (max-width:760px){
-    .layout{ flex-direction:column; }
-    .panel{ flex-basis:auto; width:100%; }
-  }
+.readout{font-size:13.5px;color:var(--mute2);line-height:1.6}
+.readout .line{margin-bottom:6px;overflow:hidden}
+.readout .line b{float:right;color:var(--ink);font-variant-numeric:tabular-nums}
+.flag{margin-top:10px;padding:8px 10px;border-radius:8px;font-size:12.8px;font-weight:600;
+      display:none;line-height:1.45}
+.flag.on{display:block;background:#FCEFE3;color:#8A4B00;border:1px solid #F0C79A}
+.flag.ok{display:block;background:#EAF3EC;color:#2A6B3B;border:1px solid #BFE0C6}
+
+.math{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:14.5px;
+      color:var(--ink)}
+.math .op{font-style:normal}
+.mathblock{background:#fff;border:1px solid var(--dim);border-radius:8px;padding:9px 12px;
+           margin:8px 0;text-align:center}
+.mathnote{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+          font-style:normal;color:var(--grey);font-size:11.5px;display:block;margin-top:4px;
+          line-height:1.4}
+.cite{color:var(--grey);font-style:italic;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
 </style>
 </head>
 <body>
 <div class="wrap">
+
   <header>
-    <p class="kicker">ASTR 3900/8090 &middot; Lecture 6</p>
-    <h1>The Alcubierre Warp Drive</h1>
-    <p class="sub">Reshape the warp bubble, push the ship's coordinate speed past <i>c</i>, and watch why it still never outruns its own local light cone.</p>
-    <hr class="rule">
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 6</div>
+    <h1>Light Cones and the Warp Drive</h1>
+    <div class="sub">Reshape the warp bubble, push the ship's coordinate speed past <i>c</i>, and watch why it still never outruns its own local light cone.</div>
   </header>
 
-  <div class="layout">
-    <!-- ================= STAGE ================= -->
-    <div class="stage">
-      <div class="card">
-        <h2><span class="dot"></span>Spacetime diagram <span style="color:var(--grey); font-weight:400; font-size:12.5px;">(equal x&ndash;t scale, so a true light ray sits at 45&deg;; units with c&nbsp;=&nbsp;1)</span></h2>
-        <canvas id="stageCanvas" width="900" height="620"></canvas>
+  <main>
+    <div class="stack">
+
+      <div class="canvasWrap">
+        <div class="capt">Spacetime diagram <em>(equal x&ndash;t scale, so a true light ray sits at 45&deg;; units with c&nbsp;=&nbsp;1)</em></div>
+        <canvas id="stageCanvas" width="1100" height="560"></canvas>
         <div class="legend">
-          <span><i class="swatch sw-worldline"></i> ship's worldline x<sub>s</sub>(t)</span>
-          <span><i class="swatch sw-grid"></i> local light-cone tilt field</span>
-          <span><i class="swatch sw-cone"></i> local cone at the ship (r<sub>s</sub>&nbsp;=&nbsp;0)</span>
-          <span><i class="swatch sw-bubble"></i> warp bubble, radius R</span>
+          <span><i class="sw-worldline"></i>ship's worldline x<sub>s</sub>(t)</span>
+          <span><i class="sw-grid"></i>local light-cone tilt field</span>
+          <span><i class="sw-cone"></i>local cone at the ship (r<sub>s</sub>&nbsp;=&nbsp;0)</span>
+          <span><i class="sw-bubble"></i>warp bubble, radius R</span>
         </div>
       </div>
 
-      <div class="card">
-        <h2><span class="dot"></span>Shape of the bubble &mdash; f(r<sub>s</sub>)</h2>
-        <p class="hint">f is 1 at the ship's own position, stays flat out to the core radius <i>a</i>, then tapers smoothly to 0 by the bubble edge R. Spacetime is flat wherever f&nbsp;=&nbsp;0.</p>
-        <canvas id="profCanvas" width="620" height="220"></canvas>
+      <div class="canvasWrap">
+        <div class="tabs" id="bubbleTabs">
+          <button class="active" data-view="shape">Shape f(r<sub>s</sub>)</button>
+          <button data-view="theta">Expansion &theta;</button>
+          <button data-view="energy">Energy density T<sup>00</sup></button>
+        </div>
+        <div class="view on" id="view-shape">
+          <p class="hint">f is 1 at the ship's own position, stays flat out to the core radius <i>a</i>, then tapers smoothly to 0 by the bubble edge R. Spacetime is flat wherever f&nbsp;=&nbsp;0.</p>
+          <canvas id="profCanvas" width="1100" height="300"></canvas>
+        </div>
+        <div class="view" id="view-map">
+          <p class="hint" id="mapHint"></p>
+          <canvas id="mapCanvas" width="1100" height="372"></canvas>
+        </div>
       </div>
+
     </div>
 
-    <!-- ================= CONTROLS ================= -->
-    <div class="panel">
-      <div class="card">
-        <h2><span class="dot"></span>Controls</h2>
+    <aside>
+      <div class="panel">
+        <h2>Controls</h2>
 
-        <div class="ctrl">
-          <label>Peak <b>coordinate</b> speed of the ship &nbsp;<span class="val" id="valVmax">1.95c</span></label>
+        <div class="ctl">
+          <label>Peak <b>coordinate</b> speed of the ship<span class="val" id="valVmax">1.95c</span></label>
           <input type="range" id="vmax" min="0.2" max="3.0" step="0.01" value="1.95">
         </div>
 
-        <div class="ctrl">
-          <label>Warp bubble radius &nbsp;R &nbsp;<span class="val" id="valR">0.180</span></label>
+        <div class="ctl">
+          <label>Warp bubble radius R<span class="val" id="valR">0.180</span></label>
           <input type="range" id="rad" min="0.06" max="0.40" step="0.005" value="0.18">
         </div>
 
-        <div class="ctrl">
-          <label>Bubble core fraction &nbsp;a&#8202;/&#8202;R &nbsp;<span class="val" id="valCore">0.50</span></label>
+        <div class="ctl">
+          <label>Bubble core fraction a&#8202;/&#8202;R<span class="val" id="valCore">0.50</span></label>
           <input type="range" id="core" min="0.08" max="0.92" step="0.01" value="0.50">
         </div>
 
-        <div class="ctrl">
-          <label>Time &nbsp;t &nbsp;(0&nbsp;&rarr;&nbsp;T&nbsp;=&nbsp;1) &nbsp;<span class="val" id="valT">0.00</span></label>
+        <div class="ctl">
+          <label>Time t (0 &rarr; T = 1)<span class="val" id="valT">0.00</span></label>
           <input type="range" id="tcur" min="0" max="1" step="0.002" value="0">
         </div>
 
-        <div class="row">
-          <button id="playBtn">&#9654;&nbsp; Play</button>
-          <button class="secondary" id="resetBtn">Reset to lecture values</button>
+        <div class="btnrow">
+          <button class="btn primary" id="playBtn">&#9654;&nbsp; Play</button>
+          <button class="btn" id="resetBtn">Reset to lecture values</button>
         </div>
 
-        <div class="checkline">
-          <input type="checkbox" id="showGrid" checked>
-          <label for="showGrid">Show background tilt field</label>
-        </div>
-        <div class="checkline">
-          <input type="checkbox" id="showRef" checked>
-          <label for="showRef">Show reference cones along the path</label>
+        <div class="checkline">Show
+          <label><input type="checkbox" id="showGrid" checked>tilt field</label>
+          <label><input type="checkbox" id="showRef" checked>reference cones</label>
         </div>
       </div>
 
-      <div class="card">
-        <h2><span class="dot"></span>Live readout</h2>
+      <div class="panel">
+        <h2>Live readout</h2>
         <div class="readout">
-          <div class="line"><span>Ship position x<sub>s</sub>(t)</span><b id="roX">0.000</b></div>
-          <div class="line"><span>Coordinate velocity V<sub>s</sub>(t)</span><b id="roV">0.000 c</b></div>
-          <div class="line"><span>Local null slopes at the ship (r<sub>s</sub>=0)</span><b id="roNull">&minus;1.00, +1.00</b></div>
-          <div class="line"><span>Station separation D / T</span><b id="roDT">0.00 / 1.00</b></div>
-          <div class="flag" id="ftlFlag">&#9889; Coordinate speed exceeds <i>c</i> right now &mdash; by the naive x/t bookkeeping, the ship looks superluminal.</div>
-          <div class="flag ok" id="okFlag">The worldline sits exactly midway between the two tilted null rays &mdash; the ship is always inside its own light cone.</div>
+          <div class="line">Ship position x<sub>s</sub>(t)<b id="roX">0.000</b></div>
+          <div class="line">Coordinate velocity V<sub>s</sub>(t)<b id="roV">0.000 c</b></div>
+          <div class="line">Null slopes at the ship (r<sub>s</sub> = 0)<b id="roNull">&minus;1.00, +1.00</b></div>
+          <div class="line">Station separation D / T<b id="roDT">1.300 / 1.000</b></div>
+          <div class="line">Peak |&theta;| in the bubble wall now<b id="roTh">0.00</b></div>
+          <div class="line">Most negative T<sup>00</sup> now<b id="roT00">0.000</b></div>
+          <div class="flag ok" id="ftlFlag"></div>
         </div>
       </div>
 
-      <div class="card">
-        <h2><span class="dot"></span>The metric</h2>
-        <p class="cite">(Alcubierre 1994)</p>
+      <div class="panel">
+        <h2>The metric <span class="cite">(Alcubierre 1994)</span></h2>
         <div class="mathblock">
-          <div class="mathrow math">ds<span class="op">&sup2;</span> = &minus;dt<span class="op">&sup2;</span> + [dx &minus; V<sub>s</sub>(t) f(r<sub>s</sub>) dt]<span class="op">&sup2;</span> + dy<span class="op">&sup2;</span> + dz<span class="op">&sup2;</span></div>
+          <span class="math">ds<span class="op">&sup2;</span> = &minus;dt<span class="op">&sup2;</span> + [dx &minus; V<sub>s</sub>(t) f(r<sub>s</sub>) dt]<span class="op">&sup2;</span> + dy<span class="op">&sup2;</span> + dz<span class="op">&sup2;</span></span>
         </div>
         <div class="mathblock">
-          <div class="mathrow math">dx&#8202;/&#8202;dt = &plusmn;1 + V<sub>s</sub>(t) f(r<sub>s</sub>)</div>
+          <span class="math">dx&#8202;/&#8202;dt = &plusmn;1 + V<sub>s</sub>(t) f(r<sub>s</sub>)</span>
           <span class="mathnote">null directions (ds = 0) &mdash; this is exactly the tilt field drawn on the diagram</span>
         </div>
-        <div class="mathrow math" style="font-size:13px;">
-          V<sub>s</sub>(t) &equiv; dx<sub>s</sub>&#8202;/&#8202;dt &nbsp;&nbsp;&nbsp; r<sub>s</sub><span class="op">&sup2;</span> &equiv; (x&minus;x<sub>s</sub>(t))<span class="op">&sup2;</span>+y<span class="op">&sup2;</span>+z<span class="op">&sup2;</span>
+        <div class="math" style="font-size:13px">
+          V<sub>s</sub>(t) &equiv; dx<sub>s</sub>&#8202;/&#8202;dt &nbsp;&nbsp; r<sub>s</sub><span class="op">&sup2;</span> &equiv; (x&minus;x<sub>s</sub>(t))<span class="op">&sup2;</span> + y<span class="op">&sup2;</span> + z<span class="op">&sup2;</span>
         </div>
       </div>
-    </div>
-  </div>
+    </aside>
+  </main>
 
   <footer>
     <span>S. Taylor &middot; Vanderbilt University</span>
     <span>ASTR 3900/8090 &middot; Lecture 6</span>
   </footer>
-</div>
 
+</div>
 <script>
 (function(){
   "use strict";
+
   const COL = {
-    bg:"#FDFDFB", panel:"#EDF1F6", ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4",
-    brown:"#8A5A18", grey:"#5A6B7B", mute2:"#33465C", dim:"#C4CBD8"
+    bg:"#FFFFFF", ink:"#15243C", blue:"#0F6E93", brown:"#8A5A18",
+    grey:"#5A6B7B", dim:"#C4CBD8"
   };
 
-  // ---------- physics (matches the Lecture 6 build_deck.py conventions) ----------
+  // ---------- physics (matches the Lecture 6 deck's own x_s(t), V_s(t), f(r_s)) ----------
   const T_SHIP = 1.0;
   function smoothS(u){ return 3*u*u - 2*u*u*u; }
   function smoothSp(u){ return 6*u - 6*u*u; }
@@ -261,11 +239,36 @@
     if (rs >= R) return 0.0;
     return 0.5*(1+Math.cos(Math.PI*(rs-a)/(R-a)));
   }
+  // df/dr_s of the cosine taper: zero in the core and outside, negative in the wall.
+  function dfProfile(rs, R, a){
+    rs = Math.abs(rs);
+    if (rs <= a || rs >= R) return 0.0;
+    return -(Math.PI/(2*(R-a)))*Math.sin(Math.PI*(rs-a)/(R-a));
+  }
+  // Expansion of Eulerian volume elements, Alcubierre (1994) eq. 12:
+  //   theta = V_s (x - x_s)/r_s * df/dr_s   (X = x - x_s, rho = sqrt(y^2+z^2)).
+  // With lapse 1 and shift beta^x = -V_s f, theta = -Tr K = d(V_s f)/dx, which is this.
+  function thetaAt(X, rho, Vs, R, a){
+    const rs = Math.hypot(X, rho);
+    if (rs <= a || rs >= R) return 0.0;
+    return Vs*(X/rs)*dfProfile(rs, R, a);
+  }
+  // Eulerian energy density, Alcubierre (1994) eq. 19 (G = c = 1):
+  //   T^00 = -(1/8 pi) V_s^2 rho^2 / (4 r_s^2) (df/dr_s)^2   -- never positive.
+  function t00At(X, rho, Vs, R, a){
+    const rs = Math.hypot(X, rho);
+    if (rs <= a || rs >= R) return 0.0;
+    const fp = dfProfile(rs, R, a);
+    return -(Vs*Vs*rho*rho*fp*fp)/(32*Math.PI*rs*rs);
+  }
+  // Largest |theta| and |T^00| anywhere, for speed Vs: |f'| peaks at mid-wall at
+  // pi/(2(R-a)); |X|/r_s <= 1 and rho/r_s <= 1, both reached (on / across the axis).
+  function thetaPeak(Vs, R, a){ return Math.abs(Vs)*Math.PI/(2*(R-a)); }
+  function t00Peak(Vs, R, a){ const g=Math.PI/(2*(R-a)); return Vs*Vs*g*g/(32*Math.PI); }
 
-  // ---------- state ----------
-  const state = { vmax:1.95, R:0.18, core:0.50, t:0.0, playing:false };
-
-  function D(){ return (2/3)*state.vmax; }   // peak of Sp(u) is 1.5 at u=0.5  =>  Vmax = 1.5*D/T
+  const state = { vmax:1.95, R:0.18, core:0.50, t:0.5, playing:false };  // t = 0.5: peak speed
+  // peak of Sp(u) is 1.5 at u = 1/2, so V_max = 1.5*D/T  =>  D = (2/3)*V_max  (T = 1)
+  function D(){ return (2/3)*state.vmax; }
   function a(){ return state.core*state.R; }
 
   // ---------- DOM ----------
@@ -275,9 +278,20 @@
   const playBtn=$("playBtn"), resetBtn=$("resetBtn");
   const showGrid=$("showGrid"), showRef=$("showRef");
   const roX=$("roX"), roV=$("roV"), roNull=$("roNull"), roDT=$("roDT");
-  const ftlFlag=$("ftlFlag"), okFlag=$("okFlag");
+  const ftlFlag=$("ftlFlag");
   const stage=$("stageCanvas"), prof=$("profCanvas");
-  const sctx=stage.getContext("2d"), pctx=prof.getContext("2d");
+  const mapc=$("mapCanvas");
+  // logical drawing sizes; the backing store is these x devicePixelRatio (s14.2)
+  const SW=1100, SH=560, PW=1100, PH=300, MW=1100, MH=372;
+  let dpr = 1;
+  function hidpi(cv, W, H){
+    dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+  }
+  const sctx=hidpi(stage,SW,SH), pctx=hidpi(prof,PW,PH), mctx=hidpi(mapc,MW,MH);
 
   function syncInputs(){
     elVmax.value=state.vmax; elR.value=state.R; elCore.value=state.core; elT.value=state.t;
@@ -288,166 +302,20 @@
     valT.textContent = state.t.toFixed(2);
   }
 
-  // ---------- canvas sizing (device-pixel aware, keeps CSS size responsive) ----------
-  function fitCanvas(cv){
-    const cssW = cv.clientWidth || cv.width;
-    const dpr = window.devicePixelRatio || 1;
-    const targetW = Math.round(cssW*dpr), targetH = Math.round((cv.height/cv.width)*cssW*dpr);
-    if (cv._w!==targetW || cv._h!==targetH){
-      cv.width = targetW; cv.height = targetH; cv._w=targetW; cv._h=targetH;
-    }
-    return dpr;
-  }
-
-  // ================= main spacetime diagram =================
-  function drawStage(){
-    const dpr = fitCanvas(stage);
-    const W = stage.width, H = stage.height;
-    const ctx = sctx;
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle = COL.bg; ctx.fillRect(0,0,W,H);
-
-    const Dv = D(), Rv = state.R, Av = a();
-
-    // ---- domain & equal-scale mapping ----
-    const margin = {l:0.075*W, r:0.045*W, t:0.06*H, b:0.13*H};
-    const xMin=-0.42, xMax=Dv+0.42, tMin=-0.10, tMax=1.20;
-    const plotW = W-margin.l-margin.r, plotH = H-margin.t-margin.b;
-    const s = Math.min(plotW/(xMax-xMin), plotH/(tMax-tMin));
-    const usedW = s*(xMax-xMin), usedH = s*(tMax-tMin);
-    const ox = margin.l + (plotW-usedW)/2, oy = margin.t + (plotH-usedH)/2;
-    function toPx(x,t){ return [ox+(x-xMin)*s, oy+(tMax-t)*s]; }
-
-    // ---- axes ----
-    ctx.strokeStyle=COL.ink; ctx.fillStyle=COL.ink; ctx.lineWidth=1.3*dpr;
-    let [ax0,ay0]=toPx(xMin+0.05,0), [ax1,ay1]=toPx(xMax-0.05,0);
-    arrow(ctx, ax0,ay0, ax1,ay1, dpr);
-    let [bx0,by0]=toPx(0,-0.06), [bx1,by1]=toPx(0,tMax-0.06);
-    arrow(ctx, bx0,by0, bx1,by1, dpr);
-    ctx.font = (13*dpr)+"px Georgia, serif"; ctx.textBaseline="middle";
-    ctx.fillText("x", ax1+6*dpr, ay1);
-    ctx.textAlign="center"; ctx.fillText("t", bx1, by1-10*dpr); ctx.textAlign="left";
-
-    // ---- stations & D / T brackets ----
-    ctx.setLineDash([4*dpr,3*dpr]); ctx.strokeStyle=COL.grey; ctx.lineWidth=1*dpr;
-    [[0,"1"],[Dv,"2"]].forEach(([xv,lab])=>{
-      let [px0,py0]=toPx(xv,0), [px1,py1]=toPx(xv,1.02);
-      ctx.beginPath(); ctx.moveTo(px0,py0); ctx.lineTo(px1,py1); ctx.stroke();
-      ctx.setLineDash([]); ctx.fillStyle=COL.grey; ctx.font=(11.5*dpr)+"px sans-serif"; ctx.textAlign="center";
-      ctx.fillText(lab, px1, py1-8*dpr);
-      ctx.setLineDash([4*dpr,3*dpr]);
-    });
-    ctx.setLineDash([]);
-
-    // D bracket (bottom)
-    {
-      let [d0x,d0y]=toPx(0,tMin+0.02), [d1x,d1y]=toPx(Dv,tMin+0.02);
-      ctx.strokeStyle=COL.brown; ctx.fillStyle=COL.brown;
-      doubleArrow(ctx, d0x,d0y, d1x,d1y, dpr);
-      ctx.font=(12*dpr)+"px Georgia, serif"; ctx.textAlign="center";
-      ctx.fillText("D = "+Dv.toFixed(2), (d0x+d1x)/2, d0y+16*dpr);
-    }
-    // T bracket (left)
-    {
-      let [t0x,t0y]=toPx(xMin+0.02,0), [t1x,t1y]=toPx(xMin+0.02,1);
-      ctx.strokeStyle=COL.blue; ctx.fillStyle=COL.blue;
-      doubleArrow(ctx, t0x,t0y, t1x,t1y, dpr);
-      ctx.font=(12*dpr)+"px Georgia, serif"; ctx.textAlign="left";
-      ctx.save(); ctx.translate(t0x-8*dpr,(t0y+t1y)/2); ctx.rotate(-Math.PI/2);
-      ctx.textAlign="center"; ctx.fillText("T = 1", 0, 0); ctx.restore();
-    }
-
-    // ---- background tilt field ----
-    if (showGrid.checked){
-      const nx=26, nt=16, Lvis=9*dpr;
-      ctx.strokeStyle=COL.dim; ctx.lineWidth=1.1*dpr;
-      for(let j=0;j<nt;j++){
-        const t = 0.02 + (0.96)*(j/(nt-1));
-        const Vt = shipV(t,Dv), xs = shipX(t,Dv);
-        for(let i=0;i<nx;i++){
-          const x = xMin+0.08*(xMax-xMin) + (xMax-xMin)*0.84*(i/(nx-1));
-          const rs = Math.abs(x-xs), f = fProfile(rs,Rv,Av), Vf = Vt*f;
-          const [px,py] = toPx(x,t);
-          [Vf+1, Vf-1].forEach(m=>{
-            const len = Math.hypot(m*s, s) || 1;
-            const ex = px + (m*s/len)*Lvis, ey = py - (s/len)*Lvis;
-            ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ex,ey); ctx.stroke();
-          });
-        }
-      }
-    }
-
-    // ---- worldline ----
-    ctx.strokeStyle=COL.brown; ctx.lineWidth=2.6*dpr; ctx.beginPath();
-    for(let k=0;k<=220;k++){
-      const t=k/220, xv=shipX(t,Dv); const [px,py]=toPx(xv,t);
-      if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
-    }
-    ctx.stroke();
-    // endpoints
-    ctx.fillStyle=COL.ink;
-    [[0,0],[Dv,1]].forEach(([xv,tv])=>{ const [px,py]=toPx(xv,tv); dot(ctx,px,py,3.4*dpr); });
-
-    // ---- reference cones along the path ----
-    if (showRef.checked){
-      [0.12,0.34,0.55,0.74].forEach(frac=>drawCone(ctx, frac, Dv, s, toPx, dpr, "rgba(15,110,147,0.42)", 20*dpr, 1.6*dpr));
-    }
-
-    // ---- warp bubble @ current time ----
-    {
-      const xs = shipX(state.t, Dv);
-      const [px,py] = toPx(xs, state.t);
-      const rad = Rv*s;
-      ctx.beginPath(); ctx.arc(px,py,rad,0,Math.PI*2);
-      ctx.fillStyle="rgba(138,90,24,0.16)"; ctx.fill();
-      ctx.setLineDash([5*dpr,3*dpr]); ctx.strokeStyle=COL.brown; ctx.lineWidth=1.4*dpr; ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // ---- current time indicator line ----
-    {
-      const [lx0,ly0]=toPx(xMin+0.05, state.t), [lx1,ly1]=toPx(xMax-0.05, state.t);
-      ctx.setLineDash([2.5*dpr,3.5*dpr]); ctx.strokeStyle="rgba(90,107,123,0.55)"; ctx.lineWidth=1*dpr;
-      ctx.beginPath(); ctx.moveTo(lx0,ly0); ctx.lineTo(lx1,ly1); ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // ---- highlighted cone + ship marker @ current time ----
-    drawCone(ctx, state.t/T_SHIP, Dv, s, toPx, dpr, COL.blue, 34*dpr, 2.2*dpr);
-    {
-      const xs = shipX(state.t, Dv);
-      const [px,py]=toPx(xs, state.t);
-      ctx.fillStyle=COL.blue; dot(ctx,px,py,4.6*dpr);
-      ctx.strokeStyle="#fff"; ctx.lineWidth=1.6*dpr; ctx.beginPath(); ctx.arc(px,py,4.6*dpr,0,Math.PI*2); ctx.stroke();
-    }
-  }
-
-  function drawCone(ctx, frac, Dv, s, toPx, dpr, color, len, lw){
-    const t = Math.min(Math.max(frac,0),1);
-    const xs = shipX(t, Dv), Vt = shipV(t, Dv); // r_s = 0 at the ship
-    const [px,py] = toPx(xs, t);
-    ctx.strokeStyle=color; ctx.lineWidth=lw;
-    [Vt+1, Vt-1].forEach(m=>{
-      const l = Math.hypot(m*s, s) || 1;
-      const ex = px + (m*s/l)*len, ey = py - (s/l)*len;
-      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ex,ey); ctx.stroke();
-    });
-  }
-
-  function arrow(ctx,x0,y0,x1,y1,dpr){
+  // ---------- small canvas helpers ----------
+  function arrow(ctx,x0,y0,x1,y1,h){
     ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
-    const ang=Math.atan2(y1-y0,x1-x0), h=7*dpr;
+    const ang=Math.atan2(y1-y0,x1-x0);
     ctx.beginPath(); ctx.moveTo(x1,y1);
     ctx.lineTo(x1-h*Math.cos(ang-0.4), y1-h*Math.sin(ang-0.4));
     ctx.lineTo(x1-h*Math.cos(ang+0.4), y1-h*Math.sin(ang+0.4));
     ctx.closePath(); ctx.fillStyle=ctx.strokeStyle; ctx.fill();
   }
-  function doubleArrow(ctx,x0,y0,x1,y1,dpr){
-    ctx.lineWidth=1.3*dpr;
+  function doubleArrow(ctx,x0,y0,x1,y1,h){
     ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
-    [[x0,y0,x1,y1],[x1,y1,x0,y0]].forEach(([ax,ay,bx,by])=>{
-      const ang=Math.atan2(by-ay,bx-ax), h=6*dpr;
+    [[x0,y0,x1,y1],[x1,y1,x0,y0]].forEach(function(e){
+      const ax=e[0], ay=e[1], bx=e[2], by=e[3];
+      const ang=Math.atan2(by-ay,bx-ax);
       ctx.beginPath(); ctx.moveTo(ax,ay);
       ctx.lineTo(ax+h*Math.cos(ang-0.5), ay+h*Math.sin(ang-0.5));
       ctx.lineTo(ax+h*Math.cos(ang+0.5), ay+h*Math.sin(ang+0.5));
@@ -456,104 +324,443 @@
   }
   function dot(ctx,x,y,r){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
 
-  // ================= f(r_s) inset =================
-  function drawProfile(){
-    const dpr = fitCanvas(prof);
-    const W=prof.width, H=prof.height, ctx=pctx;
-    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
-    ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+  // base + optional subscript/superscript; returns total width (STYLE_GUIDE s14.3)
+  function mtext(ctx, x, y, base, sub, sup, size, col, align){
+    size = size || 15; col = col || '#15243C';
+    const fb = 'italic ' + size + 'px Georgia,"Times New Roman",serif';
+    const fs = Math.round(size*0.68) + 'px Georgia,"Times New Roman",serif';
+    ctx.save(); ctx.fillStyle = col; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+    ctx.font = fb; const wb = ctx.measureText(base).width;
+    ctx.font = fs; const ws = Math.max(sub ? ctx.measureText(sub).width : 0, sup ? ctx.measureText(sup).width : 0);
+    const x0 = align === 'center' ? x - (wb+ws)/2 : align === 'right' ? x - wb - ws : x;
+    ctx.font = fb; ctx.fillText(base, x0, y);
+    ctx.font = fs;
+    if(sub) ctx.fillText(sub, x0 + wb + 1, y + size*0.28);
+    if(sup) ctx.fillText(sup, x0 + wb + 1, y - size*0.42);
+    ctx.restore(); return wb + ws;
+  }
+  // mtext followed by plain italic tail text, e.g. f(r_s) = "f(r" + s + ")"
+  function mtextTail(ctx, x, y, base, sub, tail, size, col, align){
+    ctx.save(); ctx.font = 'italic '+size+'px Georgia,"Times New Roman",serif';
+    const wt = ctx.measureText(tail).width;
+    const wf = ctx.measureText(base).width;
+    ctx.font = Math.round(size*0.68)+'px Georgia,"Times New Roman",serif';
+    const total = wf + ctx.measureText(sub).width + 1 + wt;
+    ctx.restore();
+    const x0 = align==='center' ? x-total/2 : align==='right' ? x-total : x;
+    const w = mtext(ctx, x0, y, base, sub, null, size, col, 'left');
+    ctx.save(); ctx.fillStyle = col; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.font = 'italic '+size+'px Georgia,"Times New Roman",serif';
+    ctx.fillText(tail, x0 + w + 1, y); ctx.restore();
+  }
 
-    const Rv=state.R, Av=a();
-    const margin={l:0.09*W,r:0.05*W,t:0.24*H,b:0.20*H};
-    const plotW=W-margin.l-margin.r, plotH=H-margin.t-margin.b;
-    const rMax = Math.max(0.40, Rv*1.35);
-    function toPx(rs,f){ return [margin.l+(rs/rMax)*plotW, margin.t+(1-f)*plotH]; }
+  // Domain + EQUAL-SCALE mapping: ONE shared px-per-unit `s` drives both axes,
+  // so a data slope of +/-1 is a true 45 degrees on screen (STYLE_GUIDE s9).
+  // Factored out of drawStage so a headless check can measure the real mapping
+  // rather than a re-implementation of it.
+  function stageMap(W, H, Dv){
+    // Absolute margins and a tight t-window: only what the drawing uses
+    // (t-axis arrow to 1.06, D bracket at t = -0.12 with its label under it).
+    const margin = {l:82, r:50, t:26, b:44};
+    const xMin=-0.42, xMax=Dv+0.42, tMin=-0.14, tMax=1.12;
+    const plotW = W-margin.l-margin.r, plotH = H-margin.t-margin.b;
+    const s = Math.min(plotW/(xMax-xMin), plotH/(tMax-tMin));
+    const ox = margin.l + (plotW - s*(xMax-xMin))/2;
+    const oy = margin.t + (plotH - s*(tMax-tMin))/2;
+    return { s, xMin, xMax, tMin, tMax,
+             toPx: (x,t) => [ox+(x-xMin)*s, oy+(tMax-t)*s] };
+  }
 
-    // axes
-    ctx.strokeStyle=COL.ink; ctx.lineWidth=1.2*dpr;
-    ctx.beginPath(); ctx.moveTo(margin.l,margin.t); ctx.lineTo(margin.l,margin.t+plotH); ctx.lineTo(margin.l+plotW,margin.t+plotH); ctx.stroke();
+  // ================= main spacetime diagram =================
+  function drawStage(){
+    const W = SW, H = SH, ctx = sctx;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = COL.bg; ctx.fillRect(0,0,W,H);
 
-    // guide lines at f=1 and rs = a, R
-    ctx.setLineDash([3*dpr,3*dpr]); ctx.strokeStyle=COL.dim; ctx.lineWidth=1*dpr;
-    let [gx,gy] = toPx(0,1); ctx.beginPath(); ctx.moveTo(margin.l,gy); ctx.lineTo(margin.l+plotW,gy); ctx.stroke();
-    [Av,Rv].forEach(rv=>{
-      let [x0,y0]=toPx(rv,0), [x1,y1]=toPx(rv,1);
-      ctx.beginPath(); ctx.moveTo(x0,margin.t); ctx.lineTo(x1,margin.t+plotH); ctx.stroke();
+    const Dv = D(), Rv = state.R, Av = a();
+    const M = stageMap(W, H, Dv);
+    const s = M.s, xMin = M.xMin, xMax = M.xMax, tMin = M.tMin, tMax = M.tMax;
+    const toPx = M.toPx;
+
+    // ---- axes ----
+    // The t-axis is held clear of station 1 (x = 0): drawing it at x = 0 puts it
+    // exactly on station 1's dashed line and hides that station's label.
+    const tAxisX = xMin + 0.10;
+    ctx.strokeStyle=COL.ink; ctx.fillStyle=COL.ink; ctx.lineWidth=1.8;
+    const A0=toPx(xMin+0.05,0), A1=toPx(xMax-0.05,0);
+    arrow(ctx, A0[0],A0[1], A1[0],A1[1], 10);
+    const B0=toPx(tAxisX,-0.06), B1=toPx(tAxisX,tMax-0.06);
+    arrow(ctx, B0[0],B0[1], B1[0],B1[1], 10);
+    ctx.font="italic 20px Georgia, serif"; ctx.textBaseline="middle"; ctx.textAlign="left";
+    ctx.fillText("x", A1[0]+10, A1[1]);
+    ctx.textAlign="center"; ctx.fillText("t", B1[0], B1[1]-16);
+
+    // ---- stations ----
+    ctx.setLineDash([6,4]); ctx.strokeStyle=COL.grey; ctx.lineWidth=1.4;
+    // labels sit outside their own lines (1 to the left, 2 to the right) so they
+    // can never collide, however close the stations get at low speed
+    [[0,"station 1","right",-8],[Dv,"station 2","left",8]].forEach(function(e){
+      const p0=toPx(e[0],0), p1=toPx(e[0],1.02);
+      ctx.beginPath(); ctx.moveTo(p0[0],p0[1]); ctx.lineTo(p1[0],p1[1]); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle=COL.grey; ctx.font="17px -apple-system, Helvetica, Arial, sans-serif";
+      ctx.textAlign=e[2]; ctx.textBaseline="middle"; ctx.fillText(e[1], p1[0]+e[3], p1[1]+4);
+      ctx.setLineDash([6,4]);
     });
     ctx.setLineDash([]);
 
-    // curve
-    ctx.strokeStyle=COL.brown; ctx.lineWidth=2.2*dpr; ctx.beginPath();
-    for(let i=0;i<=200;i++){
-      const rs=(i/200)*rMax, f=fProfile(rs,Rv,Av); const [px,py]=toPx(rs,f);
-      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    // ---- D bracket (bottom) ----
+    const d0=toPx(0,tMin+0.02), d1=toPx(Dv,tMin+0.02);
+    ctx.strokeStyle=COL.brown; ctx.fillStyle=COL.brown; ctx.lineWidth=1.6;
+    doubleArrow(ctx, d0[0],d0[1], d1[0],d1[1], 9);
+    ctx.font="italic 18px Georgia, serif"; ctx.textAlign="center"; ctx.textBaseline="top";
+    ctx.fillText("D = "+Dv.toFixed(2), (d0[0]+d1[0])/2, d0[1]+10);
+
+    // ---- T bracket (left) ----
+    const t0=toPx(xMin+0.02,0), t1=toPx(xMin+0.02,1);
+    ctx.strokeStyle=COL.blue; ctx.fillStyle=COL.blue; ctx.lineWidth=1.6;
+    doubleArrow(ctx, t0[0],t0[1], t1[0],t1[1], 9);
+    ctx.save(); ctx.translate(t0[0]-12,(t0[1]+t1[1])/2); ctx.rotate(-Math.PI/2);
+    ctx.font="italic 18px Georgia, serif"; ctx.textAlign="center"; ctx.textBaseline="bottom";
+    ctx.fillText("T = 1", 0, 0); ctx.restore();
+    ctx.textBaseline="middle";
+
+    // ---- background tilt field: dx/dt = +/-1 + V_s(t) f(r_s) ----
+    if (showGrid.checked){
+      // Sample the field on a roughly CONSTANT PIXEL pitch, not a fixed count:
+      // the data-domain width varies ~20x across the speed slider, so a fixed
+      // column count crowds the ticks into a zigzag at the narrow end (a tick's
+      // own horizontal spread is 2*Lvis*sin45 ~ 17px, so keep the pitch > ~40px).
+      const Lvis=12;
+      const bandPx = 0.84*(xMax-xMin)*s, rowsPx = 0.96*s;
+      const nx = Math.max(7,  Math.min(22, Math.round(bandPx/46)+1));
+      const nt = Math.max(8,  Math.min(16, Math.round(rowsPx/38)+1));
+      ctx.strokeStyle=COL.dim; ctx.lineWidth=1.5;
+      for(let j=0;j<nt;j++){
+        const t = 0.02 + 0.96*(j/(nt-1));
+        const Vt = shipV(t,Dv), xs = shipX(t,Dv);
+        for(let i=0;i<nx;i++){
+          const x = xMin + 0.08*(xMax-xMin) + (xMax-xMin)*0.84*(i/(nx-1));
+          const f = fProfile(Math.abs(x-xs),Rv,Av), Vf = Vt*f;
+          const p = toPx(x,t);
+          [Vf+1, Vf-1].forEach(function(m){
+            const len = Math.hypot(m*s, s) || 1;
+            ctx.beginPath(); ctx.moveTo(p[0],p[1]);
+            ctx.lineTo(p[0] + (m*s/len)*Lvis, p[1] - (s/len)*Lvis); ctx.stroke();
+          });
+        }
+      }
+    }
+
+    // ---- worldline ----
+    ctx.strokeStyle=COL.brown; ctx.lineWidth=3.6; ctx.beginPath();
+    for(let k=0;k<=220;k++){
+      const t=k/220, p=toPx(shipX(t,Dv),t);
+      if(k===0) ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]);
+    }
+    ctx.stroke();
+    ctx.fillStyle=COL.ink;
+    [[0,0],[Dv,1]].forEach(function(e){ const p=toPx(e[0],e[1]); dot(ctx,p[0],p[1],4.6); });
+
+    // ---- reference cones along the path ----
+    if (showRef.checked){
+      [0.12,0.34,0.55,0.74].forEach(function(tv){
+        drawCone(ctx, tv, Dv, s, toPx, "rgba(15,110,147,0.55)", 30, 2.6);
+      });
+    }
+
+    // ---- warp bubble at the current time (true radius R, equal scale) ----
+    const pb = toPx(shipX(state.t,Dv), state.t);
+    ctx.beginPath(); ctx.arc(pb[0],pb[1],Rv*s,0,Math.PI*2);
+    ctx.fillStyle="rgba(138,90,24,0.16)"; ctx.fill();
+    ctx.setLineDash([7,4]); ctx.strokeStyle=COL.brown; ctx.lineWidth=1.9; ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ---- current-time indicator (clipped to the axis extent) ----
+    const l0=toPx(xMin+0.05,state.t), l1=toPx(xMax-0.05,state.t);
+    ctx.setLineDash([3,5]); ctx.strokeStyle="rgba(90,107,123,0.55)"; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(l0[0],l0[1]); ctx.lineTo(l1[0],l1[1]); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ---- the ship's own local cone + marker ----
+    drawCone(ctx, state.t, Dv, s, toPx, COL.blue, 46, 3.0);
+    ctx.fillStyle=COL.blue; dot(ctx,pb[0],pb[1],6.2);
+    ctx.strokeStyle="#fff"; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.arc(pb[0],pb[1],6.2,0,Math.PI*2); ctx.stroke();
+  }
+
+  // At the ship, r_s = 0 so f = 1 and the null slopes are exactly V_s(t) +/- 1.
+  function drawCone(ctx, t, Dv, s, toPx, color, len, lw){
+    const tc = clamp01(t);
+    const p = toPx(shipX(tc,Dv), tc), Vt = shipV(tc,Dv);
+    ctx.strokeStyle=color; ctx.lineWidth=lw;
+    [Vt+1, Vt-1].forEach(function(m){
+      const l = Math.hypot(m*s, s) || 1;
+      ctx.beginPath(); ctx.moveTo(p[0],p[1]);
+      ctx.lineTo(p[0] + (m*s/l)*len, p[1] - (s/l)*len); ctx.stroke();
+    });
+  }
+
+  // ================= f(r_s) profile =================
+  function drawProfile(){
+    const W=PW, H=PH, ctx=pctx;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=COL.bg; ctx.fillRect(0,0,W,H);
+
+    const Rv=state.R, Av=a();
+    const margin={l:0.085*W, r:0.05*W, t:0.22*H, b:0.24*H};
+    const plotW=W-margin.l-margin.r, plotH=H-margin.t-margin.b;
+    // Fixed r_s axis (just past the slider's max R): a data-dependent axis would
+    // silently rescale as R grows, so bubbles of different R could not be compared
+    // by eye -- which is the whole point of dragging the R slider.
+    const rMax = 0.46;
+    function toPx(rs,f){ return [margin.l+(rs/rMax)*plotW, margin.t+(1-f)*plotH]; }
+
+    ctx.strokeStyle=COL.ink; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.moveTo(margin.l,margin.t);
+    ctx.lineTo(margin.l,margin.t+plotH); ctx.lineTo(margin.l+plotW,margin.t+plotH); ctx.stroke();
+
+    const gy = toPx(0,1)[1];
+    ctx.setLineDash([4,4]); ctx.strokeStyle=COL.dim; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(margin.l,gy); ctx.lineTo(margin.l+plotW,gy); ctx.stroke();
+    [Av,Rv].forEach(function(rv){
+      const x=toPx(rv,0)[0];
+      ctx.beginPath(); ctx.moveTo(x,margin.t); ctx.lineTo(x,margin.t+plotH); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle=COL.brown; ctx.lineWidth=3.2; ctx.beginPath();
+    for(let i=0;i<=240;i++){
+      const rs=(i/240)*rMax, p=toPx(rs,fProfile(rs,Rv,Av));
+      if(i===0) ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]);
     }
     ctx.stroke();
 
-    // labels
-    ctx.fillStyle=COL.grey; ctx.font=(11*dpr)+"px sans-serif"; ctx.textAlign="right"; ctx.textBaseline="middle";
-    ctx.fillText("1", margin.l-6*dpr, gy);
+    ctx.fillStyle=COL.grey;
+    ctx.font="17px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.textAlign="right"; ctx.textBaseline="middle";
+    ctx.fillText("1", margin.l-10, gy);
+    ctx.fillText("0", margin.l-10, margin.t+plotH);
     ctx.textAlign="center"; ctx.textBaseline="top";
-    let [ax0,ay0]=toPx(Av,0); ctx.fillText("a", ax0, margin.t+plotH+4*dpr);
-    let [rx0,ry0]=toPx(Rv,0); ctx.fillText("R", rx0, margin.t+plotH+4*dpr);
-    ctx.font="italic "+(12*dpr)+"px Georgia, serif";
-    ctx.fillText("r_s", margin.l+plotW*0.5, margin.t+plotH+16*dpr);
-    ctx.textAlign="left"; ctx.textBaseline="top";
-    ctx.fillText("f(r_s)", margin.l, 6*dpr);
+    ctx.font="italic 17px Georgia, serif";
+    ctx.fillText("a", toPx(Av,0)[0], margin.t+plotH+8);
+    ctx.fillText("R", toPx(Rv,0)[0], margin.t+plotH+8);
+    // real subscripts, not literal underscores
+    mtext(ctx, margin.l+plotW*0.5, margin.t+plotH+50, "r", "s", null, 19, COL.ink, "center");
+    mtextTail(ctx, margin.l, margin.t-14, "f(r", "s", ")", 19, COL.ink, "left");
   }
 
-  // ================= readouts =================
+  // ================= bubble cross-section maps: theta and T^00 =================
+  // Meridian half-plane through the ship, in the frame riding with the bubble:
+  // horizontal X = x - x_s(t), vertical rho = sqrt(y^2+z^2) >= 0 (the fields are
+  // axisymmetric, so this half-plane is the whole story). EQUAL scale in X and rho,
+  // and the view is ZOOMED TO THE BUBBLE: half-width 1.6 R, recomputed from R, so
+  // the wall always fills the panel. Colours are linear in the plotted quantity and
+  // normalized to its largest value during the trip (peak speed V_max), so the maps
+  // fade in and out as V_s(t) rises and falls during Play.
+  // Canvas shows at ~0.66 CSS px per logical px, so text is >= 17 logical px (>= 11 CSS px).
+  const MAP = {x0:78, y0:46, w:862, h:292};
+  const MAP_XL = 1.6;                             // half-width in units of R
+  let view = "shape";
+  const RGB = { white:[255,255,255], blue:[15,110,147], brown:[138,90,24], red:[164,59,52] };
+  function mix(c, q){ // white -> c by q in [0,1]
+    return [255+(c[0]-255)*q, 255+(c[1]-255)*q, 255+(c[2]-255)*q];
+  }
+  const UI = "-apple-system, Helvetica, Arial, sans-serif";
+  function drawMap(){
+    const ctx = mctx, W = MW, H = MH;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = COL.bg; ctx.fillRect(0,0,W,H);
+    const Dv = D(), Rv = state.R, Av = a();
+    const Vs = shipV(state.t, Dv), Vmax = state.vmax;
+    const isTheta = (view === "theta");
+    const XL = MAP_XL*Rv;
+    const sc = MAP.w/(2*XL);                      // px per unit, both axes
+    const RHO = MAP.h/sc;                         // rho at the top edge (~1.08 R)
+    const cx = MAP.x0 + MAP.w/2, yb = MAP.y0 + MAP.h;   // axis of motion at the bottom
+    const peak = isTheta ? thetaPeak(Vmax,Rv,Av) : t00Peak(Vmax,Rv,Av);
+
+    // ---- heatmap per DEVICE pixel (putImageData ignores the transform) ----
+    const bx = Math.round(MAP.x0*dpr), by = Math.round(MAP.y0*dpr);
+    const bw = Math.round(MAP.w*dpr), bh = Math.round(MAP.h*dpr);
+    const img = ctx.createImageData(bw, bh), d = img.data;
+    for (let j=0; j<bh; j++){
+      const rho = RHO - (j+0.5)/(sc*dpr);
+      for (let i=0; i<bw; i++){
+        const k = 4*(j*bw+i);
+        let c = RGB.white;
+        const X = (i+0.5)/(sc*dpr) - XL;
+        if (isTheta){
+          const q = thetaAt(X, rho, Vs, Rv, Av)/peak;
+          if (q < 0) c = mix(RGB.blue, Math.min(1,-q));
+          else if (q > 0) c = mix(RGB.brown, Math.min(1,q));
+        } else {
+          const q = -t00At(X, rho, Vs, Rv, Av)/peak;
+          if (q > 0) c = mix(RGB.red, Math.min(1,q));
+        }
+        d[k]=c[0]; d[k+1]=c[1]; d[k+2]=c[2]; d[k+3]=255;
+      }
+    }
+    ctx.putImageData(img, bx, by);
+
+    // ---- frame, a and R semicircles, ship on the axis ----
+    ctx.strokeStyle = COL.dim; ctx.lineWidth = 1;
+    ctx.strokeRect(MAP.x0+0.5, MAP.y0+0.5, MAP.w-1, MAP.h-1);
+    ctx.save(); ctx.beginPath(); ctx.rect(MAP.x0, MAP.y0, MAP.w, MAP.h); ctx.clip();
+    ctx.setLineDash([7,5]); ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.4;
+    [Av, Rv].forEach(function(r){
+      ctx.beginPath(); ctx.arc(cx, yb, r*sc, Math.PI, 2*Math.PI); ctx.stroke();
+    });
+    ctx.restore(); ctx.setLineDash([]);
+    ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(MAP.x0, yb); ctx.lineTo(MAP.x0+MAP.w, yb); ctx.stroke();
+    ctx.fillStyle = COL.ink; dot(ctx, cx, yb, 6);
+    ctx.font = "italic 19px Georgia, serif"; ctx.fillStyle = COL.ink;
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+    ctx.fillText("a", cx, yb - Av*sc - 4);
+    ctx.fillText("R", cx, yb - Rv*sc - 4 < MAP.y0 + 20 ? MAP.y0 + 20 : yb - Rv*sc - 4);
+
+    // ---- region labels in the strip above the map ----
+    ctx.textBaseline = "middle"; ctx.font = "600 18px "+UI;
+    const ly = MAP.y0 - 22;
+    if (isTheta){
+      ctx.fillStyle = COL.brown; ctx.textAlign = "left";
+      ctx.fillText("behind: space expands (θ > 0)", MAP.x0, ly);
+      ctx.fillStyle = COL.blue; ctx.textAlign = "right";
+      ctx.fillText("ahead: space contracts (θ < 0)", MAP.x0 + MAP.w, ly);
+      ctx.strokeStyle = COL.ink; ctx.fillStyle = COL.ink; ctx.lineWidth = 1.8;
+      arrow(ctx, cx - 40, ly, cx + 40, ly, 10);
+    } else {
+      ctx.fillStyle = COL.red; ctx.textAlign = "left";
+      ctx.fillText("exotic (negative) energy density", MAP.x0, ly);
+      ctx.fillStyle = COL.grey; ctx.font = "17px "+UI; ctx.textAlign = "right";
+      ctx.fillText("cross-section of a torus around the axis of motion", MAP.x0 + MAP.w, ly);
+    }
+    if (Math.abs(Vs) < 1e-9){
+      ctx.fillStyle = COL.grey; ctx.textAlign = "center"; ctx.font = "18px "+UI;
+      ctx.fillText("Ship momentarily at rest: space is flat everywhere — move t or press Play", cx, MAP.y0 + 24);
+    }
+
+    // ---- axes: ticks at 0, +/-a, +/-R along X; R up rho ----
+    ctx.font = "17px "+UI; ctx.fillStyle = COL.grey; ctx.strokeStyle = COL.grey; ctx.lineWidth = 1;
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    [-Rv, 0, Rv].forEach(function(v){
+      const px = cx + v*sc;
+      ctx.beginPath(); ctx.moveTo(px, yb); ctx.lineTo(px, yb+6); ctx.stroke();
+      ctx.fillText(v === 0 ? "0" : (v>0?"":"−")+Math.abs(v).toFixed(2), px, yb+8);
+    });
+    mtext(ctx, MAP.x0 + MAP.w, yb+26, "x − x", "s", null, 19, COL.ink, "right");
+    ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillStyle = COL.grey;
+    ctx.beginPath(); ctx.moveTo(MAP.x0-6, yb-Rv*sc); ctx.lineTo(MAP.x0, yb-Rv*sc); ctx.stroke();
+    ctx.fillText(Rv.toFixed(2), MAP.x0-8, yb-Rv*sc);
+    ctx.fillText("0", MAP.x0-8, yb);
+    ctx.save(); ctx.translate(MAP.x0-52, MAP.y0 + MAP.h*0.45); ctx.rotate(-Math.PI/2);
+    ctx.font = "italic 19px Georgia, serif"; ctx.fillStyle = COL.ink; ctx.textAlign = "center";
+    ctx.fillText("ρ", 0, 0); ctx.restore();
+
+    // ---- colour key ----
+    const kx = MAP.x0 + MAP.w + 26, ky0 = MAP.y0, ky1 = MAP.y0 + MAP.h, kw = 18;
+    const nK = 120;
+    for (let n=0; n<nK; n++){
+      const f0 = n/nK, yk = ky0 + f0*(ky1-ky0);
+      let c;
+      if (isTheta){ const q = 1 - 2*(f0 + 0.5/nK); c = q>0 ? mix(RGB.brown, q) : mix(RGB.blue, -q); }
+      else { c = mix(RGB.red, f0 + 0.5/nK); }
+      ctx.fillStyle = "rgb("+c.map(Math.round).join(",")+")";
+      ctx.fillRect(kx, yk, kw, (ky1-ky0)/nK + 0.6);
+    }
+    ctx.strokeStyle = COL.dim; ctx.lineWidth = 1; ctx.strokeRect(kx+0.5, ky0+0.5, kw-1, ky1-ky0-1);
+    ctx.font = "17px "+UI; ctx.fillStyle = COL.grey;
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    const fmtK = v => Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(3);
+    if (isTheta){
+      ctx.fillText("+"+fmtK(peak), kx+kw+6, ky0+8);
+      ctx.fillText("0", kx+kw+6, (ky0+ky1)/2);
+      ctx.fillText("−"+fmtK(peak), kx+kw+6, ky1-8);
+    } else {
+      ctx.fillText("0", kx+kw+6, ky0+8);
+      ctx.fillText("−"+fmtK(peak), kx+kw+6, ky1-8);
+    }
+    ctx.save(); ctx.translate(kx + kw + 80, (ky0+ky1)/2); ctx.rotate(-Math.PI/2);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "17px "+UI;
+    ctx.fillText("scale: at peak speed", 0, 0); ctx.restore();
+  }
+
+  // Equation (serif) first, then one line of meaning -- shown under the active tab.
+  const MAP_HINTS = {
+    theta: '<span class="math">&theta; = V<sub>s</sub> (x&minus;x<sub>s</sub>)&#8202;/&#8202;r<sub>s</sub> &middot; df&#8202;/&#8202;dr<sub>s</sub></span> Expansion of volume elements carried by observers at rest in the slices. f&prime; &lt; 0 in the wall, so space is squeezed ahead of the ship and stretched behind it; the core and the outside are untouched.',
+    energy: '<span class="math">T<sup>00</sup> = &minus;V<sub>s</sub><sup>2</sup>&rho;<sup>2</sup>(df&#8202;/&#8202;dr<sub>s</sub>)<sup>2</sup>&#8202;/&#8202;(32&pi;r<sub>s</sub><sup>2</sup>)</span> Energy density those observers measure (G = c = 1). Negative wherever it is nonzero &mdash; no ordinary matter supplies it &mdash; and it grows as V<sub>s</sub><sup>2</sup>/(R&minus;a)<sup>2</sup>.'
+  };
+  function setView(v){
+    view = v;
+    document.querySelectorAll("#bubbleTabs button").forEach(function(b){
+      b.classList.toggle("active", b.dataset.view === v);
+    });
+    $("view-shape").classList.toggle("on", v === "shape");
+    $("view-map").classList.toggle("on", v !== "shape");
+    if (v !== "shape"){ $("mapHint").innerHTML = MAP_HINTS[v]; drawMap(); }
+  }
+  document.querySelectorAll("#bubbleTabs button").forEach(function(b){
+    b.addEventListener("click", function(){ setView(b.dataset.view); });
+  });
+
+  // ================= readout =================
   function updateReadout(){
-    const Dv=D(), Vt=shipV(state.t,Dv), xs=shipX(state.t,Dv);
-    roX.textContent = xs.toFixed(3);
+    const Dv=D(), Vt=shipV(state.t,Dv);
+    const fmt = v => (v>=0?"+":"") + v.toFixed(2);
+    roX.textContent = shipX(state.t,Dv).toFixed(3);
     roV.textContent = Vt.toFixed(3)+" c";
-    roV.style.color = Math.abs(Vt)>1 ? "#B34700" : "var(--ink)";
-    const fmtSigned = v => (v>=0?"+":"") + v.toFixed(2);
-    roNull.textContent = fmtSigned(Vt-1)+",  "+fmtSigned(Vt+1);
+    roV.style.color = Math.abs(Vt)>1 ? "#B34700" : "";
+    roNull.textContent = fmt(Vt-1)+",  "+fmt(Vt+1);
     roDT.textContent = Dv.toFixed(3)+" / 1.000";
-    ftlFlag.classList.toggle("on", Math.abs(Vt)>1.0);
+    // one status box: always inside its own cone; orange while coordinate speed > c
+    const ftl = Math.abs(Vt)>1.0;
+    ftlFlag.className = "flag " + (ftl ? "on" : "ok");
+    ftlFlag.innerHTML = ftl
+      ? "&#9889; Coordinate speed exceeds <i>c</i> &mdash; yet the worldline stays midway between the tilted null rays, inside its own light cone."
+      : "The worldline sits midway between the tilted null rays: the ship is inside its own light cone.";
+    const th = thetaPeak(Vt, state.R, a()), tp = t00Peak(Vt, state.R, a());
+    $("roTh").textContent = th.toFixed(2);
+    $("roT00").textContent = (tp > 0 ? "−" : "") + (tp >= 1 ? tp.toFixed(2) : tp.toFixed(4));
   }
 
-  // ================= wiring =================
-  function redrawAll(){ syncInputs(); drawStage(); drawProfile(); updateReadout(); }
+  function redrawAll(){ syncInputs(); drawStage(); drawProfile(); if(view!=="shape") drawMap(); updateReadout(); }
 
   elVmax.addEventListener("input", e=>{ state.vmax=parseFloat(e.target.value); redrawAll(); });
-  elR.addEventListener("input", e=>{ state.R=parseFloat(e.target.value); redrawAll(); });
-  elCore.addEventListener("input", e=>{ state.core=parseFloat(e.target.value); redrawAll(); });
-  elT.addEventListener("input", e=>{ state.t=parseFloat(e.target.value); state.playing=false; playBtn.innerHTML="&#9654;&nbsp; Play"; redrawAll(); });
+  elR.addEventListener("input",   e=>{ state.R=parseFloat(e.target.value);    redrawAll(); });
+  elCore.addEventListener("input",e=>{ state.core=parseFloat(e.target.value); redrawAll(); });
+  elT.addEventListener("input",   e=>{ state.t=parseFloat(e.target.value); stopPlay(); redrawAll(); });
   showGrid.addEventListener("change", drawStage);
   showRef.addEventListener("change", drawStage);
 
-  resetBtn.addEventListener("click", ()=>{
-    state.vmax=1.95; state.R=0.18; state.core=0.50; state.t=0.0; state.playing=false;
-    playBtn.innerHTML="&#9654;&nbsp; Play";
-    redrawAll();
+  resetBtn.addEventListener("click", function(){
+    state.vmax=1.95; state.R=0.18; state.core=0.50; state.t=0.5;
+    stopPlay(); redrawAll();
   });
 
   let playStart=null;
   const LOOP_S = 3.4;
+  function stopPlay(){ state.playing=false; playBtn.innerHTML="&#9654;&nbsp; Play"; }
   function playFrame(ts){
     if(!state.playing) return;
     if(playStart===null) playStart=ts;
-    let elapsed = ((ts-playStart)/1000) % LOOP_S;
-    state.t = elapsed/LOOP_S;
-    syncInputs(); drawStage(); updateReadout();
+    state.t = (((ts-playStart)/1000) % LOOP_S)/LOOP_S;
+    syncInputs(); drawStage(); if(view!=="shape") drawMap(); updateReadout();
     requestAnimationFrame(playFrame);
   }
-  playBtn.addEventListener("click", ()=>{
+  playBtn.addEventListener("click", function(){
     state.playing = !state.playing;
     if(state.playing){
       playBtn.innerHTML="&#10074;&#10074;&nbsp; Pause";
-      playStart=null;
-      requestAnimationFrame(playFrame);
-    } else {
-      playBtn.innerHTML="&#9654;&nbsp; Play";
-    }
+      playStart=null; requestAnimationFrame(playFrame);
+    } else stopPlay();
   });
 
-  window.addEventListener("resize", ()=>{ drawStage(); drawProfile(); });
-
   redrawAll();
+
+  // exposed for headless render checks (STYLE_GUIDE s11.1a)
+  window.__demo = { state, redrawAll, drawStage, drawProfile, drawMap, setView, D, shipX, shipV,
+                    fProfile, dfProfile, thetaAt, t00At, thetaPeak, t00Peak, stageMap };
 })();
 </script>
 </body>

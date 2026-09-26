@@ -8,222 +8,120 @@
   :root{
     --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
     --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
-    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --serif: Georgia, "Times New Roman", serif;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --mono: "SF Mono", "Cascadia Code", Consolas, "Courier New", monospace;
   }
   *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
-    -webkit-font-smoothing:antialiased;
-  }
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
   .wrap{max-width:1200px; margin:0 auto; padding:24px 28px 40px;}
-  header{margin-bottom:16px;}
-  .eyebrow{
-    font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:0.08em;
-    text-transform:uppercase; color:var(--blue); margin:0 0 6px;
-  }
-  h1{
-    font-family:var(--serif); font-size:30px; margin:0 0 8px;
-    color:var(--ink); line-height:1.15; font-weight:400;
-  }
-  .sub{color:var(--grey); font-size:14px; max-width:640px; line-height:1.5; margin:0;}
+  .eyebrow{font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--blue); margin:0 0 6px;}
+  h1{font-family:var(--serif); font-size:30px; margin:0 0 8px; color:var(--ink); line-height:1.15; font-weight:400;}
+  .sub{color:var(--grey); font-size:14px; line-height:1.5; margin:0;}
   .formula-strip{
-    margin-top:10px; padding:12px 16px; background:var(--panel); border:1px solid #d7deea;
+    margin-top:10px; padding:10px 16px; background:var(--panel); border:1px solid #d7deea;
     border-radius:10px; font-family:var(--serif); font-size:15px; color:var(--mute2);
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
   }
   .formula-strip .eq{font-style:italic; color:var(--ink);}
-  .formula-strip .tag{
-    font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:0.04em;
-    padding:2px 8px; border-radius:999px; text-transform:uppercase;
-  }
+  .formula-strip .tag{font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:0.04em;
+    padding:2px 8px; border-radius:999px; text-transform:uppercase;}
   .tag.sr{background:#f3e6d3; color:var(--brown);}
   .tag.gr{background:#dbeaf1; color:var(--blue);}
 
-  nav.tabs{
-    display:flex; gap:6px; margin:18px 0 14px; flex-wrap:wrap;
-    border-bottom:1px solid #dfe4ec; padding-bottom:0;
-  }
-  nav.tabs button{
-    font-family:var(--sans); font-size:13.5px; font-weight:600; color:var(--grey);
-    background:none; border:none; padding:10px 14px; cursor:pointer; border-radius:8px 8px 0 0;
-    position:relative; top:1px;
-  }
-  nav.tabs button.active{
-    color:var(--blue); border-bottom:2px solid var(--blue);
-  }
-  nav.tabs button:hover:not(.active){color:var(--ink);}
+  /* ---- component kit (STYLE_GUIDE §14.1) ---- */
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+  .tabs button{font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:9px 14px;border:1px solid var(--dim);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+  .tabs button:hover{border-color:var(--blued)}
+  .tabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn{font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:8px 14px;border-radius:8px;border:1px solid var(--blued);background:#fff;color:var(--blued);cursor:pointer}
+  .btn:hover{background:var(--panel)}
+  .btn.primary{background:var(--blued);color:#fff}
+  .btn.primary:hover{background:var(--blue)}
+  .btn:disabled{opacity:.45;cursor:default}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0 0}
+  .ctl{margin:0 0 12px}
+  .ctl:last-child{margin-bottom:0}
+  .ctl label{display:block;font-size:12.5px;color:var(--mute2)}
+  .ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+    font-size:12.5px;color:var(--blue)}
+  input[type=checkbox]{accent-color:var(--blue)}
+  /* ---- end kit ---- */
 
-  .grid{display:grid; grid-template-columns: 1.05fr 1fr; gap:22px;}
-  @media (max-width:760px){ .grid{grid-template-columns:1fr;} }
+  .grid{display:grid; grid-template-columns: 1.08fr 1fr; gap:18px; margin-top:16px;}
+  @media (max-width:860px){ .grid{grid-template-columns:1fr;} }
+  .col{display:flex; flex-direction:column; gap:14px;}
 
-  .card{
-    background:#fff; border:1px solid #e6eaf1; border-radius:14px; padding:16px 20px;
-  }
-  .card h2{
-    font-family:var(--sans); font-size:12.5px; font-weight:700; letter-spacing:0.07em;
-    text-transform:uppercase; color:var(--grey); margin:0 0 12px;
-  }
+  .card{background:#fff; border:1px solid #e1e6ee; border-radius:12px; padding:14px 16px;}
+  .card h2{font-family:var(--serif); font-size:17px; font-weight:400; color:var(--ink); margin:0 0 10px;}
+  .card h2 .aside{font-family:var(--sans); font-size:12px; color:var(--grey); margin-left:6px;}
+  .hint{font-size:12px; color:var(--grey); margin-top:5px; line-height:1.45;}
+  .dirrow{margin:0 0 12px}
+  .dirrow button{flex:1}
 
-  .control{margin-bottom:18px;}
-  .control:last-child{margin-bottom:0;}
-  .control-label{
-    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;
-  }
-  .control-label span.name{font-size:14px; color:var(--mute2); font-weight:600;}
-  .control-label span.val{font-family:var(--mono); font-size:13.5px; color:var(--ink);}
-  input[type=range]{
-    width:100%; -webkit-appearance:none; height:5px; border-radius:3px;
-    background:linear-gradient(to right, var(--blued), var(--blued)) no-repeat, var(--dim);
-    background-size: var(--fill,50%) 100%;
-  }
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none; width:17px; height:17px; border-radius:50%;
-    background:var(--blue); border:2px solid #fff; box-shadow:0 0 0 1px var(--blued);
-    cursor:pointer; margin-top:-6px;
-  }
-  input[type=range]::-moz-range-thumb{
-    width:15px; height:15px; border-radius:50%; background:var(--blue);
-    border:2px solid #fff; box-shadow:0 0 0 1px var(--blued); cursor:pointer;
-  }
-  .hint{font-size:12px; color:var(--grey); margin-top:5px; line-height:1.4;}
+  canvas#fig{display:block; width:100%; height:auto; aspect-ratio:560/340; touch-action:none;}
+  .figcap{font-size:12px; color:var(--grey); line-height:1.5; margin:8px 0 0;}
+  .figcap b{color:var(--mute2); font-weight:600;}
 
-  .direction-toggle{
-    display:flex; gap:8px; margin-bottom:18px;
-  }
-  .direction-toggle button{
-    flex:1; padding:9px 8px; border-radius:8px; border:1.5px solid #dfe4ec;
-    background:#fff; font-family:var(--sans); font-size:13px; font-weight:600;
-    color:var(--grey); cursor:pointer;
-  }
-  .direction-toggle button.active{
-    border-color:var(--blue); color:var(--blue); background:#eef6f9;
-  }
-
-  /* twin clocks: the point of the animation. Both readouts derive from the exact
-     same elapsed-time value -- they are LITERALLY identical, on purpose, because
-     the effect we're demonstrating is far below the resolution a clock face can
-     show. That's the whole point: you cannot see this with your eyes. */
-  .twin-clocks{
-    display:flex; align-items:center; justify-content:center; gap:14px;
-    margin-bottom:6px;
-  }
-  .clock-box{
-    flex:1; text-align:center; background:var(--panel); border-radius:12px;
-    padding:12px 8px; border:1px solid #e2e8f1;
-  }
-  .clock-label{
-    font-size:11px; color:var(--grey); text-transform:uppercase; letter-spacing:.04em;
-    margin-bottom:4px; font-weight:600;
-  }
-  .clock-readout{
-    font-family:var(--mono); font-size:clamp(18px,3.2vw,24px); font-weight:700;
-    color:var(--ink); letter-spacing:-0.01em;
-  }
+  /* twin clocks: both readouts derive from the same elapsed-time value -- they are
+     LITERALLY identical, on purpose; the effect is far below what a clock face resolves. */
+  .twin-clocks{display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:6px;}
+  .clock-box{flex:1; text-align:center; background:var(--panel); border-radius:12px; padding:10px 8px; border:1px solid #e2e8f1;}
+  .clock-label{font-size:11px; color:var(--grey); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; font-weight:600;}
+  .clock-readout{font-family:var(--mono); font-size:clamp(18px,3.0vw,22px); font-weight:700; color:var(--ink); letter-spacing:-0.01em;}
   .clock-vs{font-size:12px; color:var(--dim); font-weight:700;}
-  .twin-note{
-    text-align:center; font-size:12px; color:var(--grey); margin:8px 0 18px;
-    font-style:italic;
-  }
+  .twin-note{text-align:center; font-size:12px; color:var(--grey); margin:6px 0 14px; font-style:italic;}
 
-  /* signature hero counter, driven by the Run animation -- the ONLY place the
-     otherwise-invisible difference between the two clocks above becomes visible */
-  .hero-counter-wrap{
-    text-align:center; margin-bottom:14px; padding:10px 10px 8px;
-    background:linear-gradient(180deg,#fbfdfe,var(--panel)); border-radius:12px;
-    border:1px solid #e2e8f1;
-  }
+  .hero-counter-wrap{text-align:center; margin-bottom:14px; padding:10px 10px 8px;
+    background:linear-gradient(180deg,#fbfdfe,var(--panel)); border-radius:12px; border:1px solid #e2e8f1;}
   .hero-label{font-size:11.5px; color:var(--grey); margin-bottom:2px;}
-  .hero-counter{
-    font-family:var(--mono); font-size:clamp(28px,5vw,40px); font-weight:700;
-    color:var(--ink); letter-spacing:-0.01em; line-height:1.2;
-    transition:color .15s ease;
-  }
+  .hero-counter{font-family:var(--mono); font-size:clamp(28px,5vw,40px); font-weight:700; color:var(--ink);
+    letter-spacing:-0.01em; line-height:1.2; transition:color .15s ease;}
   .hero-counter.running{color:var(--blue);}
   .hero-sub{font-size:11.5px; color:var(--grey); margin-top:4px;}
   .hero-sub b{color:var(--mute2);}
 
-  /* the tug-of-war bar: signature element */
-  .duel{margin:6px 0 16px;}
+  .duel{margin:6px 0 14px;}
   .duel-labels{display:flex; justify-content:space-between; font-size:12px; color:var(--grey); margin-bottom:6px;}
   .duel-labels .l{color:var(--brown); font-weight:700;}
   .duel-labels .r{color:var(--blue); font-weight:700;}
-  .duel-track{
-    position:relative; height:46px; background:var(--panel); border-radius:10px;
-    overflow:hidden; border:1px solid #dde3ec;
-  }
-  .duel-mid{
-    position:absolute; left:50%; top:0; bottom:0; width:1px; background:#b8c2d1; z-index:3;
-  }
-  .duel-bar{
-    position:absolute; top:6px; bottom:6px; border-radius:6px; transition:all .25s ease;
-  }
+  .duel-track{position:relative; height:46px; background:var(--panel); border-radius:10px; overflow:hidden; border:1px solid #dde3ec;}
+  .duel-mid{position:absolute; left:50%; top:0; bottom:0; width:1px; background:#b8c2d1; z-index:3;}
+  .duel-bar{position:absolute; top:6px; bottom:6px; border-radius:6px; transition:all .25s ease;}
   .duel-bar.sr{background:linear-gradient(90deg,#a3742f,var(--brown)); right:50%;}
   .duel-bar.gr{background:linear-gradient(90deg,var(--blue),#0a5878); left:50%;}
-  .duel-net{
-    position:absolute; top:-3px; bottom:-3px; width:3px; background:var(--ink); z-index:4;
-    border-radius:2px; transition:left .25s ease;
-  }
-  .duel-net::after{
-    content:attr(data-label); position:absolute; top:-22px; left:50%; transform:translateX(-50%);
-    font-family:var(--mono); font-size:11px; color:var(--ink); white-space:nowrap; font-weight:700;
-  }
+  .duel-net{position:absolute; top:-3px; bottom:-3px; width:3px; background:var(--ink); z-index:4; border-radius:2px; transition:left .25s ease;}
+  .duel-net::after{content:attr(data-label); position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    font-family:var(--mono); font-size:11px; color:var(--ink); white-space:nowrap; font-weight:700;}
 
-  .readout{
-    display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:6px;
-  }
-  .readout .cell{
-    background:var(--panel); border-radius:10px; padding:12px 10px; text-align:center;
-  }
+  .readout{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:6px;}
+  .readout .cell{background:var(--panel); border-radius:10px; padding:10px 8px; text-align:center;}
   .readout .cell .k{font-size:10.5px; color:var(--grey); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px;}
-  .readout .cell .v{font-family:var(--mono); font-size:17px; color:var(--ink); font-weight:600;}
+  .readout .cell .v{font-family:var(--mono); font-size:16px; color:var(--ink); font-weight:600;}
   .readout .cell.sr .v{color:var(--brown);}
   .readout .cell.gr .v{color:var(--blue);}
-  .readout .cell.net .v{color:var(--ink); font-size:18px;}
 
-  .verdict{
-    margin-top:10px; padding:12px 14px; border-radius:10px; background:#f5f8ee;
-    border:1px solid #dce6c8; font-size:13.5px; color:var(--mute2); line-height:1.5;
-  }
+  .verdict{margin-top:10px; padding:10px 12px; border-radius:10px; background:#f5f8ee;
+    border:1px solid #dce6c8; font-size:13.5px; color:var(--mute2); line-height:1.5;}
   .verdict b{color:var(--ink);}
 
-  .compare-table{width:100%; border-collapse:collapse; margin-top:10px; font-size:13.5px;}
-  .compare-table th{
-    text-align:right; font-weight:600; color:var(--grey); font-size:11px;
-    text-transform:uppercase; letter-spacing:.04em; padding:6px 8px; border-bottom:1px solid #e6eaf1;
-  }
+  .compare-table{width:100%; border-collapse:collapse; margin-top:4px; font-size:13px;}
+  .compare-table th{text-align:right; font-weight:600; color:var(--grey); font-size:11px; text-transform:uppercase;
+    letter-spacing:.04em; padding:6px 8px; border-bottom:1px solid #e6eaf1;}
   .compare-table th:first-child{text-align:left;}
-  .compare-table td{padding:9px 8px; text-align:right; border-bottom:1px solid #f0f2f6; font-family:var(--mono);}
+  .compare-table td{padding:7px 8px; text-align:right; border-bottom:1px solid #f0f2f6; font-family:var(--mono);}
   .compare-table td:first-child{text-align:left; font-family:var(--sans); color:var(--mute2); font-weight:600;}
   .compare-table tr.computed td{color:var(--blue); font-weight:700;}
 
-  .gps-extra{margin-top:10px; padding-top:10px; border-top:1px dashed #dfe4ec;}
-  .gps-extra p{font-size:13px; color:var(--mute2); line-height:1.55; margin:0 0 10px;}
-  .gps-extra .fact{
-    display:inline-flex; align-items:baseline; gap:6px; font-family:var(--mono);
-    background:var(--panel); padding:6px 10px; border-radius:8px; font-size:13px; margin-bottom:10px;
-  }
-
   .fly-row{display:flex; gap:12px; align-items:center; margin-top:12px;}
-  .fly-btn{
-    font-family:var(--sans); font-weight:700; font-size:13.5px; color:#fff; background:var(--blue);
-    border:none; padding:10px 18px; border-radius:8px; cursor:pointer; white-space:nowrap;
-  }
-  .fly-btn:hover{background:var(--blued);}
-  .fly-btn:disabled{background:var(--dim); cursor:default;}
   .fly-hint{font-size:12px; color:var(--grey);}
 
-  footer{
-    margin-top:20px; padding-top:12px; border-top:1px solid #e6eaf1;
-    font-size:11.5px; color:var(--grey); display:flex; justify-content:space-between;
-    flex-wrap:wrap; gap:6px;
-  }
-  .assumptions{
-    margin-top:10px; font-size:12px; color:var(--grey); line-height:1.6;
-    background:var(--panel); border-radius:10px; padding:12px 14px;
-  }
-  .assumptions b{color:var(--mute2);}
+  footer{margin-top:24px; padding:14px 0 0; border-top:1px solid var(--dim);
+    font-size:11.5px; color:var(--grey); display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;}
 </style>
 </head>
 <body>
@@ -249,24 +147,16 @@
   </nav>
 
   <div class="grid">
-    <div class="card" id="controlsCard">
-      <h2 id="controlsTitle">Controls</h2>
-      <div id="controlsBody"></div>
-
-      <div id="compareBlock" style="display:none;">
-        <table class="compare-table">
-          <thead><tr><th>Eastbound / Westbound</th><th>Predicted</th><th>Observed</th></tr></thead>
-          <tbody id="compareBody"></tbody>
-        </table>
+    <div class="col">
+      <div class="card" id="controlsCard">
+        <h2 id="controlsTitle">Controls</h2>
+        <div id="controlsBody"></div>
       </div>
 
-      <div class="gps-extra" id="gpsExtra" style="display:none;">
-        <p>Real GPS satellites orbit at &asymp;20,200&nbsp;km altitude. At that altitude the
-          gravitational (GR) effect dominates the kinematic (SR) effect, and the satellite's
-          on-board clock must be corrected by:</p>
-        <div class="fact">net &asymp; +38.5 &micro;s / day</div>
-        <p>(&minus;7.2&nbsp;&micro;s/day from its orbital speed, +45.7&nbsp;&micro;s/day from being
-          higher up a shallower potential well &mdash; built into every GPS receiver's firmware.)</p>
+      <div class="card">
+        <h2 id="figTitle">Figure</h2>
+        <canvas id="fig" width="560" height="340"></canvas>
+        <p class="figcap" id="figCap"></p>
       </div>
     </div>
 
@@ -311,14 +201,19 @@
       <div class="verdict" id="verdict"></div>
 
       <div class="fly-row">
-        <button class="fly-btn" id="flyBtn">&#9654; Run the clock</button>
+        <button class="btn primary" id="flyBtn">&#9654; Run the clock</button>
         <span class="fly-hint" id="flyHint">reveals what the clocks above can't show you</span>
       </div>
+
+        <div id="compareBlock" style="display:none; margin-top:14px;">
+          <table class="compare-table">
+            <thead><tr><th>Net gain of flying clock</th><th>Predicted</th><th>Observed</th></tr></thead>
+            <tbody id="compareBody"></tbody>
+          </table>
+        </div>
+      <p class="hint" id="assumptions" style="margin-top:12px"></p>
     </div>
   </div>
-
-
-  <div class="assumptions" id="assumptions"></div>
 
   <footer>
     <span>S. Taylor &middot; Vanderbilt University</span>
@@ -328,38 +223,78 @@
 </div>
 
 <script>
+// ---------- kit helpers (STYLE_GUIDE §14.2, §14.3) ----------
+function hidpi(cv, W, H){
+  var dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+function mtext(ctx, x, y, base, sub, sup, size, col, align){
+  size = size || 15; col = col || '#15243C';
+  var fb = 'italic ' + size + 'px Georgia,"Times New Roman",serif';
+  var fs = Math.round(size*0.68) + 'px Georgia,"Times New Roman",serif';
+  ctx.save(); ctx.fillStyle = col; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  ctx.font = fb; var wb = ctx.measureText(base).width;
+  ctx.font = fs; var ws = Math.max(sub ? ctx.measureText(sub).width : 0, sup ? ctx.measureText(sup).width : 0);
+  var x0 = align === 'center' ? x - (wb+ws)/2 : align === 'right' ? x - wb - ws : x;
+  ctx.font = fb; ctx.fillText(base, x0, y);
+  ctx.font = fs;
+  if(sub) ctx.fillText(sub, x0 + wb + 1, y + size*0.28);
+  if(sup) ctx.fillText(sup, x0 + wb + 1, y - size*0.42);
+  ctx.restore(); return wb + ws;
+}
+
 // ---------- physics ----------
 const Gc = 6.674e-11, M = 5.972e24, R = 6.371e6, c = 2.998e8;
-const GM = G_times_M();
-function G_times_M(){ return Gc*M; }
-const g0 = GM / (R*R);                        // surface gravity, ~9.82
-const Vearth = 2*Math.PI*R/86164;              // equatorial rotation speed, ~464.6 m/s
+const GM = Gc*M;
+const g0 = GM / (R*R);                         // surface gravity, ~9.82 m/s^2
+const SIDEREAL_DAY = 86164;
+const OMEGA = 2*Math.PI/SIDEREAL_DAY;          // Earth's rotation rate
+const Vearth = OMEGA*R;                        // equatorial rotation speed, ~464.6 m/s
 
-// SR + GR contributions to (flying clock - reference clock), in seconds,
-// following the Step-8/Step-10 formula, assuming constant v, h over duration T (s).
-// Reference clock: Earth's surface at the equator (v = Vearth for 'hk'/'custom' modes,
-// which already includes the surface clock's own rotation baked into V_earth term;
-// v = 0 non-rotating reference for 'gps' mode, matching the standard GPS convention
-// that reproduces the textbook 38 microseconds/day figure).
-function computeHK(Vg_signed, h, T){
-  // Delta tau = (1/c^2) * T * { g*h - (1/2)*Vg*(Vg + 2*Vearth) }
-  const gr = g0 * h;                  // m^2/s^2 equivalent, "GR-like" piece before scaling
-  const sr = -0.5 * Vg_signed * (Vg_signed + 2*Vearth);
-  const grTerm = (T / (c*c)) * gr;    // seconds
-  const srTerm = (T / (c*c)) * sr;    // seconds
+// Hafele-Keating (Lecture 5, Step 10): constant ground speed Vg (signed, + = east) and
+// altitude h, relative to a clock at rest on the rotating surface. The 1971 routes flew at
+// mid-northern latitudes, so the surface rotation speed is V_earth cos(lat), not V_earth:
+//   Delta tau = (T/c^2) { g h - (1/2) Vg (Vg + 2 V_earth cos lat) }
+// The SR piece is (1/2)[Vrot^2 - (Vrot+Vg)^2]: the flying clock's inertial speed is
+// Vrot+Vg, the reference clock's is Vrot. lat = 0 recovers the equatorial Step-10 formula.
+function computeHK(Vg_signed, h, T, latDeg){
+  const Vrot = Vearth*Math.cos((latDeg||0)*Math.PI/180);
+  const grTerm = (T/(c*c)) * g0*h;
+  const srTerm = (T/(c*c)) * (-0.5*Vg_signed*(Vg_signed + 2*Vrot));
   return {srTerm, grTerm, net: srTerm + grTerm};
 }
+// Custom tab: same SR bookkeeping as HK (eastward speed v relative to the rotating
+// surface), but the exact Newtonian potential difference GM(1/R - 1/r) rather than g h,
+// because the altitude slider reaches tens of thousands of km where g h is badly wrong.
+// For h << R the two agree.
+function potentialGain(h){ return GM*(1/R - 1/(R+h)); }
+function computeCustom(v, h, T){
+  const grTerm = (T/(c*c)) * potentialGain(h);
+  const srTerm = (T/(c*c)) * (-0.5*v*(v + 2*Vearth));
+  return {srTerm, grTerm, net: srTerm + grTerm};
+}
+// GPS: circular orbit, v^2 = GM/r, relative to a NON-rotating clock at the surface.
 function computeGPS(v, r, T){
-  // relative to a non-rotating clock at Earth's surface (v=0, r=R)
   const grTerm = (T*GM/(c*c)) * (1/R - 1/r);
   const srTerm = -(T/(2*c*c)) * (v*v);
   return {srTerm, grTerm, net: srTerm + grTerm};
 }
+// Rates in seconds gained per second, for circular orbits at altitude h (metres).
+function gpsRates(h){
+  const r = R + h;
+  return {gr: GM/(c*c)*(1/R - 1/r), sr: -GM/(2*c*c*r)};
+}
+// Net rate vanishes where GM/R = (3/2) GM/r, i.e. r = 3R/2.
+const H_CROSS = 0.5*R;
 
 // ---------- state ----------
 let scenario = 'gps';
-let direction = 'east'; // for hk
+let direction = 'east';
 let flying = false, flyRAF = null, flyStart = 0;
+let gpsDays = 1;
 
 const els = {
   tabs: document.getElementById('tabs'),
@@ -374,7 +309,6 @@ const els = {
   verdict: document.getElementById('verdict'),
   compareBlock: document.getElementById('compareBlock'),
   compareBody: document.getElementById('compareBody'),
-  gpsExtra: document.getElementById('gpsExtra'),
   assumptions: document.getElementById('assumptions'),
   flyBtn: document.getElementById('flyBtn'),
   flyHint: document.getElementById('flyHint'),
@@ -383,51 +317,53 @@ const els = {
   clockRef: document.getElementById('clockRef'),
   clockTravel: document.getElementById('clockTravel'),
   clockTravelLabel: document.getElementById('clockTravelLabel'),
+  fig: document.getElementById('fig'),
+  figTitle: document.getElementById('figTitle'),
+  figCap: document.getElementById('figCap'),
 };
 
-// ---------- scenario configs ----------
+const FW = 560, FH = 340;
+const fctx = hidpi(els.fig, FW, FH);
+
 const HK_HISTORICAL = {
   east: {pred:-40, predErr:23, obs:-59, obsErr:10},
   west: {pred:275, predErr:21, obs:273, obsErr:7},
 };
 
 let params = {
-  gps: {altitude: 20200},          // km above surface
-  hk:  {speed: 243, altitude: 8900, duration: 41.2},  // m/s, m, hours
-  custom: {speed: 250, altitude: 10000, duration: 24},
+  gps: {altitude: 20200},                              // km above surface
+  hk:  {speed: 243, altitude: 8900, duration: 41.2, lat: 35},   // m/s, m, hours, degrees (approx. mean route latitude)
+  custom: {speed: 250, altitude: 10000, duration: 24}, // m/s, m, hours
 };
 
 function fmtNs(seconds){
   const ns = seconds*1e9;
-  const sign = ns >= 0 ? '+' : '\u2212';
-  return sign + Math.abs(ns).toFixed(1) + ' ns';
+  return (ns >= 0 ? '+' : '−') + Math.abs(ns).toFixed(1) + ' ns';
 }
 function fmtUs(seconds){
   const us = seconds*1e6;
-  const sign = us >= 0 ? '+' : '\u2212';
-  return sign + Math.abs(us).toFixed(2) + ' \u00b5s';
+  return (us >= 0 ? '+' : '−') + Math.abs(us).toFixed(2) + ' µs';
 }
+function commas(x){ return Math.round(x).toLocaleString('en-US'); }
 
+// ---------- controls ----------
 function renderControls(){
   if(scenario === 'gps'){
     els.controlsTitle.textContent = 'GPS satellite altitude';
     els.controlsBody.innerHTML = `
-      <div class="control">
-        <div class="control-label"><span class="name">Orbital altitude</span>
-          <span class="val" id="altOut">${params.gps.altitude.toLocaleString()} km</span></div>
+      <div class="ctl">
+        <label>Orbital altitude <span class="val" id="altOut">${commas(params.gps.altitude)} km</span></label>
         <input type="range" id="altSlider" min="300" max="35800" step="100" value="${params.gps.altitude}">
-        <div class="hint">Real GPS satellites orbit at 20,200&nbsp;km &mdash; drag down toward
-          the ISS (&asymp;400&nbsp;km) or up toward geostationary (&asymp;35,800&nbsp;km) to see
-          where SR and GR trade off.</div>
+        <div class="hint">Real GPS satellites orbit at 20,200&nbsp;km. Drag down toward the ISS
+          (&asymp;400&nbsp;km) or up toward geostationary (&asymp;35,800&nbsp;km) and follow the marker on the figure.</div>
       </div>
-      <div class="control">
-        <div class="control-label"><span class="name">Elapsed time</span>
-          <span class="val" id="durOutGps">1 day</span></div>
-        <input type="range" id="durSliderGps" min="1" max="30" step="1" value="1">
+      <div class="ctl">
+        <label>Elapsed time <span class="val" id="durOutGps">${gpsDays} ${gpsDays==1?'day':'days'}</span></label>
+        <input type="range" id="durSliderGps" min="1" max="30" step="1" value="${gpsDays}">
       </div>`;
     document.getElementById('altSlider').oninput = e=>{
       params.gps.altitude = +e.target.value;
-      document.getElementById('altOut').textContent = params.gps.altitude.toLocaleString()+' km';
+      document.getElementById('altOut').textContent = commas(params.gps.altitude)+' km';
       update();
     };
     document.getElementById('durSliderGps').oninput = e=>{
@@ -438,28 +374,28 @@ function renderControls(){
   } else if(scenario === 'hk'){
     els.controlsTitle.textContent = 'Flight parameters';
     els.controlsBody.innerHTML = `
-      <div class="direction-toggle">
+      <div class="tabs dirrow">
         <button id="dirEast" class="${direction==='east'?'active':''}">Eastbound</button>
         <button id="dirWest" class="${direction==='west'?'active':''}">Westbound</button>
       </div>
-      <div class="control">
-        <div class="control-label"><span class="name">Ground speed</span>
-          <span class="val" id="spOut">${params.hk.speed} m/s</span></div>
+      <div class="ctl">
+        <label>Ground speed <span class="val" id="spOut">${params.hk.speed} m/s</span></label>
         <input type="range" id="spSlider" min="150" max="320" step="1" value="${params.hk.speed}">
       </div>
-      <div class="control">
-        <div class="control-label"><span class="name">Cruising altitude</span>
-          <span class="val" id="altOutHk">${params.hk.altitude.toLocaleString()} m</span></div>
+      <div class="ctl">
+        <label>Cruising altitude <span class="val" id="altOutHk">${commas(params.hk.altitude)} m</span></label>
         <input type="range" id="altSliderHk" min="6000" max="12000" step="100" value="${params.hk.altitude}">
       </div>
-      <div class="control">
-        <div class="control-label"><span class="name">Flight duration</span>
-          <span class="val" id="durOutHk">${params.hk.duration} hr</span></div>
+      <div class="ctl">
+        <label>Mean flight latitude (approx.) <span class="val" id="latOutHk">${params.hk.lat}&deg;</span></label>
+        <input type="range" id="latSliderHk" min="0" max="60" step="1" value="${params.hk.lat}">
+      </div>
+      <div class="ctl">
+        <label>Flight duration <span class="val" id="durOutHk">${params.hk.duration} hr</span></label>
         <input type="range" id="durSliderHk" min="10" max="70" step="0.5" value="${params.hk.duration}">
-        <div class="hint">Defaults are the published average speed/altitude/airborne time for
-          the 1971 flights. The historical predicted/observed totals (right) come from
-          integrating the actual varying flight profile \u2014 this slider model uses constant
-          averages, so it lands close but not identical.</div>
+        <div class="hint">Defaults are the published average speed, altitude and airborne time of the
+          1971 flights. The historical totals below come from integrating the real, varying flight
+          profile; this model uses constant averages on one circle of latitude, so it lands close but not identical.</div>
       </div>`;
     document.getElementById('dirEast').onclick = ()=>{direction='east'; renderControls(); update();};
     document.getElementById('dirWest').onclick = ()=>{direction='west'; renderControls(); update();};
@@ -470,7 +406,12 @@ function renderControls(){
     };
     document.getElementById('altSliderHk').oninput = e=>{
       params.hk.altitude = +e.target.value;
-      document.getElementById('altOutHk').textContent = params.hk.altitude.toLocaleString()+' m';
+      document.getElementById('altOutHk').textContent = commas(params.hk.altitude)+' m';
+      update();
+    };
+    document.getElementById('latSliderHk').oninput = e=>{
+      params.hk.lat = +e.target.value;
+      document.getElementById('latOutHk').innerHTML = params.hk.lat+'&deg;';
       update();
     };
     document.getElementById('durSliderHk').oninput = e=>{
@@ -481,32 +422,28 @@ function renderControls(){
   } else {
     els.controlsTitle.textContent = 'Your own clock';
     els.controlsBody.innerHTML = `
-      <div class="control">
-        <div class="control-label"><span class="name">Speed relative to Earth's surface</span>
-          <span class="val" id="spOutC">${params.custom.speed} m/s</span></div>
+      <div class="ctl">
+        <label>Eastward speed relative to the surface <span class="val" id="spOutC">${commas(params.custom.speed)} m/s</span></label>
         <input type="range" id="spSliderC" min="0" max="8000" step="10" value="${params.custom.speed}">
       </div>
-      <div class="control">
-        <div class="control-label"><span class="name">Altitude above surface</span>
-          <span class="val" id="altOutC">${params.custom.altitude.toLocaleString()} m</span></div>
+      <div class="ctl">
+        <label>Altitude above surface <span class="val" id="altOutC">${commas(params.custom.altitude)} m</span></label>
         <input type="range" id="altSliderC" min="0" max="40000000" step="10000" value="${params.custom.altitude}">
       </div>
-      <div class="control">
-        <div class="control-label"><span class="name">Duration</span>
-          <span class="val" id="durOutC">${params.custom.duration} hr</span></div>
+      <div class="ctl">
+        <label>Duration <span class="val" id="durOutC">${params.custom.duration} hr</span></label>
         <input type="range" id="durSliderC" min="1" max="168" step="1" value="${params.custom.duration}">
       </div>
-      <div class="hint">Try 0 m/s at 0 m (nothing happens); then just altitude (clock runs
-        fast); then just speed at the surface (clock runs slow) \u2014 the same competition as
-        every other tab, stripped down.</div>`;
+      <div class="hint">Try 0 m/s at 0 m (nothing happens); then only altitude (the clock runs fast);
+        then only speed at the surface (it runs slow). The figure shows the speed at which the two cancel.</div>`;
     document.getElementById('spSliderC').oninput = e=>{
       params.custom.speed = +e.target.value;
-      document.getElementById('spOutC').textContent = params.custom.speed+' m/s';
+      document.getElementById('spOutC').textContent = commas(params.custom.speed)+' m/s';
       update();
     };
     document.getElementById('altSliderC').oninput = e=>{
       params.custom.altitude = +e.target.value;
-      document.getElementById('altOutC').textContent = params.custom.altitude.toLocaleString()+' m';
+      document.getElementById('altOutC').textContent = commas(params.custom.altitude)+' m';
       update();
     };
     document.getElementById('durSliderC').oninput = e=>{
@@ -517,8 +454,6 @@ function renderControls(){
   }
 }
 
-let gpsDays = 1;
-
 function currentResult(){
   if(scenario === 'gps'){
     const r = R + params.gps.altitude*1000;
@@ -528,10 +463,10 @@ function currentResult(){
   } else if(scenario === 'hk'){
     const Vg = direction==='east' ? params.hk.speed : -params.hk.speed;
     const T = params.hk.duration*3600;
-    return {...computeHK(Vg, params.hk.altitude, T), T, label:'flying clock'};
+    return {...computeHK(Vg, params.hk.altitude, T, params.hk.lat), T, label:'flying clock'};
   } else {
     const T = params.custom.duration*3600;
-    return {...computeHK(params.custom.speed, params.custom.altitude, T), T, label:'clock'};
+    return {...computeCustom(params.custom.speed, params.custom.altitude, T), T, label:'clock'};
   }
 }
 
@@ -557,10 +492,9 @@ function formatElapsed(totalSeconds){
 }
 
 function applyState(res, frac){
-  // frac in [0,1]: fraction of the way through the run. frac=1 is the resting/idle display.
+  // frac in [0,1]: fraction of the way through the run. frac=1 is the resting display.
   const srNs = res.srTerm*1e9*frac, grNs = res.grTerm*1e9*frac, netVal = res.net*frac;
-  const srNsFull = res.srTerm*1e9, grNsFull = res.grTerm*1e9;
-  const maxMag = Math.max(Math.abs(srNsFull), Math.abs(grNsFull), 1) * 1.15;
+  const maxMag = Math.max(Math.abs(res.srTerm*1e9), Math.abs(res.grTerm*1e9), 1) * 1.15;
 
   els.barSR.style.width = (Math.abs(srNs)/maxMag*50) + '%';
   els.barGR.style.width = (Math.abs(grNs)/maxMag*50) + '%';
@@ -568,93 +502,362 @@ function applyState(res, frac){
   els.netMarker.style.left = Math.max(2,Math.min(98,netPct)) + '%';
   els.netMarker.setAttribute('data-label', frac > 0.03 ? fmtNs(netVal) : '');
 
-  const useUs = scenario==='gps';
-  els.heroCounter.textContent = useUs ? fmtUs(netVal) : fmtNs(netVal);
+  els.heroCounter.textContent = scenario==='gps' ? fmtUs(netVal) : fmtNs(netVal);
 
-  // Both clocks show the SAME elapsed wall-clock time -- deliberately. The
-  // physics difference (shown above, in ns/us) is roughly nine to twelve orders
-  // of magnitude smaller than what a HH:MM:SS readout can resolve, so an honest
-  // clock face for both really would look identical at every instant. That's
-  // the point being demonstrated, not a simplification.
+  // Both clocks show the SAME elapsed time, deliberately: the physical difference is nine
+  // to twelve orders of magnitude below what an HH:MM:SS readout can resolve.
   const elapsed = formatElapsed(totalDurationSeconds() * frac);
   els.clockRef.textContent = elapsed;
   els.clockTravel.textContent = elapsed;
+
+  if(scenario === 'hk') drawGlobe(frac);
 }
 
 function update(){
   const res = currentResult();
-
   const useUs = scenario==='gps';
   els.srVal.textContent = useUs ? fmtUs(res.srTerm) : fmtNs(res.srTerm);
   els.grVal.textContent = useUs ? fmtUs(res.grTerm) : fmtNs(res.grTerm);
   els.netVal.textContent = useUs ? fmtUs(res.net) : fmtNs(res.net);
 
-  const srNs = res.srTerm*1e9, grNs = res.grTerm*1e9;
-  const winner = Math.abs(grNs) > Math.abs(srNs) ? 'gravitational (GR)' : 'kinematic (SR)';
-  const sense = res.net >= 0 ? 'runs fast \u2014 gains time' : 'runs slow \u2014 loses time';
+  const winner = Math.abs(res.grTerm) > Math.abs(res.srTerm) ? 'gravitational (GR)' : 'kinematic (SR)';
+  const sense = res.net >= 0 ? 'runs fast — gains time' : 'runs slow — loses time';
   const durLabel = scenario==='gps' ? gpsDays+(gpsDays==1?' day':' days')
                   : (scenario==='hk'?params.hk.duration:params.custom.duration)+' hours';
   els.verdict.innerHTML = `The <b>${winner}</b> effect wins here: the ${res.label} <b>${sense}</b>
-    relative to the reference clock, by <b>${useUs?fmtUs(res.net):fmtNs(res.net)}</b> over
-    ${durLabel}.`;
+    relative to the reference clock, by <b>${useUs?fmtUs(res.net):fmtNs(res.net)}</b> over ${durLabel}.`;
 
   els.clockTravelLabel.textContent = scenario==='hk' ? CLOCK_LABELS.hk[direction] : CLOCK_LABELS[scenario];
   els.heroSub.innerHTML = 'press <b>Run the clock</b> to reveal it';
-  applyState(res, 1);
 
   els.compareBlock.style.display = scenario==='hk' ? 'block' : 'none';
-  els.gpsExtra.style.display = scenario==='gps' ? 'block' : 'none';
-
   if(scenario==='hk'){
     const hist = HK_HISTORICAL[direction];
     els.compareBody.innerHTML = `
-      <tr class="computed"><td>Your slider model</td><td colspan="2">${fmtNs(res.net)}</td></tr>
-      <tr><td>Hafele\u2013Keating ${direction}bound</td>
-          <td>${hist.pred>0?'+':''}${hist.pred}\u00b1${hist.predErr} ns</td>
-          <td>${hist.obs>0?'+':''}${hist.obs}\u00b1${hist.obsErr} ns</td></tr>`;
+      <tr class="computed"><td>This model</td><td colspan="2">${fmtNs(res.net)}</td></tr>
+      <tr><td>Hafele–Keating, ${direction}bound</td>
+          <td>${hist.pred>0?'+':''}${hist.pred}±${hist.predErr} ns</td>
+          <td>${hist.obs>0?'+':''}${hist.obs}±${hist.obsErr} ns</td></tr>`;
   }
 
   renderAssumptions();
+  drawFigure();
+  applyState(res, 1);
 }
 
 function renderAssumptions(){
   let text = '';
   if(scenario==='gps'){
-    text = `<b>Model:</b> circular orbit, v = &radic;(GM/r); reference is a
-      <b>non-rotating</b> clock at Earth's surface (the usual convention, and the one that
-      reproduces the textbook 38&nbsp;&micro;s/day figure). Earth's own rotation is
-      neglected here for clarity \u2014 the Hafele&ndash;Keating tab includes it explicitly.`;
+    text = `<b>Model:</b> circular orbit, v = &radic;(GM/r); reference is a <b>non-rotating</b> clock at
+      Earth's surface (the usual convention, which reproduces the textbook 38&nbsp;&micro;s/day).
+      Earth's rotation is neglected here; the Hafele&ndash;Keating tab includes it explicitly.`;
   } else if(scenario==='hk'){
-    text = `<b>Model:</b> Lecture 5, Step 10 \u2014 constant ground speed and altitude along
-      the equator, reference is a clock at rest on Earth's rotating surface
-      (includes V<sub>\u2295</sub> &asymp; 465&nbsp;m/s). Eastbound speed adds to Earth's
-      rotation; westbound subtracts.`;
+    text = `<b>Model:</b> Lecture 5, Step 10 &mdash; constant ground speed and altitude around a circle of
+      latitude &lambda;, GR term g&thinsp;h, reference clock at rest on Earth's rotating surface, which moves at
+      V<sub>&oplus;</sub>cos&thinsp;&lambda; (V<sub>&oplus;</sub> &asymp; 465&nbsp;m/s at the equator). Eastbound speed adds
+      to that rotation; westbound subtracts. The published predictions integrate the real flight profiles.`;
   } else {
-    text = `<b>Model:</b> same formula as the Hafele&ndash;Keating tab, generalized to any
-      speed and altitude \u2014 reference is a clock at rest on Earth's rotating equatorial
-      surface.`;
+    text = `<b>Model:</b> the Hafele&ndash;Keating SR term for an eastward speed relative to the rotating
+      equatorial surface, with the exact potential difference GM(1/R &minus; 1/r) in place of g&thinsp;h
+      (they agree for h &#8810; R; g&thinsp;h is badly wrong at thousands of km).`;
   }
   els.assumptions.innerHTML = text;
 }
 
-// ---------- fly animation ----------
-// Linear, not eased: the physics itself accumulates linearly with elapsed time
-// for fixed v and h, and the clock readouts above are meant to tick at a
-// constant rate like a real clock would, so the animation doesn't fake a
-// non-uniform pace.
+// ---------- figure ----------
+const FC = {ink:'#15243C', blue:'#0F6E93', blued:'#2E6DA4', brown:'#8A5A18', grey:'#5A6B7B',
+            mute2:'#33465C', dim:'#C4CBD8', panel:'#EDF1F6'};
+const SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+
+function niceStep(raw){
+  const e = Math.pow(10, Math.floor(Math.log10(raw))), f = raw/e;
+  return (f<1.5?1:f<3.5?2:f<7.5?5:10)*e;
+}
+function stext(s, x, y, col, size, align, baseline, weight){
+  fctx.fillStyle = col; fctx.font = (weight?weight+' ':'') + size + 'px ' + SANS;
+  fctx.textAlign = align || 'left'; fctx.textBaseline = baseline || 'alphabetic';
+  fctx.fillText(s, x, y);
+}
+
+// Generic rate plot: series are functions of x returning a value already in display units.
+function drawPlot(o){
+  const ctx = fctx;
+  ctx.clearRect(0, 0, FW, FH);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, FW, FH);
+  const x0 = 62, x1 = FW - 14, y0 = 14, y1 = FH - 44;
+  const lx0 = o.xlog ? Math.log10(o.xmin) : o.xmin, lx1 = o.xlog ? Math.log10(o.xmax) : o.xmax;
+  const X = v => x0 + ((o.xlog ? Math.log10(v) : v) - lx0)/(lx1 - lx0)*(x1 - x0);
+
+  const N = 320, xs = [];
+  for(let i=0;i<=N;i++){ const f = lx0 + (lx1-lx0)*i/N; xs.push(o.xlog ? Math.pow(10,f) : f); }
+  let ymin = 0, ymax = 0;
+  const vals = o.series.map(s => xs.map(x => { const v = s.f(x); ymin = Math.min(ymin, v); ymax = Math.max(ymax, v); return v; }));
+  const span = Math.max(ymax - ymin, 1e-12);
+  ymax += (o.topPad || 0.10)*span; ymin -= 0.10*span;
+  const Y = v => y1 - (v - ymin)/(ymax - ymin)*(y1 - y0);
+
+  // frame + inward ticks on all four sides
+  ctx.strokeStyle = FC.grey; ctx.lineWidth = 1; ctx.strokeRect(x0, y0, x1-x0, y1-y0);
+  const ystep = niceStep((ymax - ymin)/5);
+  ctx.beginPath();
+  for(let v = Math.ceil(ymin/ystep)*ystep; v <= ymax; v += ystep){
+    const y = Y(v);
+    ctx.moveTo(x0, y); ctx.lineTo(x0+6, y); ctx.moveTo(x1, y); ctx.lineTo(x1-6, y);
+    stext(Math.abs(v) < ystep*1e-6 ? '0' : (+v.toPrecision(6)).toString(), x0-6, y, FC.grey, 11, 'right', 'middle');
+  }
+  o.xticks.forEach(t => { const x = X(t.v); ctx.moveTo(x, y1); ctx.lineTo(x, y1-6); ctx.moveTo(x, y0); ctx.lineTo(x, y0+6);
+    stext(t.label, x > x1-20 ? x1+4 : x, y1+15, FC.grey, 11, x > x1-20 ? 'right' : 'center'); });
+  (o.xminor||[]).forEach(v => { const x = X(v); ctx.moveTo(x, y1); ctx.lineTo(x, y1-3); ctx.moveTo(x, y0); ctx.lineTo(x, y0+3); });
+  ctx.stroke();
+  stext(o.xlabel, (x0+x1)/2, FH-8, FC.mute2, 12, 'center');
+  ctx.save(); ctx.translate(16, (y0+y1)/2); ctx.rotate(-Math.PI/2);
+  stext(o.ylabel, 0, 0, FC.mute2, 12, 'center', 'middle'); ctx.restore();
+
+  ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1-x0, y1-y0); ctx.clip();
+  // zero line
+  ctx.strokeStyle = FC.dim; ctx.setLineDash([4,4]); ctx.beginPath();
+  ctx.moveTo(x0, Y(0)); ctx.lineTo(x1, Y(0)); ctx.stroke(); ctx.setLineDash([]);
+  // named reference markers
+  (o.markers||[]).forEach(m => {
+    const x = X(m.x); if(x < x0 || x > x1) return;
+    ctx.strokeStyle = 'rgba(90,107,123,0.45)'; ctx.setLineDash([2,3]); ctx.beginPath();
+    ctx.moveTo(x, y0+18); ctx.lineTo(x, y1); ctx.stroke(); ctx.setLineDash([]);
+    stext(m.label, x, y0+14, FC.grey, 11, 'center', 'alphabetic', 600);
+  });
+  // curves
+  o.series.forEach((s, k) => {
+    ctx.strokeStyle = s.col; ctx.lineWidth = s.lw || 2; ctx.setLineDash(s.dash || []);
+    ctx.beginPath();
+    xs.forEach((x, i) => { const px = X(x), py = Y(vals[k][i]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+  // zero crossing of the net curve
+  const hasCross = o.cross && o.cross.x >= o.xmin && o.cross.x <= o.xmax;
+  if(hasCross){
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = FC.ink; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(X(o.cross.x), Y(0), 5, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+  }
+  // current setting
+  if(o.cur){
+    const x = X(Math.min(o.xmax, Math.max(o.xmin, o.cur.x)));
+    ctx.strokeStyle = 'rgba(21,36,60,0.55)'; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    o.series.forEach(s => {
+      const y = Y(s.f(o.cur.x));
+      ctx.fillStyle = s.col; ctx.beginPath(); ctx.arc(x, y, s.lw > 2 ? 5 : 4, 0, 2*Math.PI); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4; ctx.stroke();
+    });
+  }
+  ctx.restore();
+  if(o.cur){
+    const x = X(Math.min(o.xmax, Math.max(o.xmin, o.cur.x)));
+    stext(o.cur.label, Math.min(x1-4, Math.max(x0+4, x)) + (x > (x0+x1)/2 ? -4 : 4), y1-10, FC.ink, 11, x > (x0+x1)/2 ? 'right' : 'left', 'alphabetic', 600);
+  }
+  // legend, on a white card so reference lines behind it don't clutter the text
+  const items = o.series.map(s => ({name:s.name, col:s.col, lw:s.lw||2}));
+  if(hasCross) items.push({name:o.cross.name, col:FC.ink, hollow:true});
+  fctx.font = '600 11.5px ' + SANS;
+  const bw = 34 + Math.max.apply(null, items.map(it => fctx.measureText(it.name).width)) + 10;
+  const bh = 8 + 16*items.length;
+  const bx = o.legendRight ? x1 - 8 - bw : x0 + 8, by = o.legendBottom ? y1 - 8 - bh : (o.legendRight ? y0 + 8 : y0 + 22);
+  fctx.fillStyle = 'rgba(255,255,255,0.94)'; fctx.fillRect(bx, by, bw, bh);
+  fctx.strokeStyle = '#E1E6EE'; fctx.lineWidth = 1; fctx.strokeRect(bx, by, bw, bh);
+  items.forEach((it, i) => {
+    const ly = by + 16 + 16*i;
+    if(it.hollow){
+      fctx.fillStyle = '#fff'; fctx.strokeStyle = it.col; fctx.lineWidth = 1.6;
+      fctx.beginPath(); fctx.arc(bx+18, ly-4, 4, 0, 2*Math.PI); fctx.fill(); fctx.stroke();
+    } else {
+      fctx.strokeStyle = it.col; fctx.lineWidth = it.lw;
+      fctx.beginPath(); fctx.moveTo(bx+8, ly-4); fctx.lineTo(bx+28, ly-4); fctx.stroke();
+    }
+    stext(it.name, bx+34, ly, it.col, 11.5, 'left', 'alphabetic', 600);
+  });
+}
+
+function drawGpsFigure(){
+  const US = 86400*1e6;                             // (s per s) -> microseconds per day
+  const kmTicks = [{v:300,label:'300'},{v:1000,label:'1,000'},{v:3000,label:'3,000'},{v:10000,label:'10,000'},{v:30000,label:'30,000'},{v:100000,label:'100,000'}];
+  const minor = [];
+  for(let d=100; d<=100000; d*=10) for(let k=2;k<=9;k++){ const v=k*d; if(v>=200 && v<=100000) minor.push(v); }
+  const h = params.gps.altitude;
+  drawPlot({
+    xmin:200, xmax:100000, xlog:true, xticks:kmTicks, xminor:minor,
+    xlabel:'orbital altitude (km, log scale)', ylabel:'clock gain (µs per day)',
+    series:[
+      {name:'GR: higher in the potential', col:FC.blue, f:x=>gpsRates(x*1000).gr*US},
+      {name:'SR: orbital speed', col:FC.brown, f:x=>gpsRates(x*1000).sr*US},
+      {name:'net', col:FC.ink, lw:2.8, f:x=>{const q=gpsRates(x*1000); return (q.gr+q.sr)*US;}},
+    ],
+    markers:[{x:408,label:'ISS'},{x:20200,label:'GPS'},{x:35786,label:'GEO'}],
+    cross:{x:H_CROSS/1000, name:'net = 0 at r = 3R/2 ('+commas(H_CROSS/1000)+' km)'},
+    cur:{x:h, label:commas(h)+' km'},
+  });
+  const q = gpsRates(h*1000);
+  els.figTitle.innerHTML = 'Rate of the orbiting clock vs. altitude<span class="aside">per day, circular orbits</span>';
+  els.figCap.innerHTML = `Below <b>${commas(H_CROSS/1000)} km</b> the orbital speed wins and the clock loses time;
+    above it the potential wins. At the current altitude: SR <b>${fmtUs(q.sr*86400)}</b>, GR <b>${fmtUs(q.gr*86400)}</b>,
+    net <b>${fmtUs((q.sr+q.gr)*86400)}</b> per day. At GPS altitude that net +38.5&nbsp;&micro;s/day is the
+    correction built into every GPS satellite clock.`;
+}
+
+function drawCustomFigure(){
+  const h = params.custom.altitude, T = 86400;
+  const phi = potentialGain(h);
+  const vStar = -Vearth + Math.sqrt(Vearth*Vearth + 2*phi);   // (1/2) v (v + 2 V_earth) = Phi
+  // speed axis adapts so the cancellation point sits well inside the plot
+  const want = Math.max(3*vStar, 1.3*params.custom.speed, 500);
+  const step = niceStep(want/5), vmax = Math.ceil(want/step)*step;
+  const r0 = computeCustom(vmax, h, T), mag = Math.max(Math.abs(r0.srTerm), Math.abs(r0.grTerm), Math.abs(r0.net));
+  const useUs = mag >= 2e-6, S = useUs ? 1e6 : 1e9, unit = useUs ? 'µs' : 'ns';
+  const ticks = []; for(let v=0; v<=vmax+1e-9; v+=step) ticks.push({v, label: v ? commas(v) : '0'});
+  drawPlot({
+    xmin:0, xmax:vmax, xlog:false, xticks:ticks,
+    xlabel:'eastward speed relative to the surface (m/s)', ylabel:'clock gain ('+unit+' per day)',
+    series:[
+      {name:'GR: altitude', col:FC.blue, f:v=>computeCustom(v, h, T).grTerm*S},
+      {name:'SR: speed', col:FC.brown, f:v=>computeCustom(v, h, T).srTerm*S},
+      {name:'net', col:FC.ink, lw:2.8, f:v=>computeCustom(v, h, T).net*S},
+    ],
+    legendRight:true, topPad:0.65,
+    cross: vStar > 0 ? {x:vStar, name:'net = 0 at '+commas(vStar)+' m/s'} : null,
+    cur:{x:params.custom.speed, label:commas(params.custom.speed)+' m/s'},
+  });
+  els.figTitle.innerHTML = 'Rate of your clock vs. speed<span class="aside">per day, at '+commas(h)+' m</span>';
+  els.figCap.innerHTML = vStar > 0
+    ? `At this altitude a clock moving east faster than <b>${commas(vStar)} m/s</b> loses time overall;
+       slower, and the altitude gain wins.`
+    : `At zero altitude there is no GR term: any motion relative to the surface makes the clock lose time.`;
+}
+
+// Hafele-Keating globe: seen from above the North Pole, in the non-rotating (inertial) frame.
+// Earth turns counter-clockwise; everything is driven by the real flight: frac of the run
+// corresponds to frac of the flight duration.
+function drawGlobe(frac){
+  const ctx = fctx;
+  ctx.clearRect(0, 0, FW, FH);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, FW, FH);
+  const cx = 158, cy = 180, Re = 104;
+  const v = params.hk.speed, T = params.hk.duration*3600, t = T*frac;
+  const cl = Math.cos(params.hk.lat*Math.PI/180), Vrot = Vearth*cl;
+  const th0 = Math.PI/2;
+  const thE = th0 + OMEGA*t;                        // ground reference clock (and Earth itself)
+  const thEast = th0 + (OMEGA + v/(R*cl))*t;        // angular rate (Vrot + v)/(R cos lat)
+  const thWest = th0 + (OMEGA - v/(R*cl))*t;
+  const Rl = Re*cl;                                 // latitude circle, seen from above the pole
+  const P = (th, r) => [cx + r*Math.cos(th), cy - r*Math.sin(th)];
+
+  // Earth
+  const grad = ctx.createRadialGradient(cx-30, cy-30, 10, cx, cy, Re);
+  grad.addColorStop(0, '#E4EEF5'); grad.addColorStop(1, '#C9DBE8');
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, Re, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle = FC.dim; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
+  for(let k=0;k<12;k++){
+    const a = thE + k*Math.PI/6, p = P(a, Re);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(p[0], p[1]); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(cx, cy, Re*0.5, 0, 2*Math.PI); ctx.stroke();
+  ctx.strokeStyle = 'rgba(21,36,60,0.28)'; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.arc(cx, cy, Rl, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  stext(params.hk.lat + '\u00b0 N', cx - 6, cy - Rl + 16, FC.grey, 10.5, 'right');
+  ctx.fillStyle = FC.ink; ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2*Math.PI); ctx.fill();
+  stext('N', cx+6, cy-6, FC.mute2, 11, 'left', 'alphabetic', 700);
+
+  // rotation arrow
+  ctx.strokeStyle = FC.grey; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(cx, cy, Re*0.34, -0.25, -1.15, true); ctx.stroke();
+  const ah = P(1.15, Re*0.34);
+  ctx.fillStyle = FC.grey; ctx.beginPath();
+  ctx.moveTo(ah[0]-6, ah[1]-1); ctx.lineTo(ah[0]+3, ah[1]-6); ctx.lineTo(ah[0]+2, ah[1]+4); ctx.closePath(); ctx.fill();
+
+  // trails (counter-clockwise from the start point)
+  function trail(th, r, col, w){
+    ctx.strokeStyle = col; ctx.lineWidth = w;
+    ctx.beginPath();
+    if(th - th0 >= 2*Math.PI) ctx.arc(cx, cy, r, 0, 2*Math.PI);
+    else ctx.arc(cx, cy, r, -th0, -th, true);
+    ctx.stroke();
+  }
+  const rE = Rl + 24, rW = Rl + 12;
+  const selE = direction === 'east';
+  trail(thEast, rE, selE ? 'rgba(138,90,24,0.55)' : 'rgba(138,90,24,0.18)', 2.2);
+  trail(thWest, rW, !selE ? 'rgba(15,110,147,0.55)' : 'rgba(15,110,147,0.18)', 2.2);
+  trail(thE, Rl, 'rgba(21,36,60,0.35)', 2.2);
+
+  // start marker
+  ctx.strokeStyle = FC.grey; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx, cy-Re+2); ctx.lineTo(cx, cy-Re-36); ctx.stroke();
+  stext('start', cx+5, cy-Re-30, FC.grey, 10.5, 'left');
+
+  function plane(th, r, col, alpha){
+    const p = P(th, r), tx = -Math.sin(th), ty = -Math.cos(th);   // CCW tangent in screen coords
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(p[0] + 9*tx, p[1] + 9*ty);
+    ctx.lineTo(p[0] - 6*tx + 5*ty, p[1] - 6*ty - 5*tx);
+    ctx.lineTo(p[0] - 6*tx - 5*ty, p[1] - 6*ty + 5*tx);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.restore();
+  }
+  plane(thEast, rE, FC.brown, selE ? 1 : 0.35);
+  plane(thWest, rW, FC.blue, selE ? 0.35 : 1);
+  const g = P(thE, Rl);
+  ctx.fillStyle = FC.ink; ctx.fillRect(g[0]-4.5, g[1]-4.5, 9, 9);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4; ctx.strokeRect(g[0]-4.5, g[1]-4.5, 9, 9);
+
+  // speed bars: inertial-frame speed of each clock
+  const bx = 318, bw = 220, vmax = Vearth + 330;
+  const rows = [
+    {name:'eastbound plane', tail:' + v', sp:Vrot+v, col:FC.brown, sel:selE},
+    {name:'ground reference clock', tail:'', sp:Vrot, col:FC.ink, sel:true},
+    {name:'westbound plane', tail:' \u2212 v', sp:Vrot-v, col:FC.blue, sel:!selE},
+  ];
+  stext('Speed in the inertial frame', bx, 44, FC.ink, 13, 'left', 'alphabetic', 600);
+  rows.forEach((rw, i) => {
+    const y = 80 + i*70;
+    stext(rw.name, bx, y, FC.mute2, 11.5);
+    ctx.fillStyle = FC.panel; ctx.fillRect(bx, y+7, bw, 13);
+    ctx.save(); ctx.globalAlpha = rw.sel ? 1 : 0.4;
+    ctx.fillStyle = rw.col; ctx.fillRect(bx, y+7, bw*Math.max(0, rw.sp)/vmax, 13); ctx.restore();
+    const w = mtext(ctx, bx, y+40, 'V', '\u2295', null, 14, FC.ink);
+    stext(' cos \u03bb' + rw.tail + ' = ' + Math.round(rw.sp) + ' m/s', bx + w + 1, y+40, FC.ink, 12.5);
+  });
+  stext('faster here \u2192 slower clock', bx, 300, FC.ink, 12, 'left', 'alphabetic', 600);
+
+  stext('seen from above the North Pole · non-rotating frame', 12, 20, FC.grey, 11);
+  stext('flight time ' + params.hk.duration + ' h shown in 3 s · altitude exaggerated', 12, FH-10, FC.grey, 11);
+}
+
+function drawFigure(){
+  if(scenario === 'gps') drawGpsFigure();
+  else if(scenario === 'custom') drawCustomFigure();
+  else {
+    els.figTitle.innerHTML = 'The flights, from above the North Pole<span class="aside">inertial frame</span>';
+    els.figCap.innerHTML = `Press <b>Run the clock</b> to fly the whole trip along the dashed circle of latitude.
+      Earth, the ground clock and both planes all move counter-clockwise in this non-rotating frame. The ground clock
+      is itself moving, at V<sub>&oplus;</sub>cos&thinsp;&lambda;, so the <b>eastbound</b> plane, moving faster than it,
+      loses time on it, and the <b>westbound</b> plane, moving slower, gains. Both planes also gain from altitude
+      (g&thinsp;h/c&sup2;).`;
+    drawGlobe(1);
+  }
+}
+
+// ---------- run animation ----------
+// Linear in time: for fixed v and h the offset accumulates linearly, and the clocks tick at a constant rate.
+const DURATION_MS = 3000;
 els.flyBtn.onclick = ()=>{
   if(flying) return;
   flying = true;
   els.flyBtn.disabled = true;
-  els.flyBtn.textContent = '\u25B6 Running\u2026';
+  els.flyBtn.textContent = '▶ Running…';
   els.heroCounter.classList.add('running');
-  els.heroSub.textContent = 'revealing\u2026';
+  els.heroSub.textContent = 'revealing…';
 
   const res = currentResult();
   applyState(res, 0);
-
   flyStart = performance.now();
-  const DURATION_MS = 2600;
   function frame(now){
     const t = Math.min(1, (now-flyStart)/DURATION_MS);
     applyState(res, t);
@@ -663,9 +866,9 @@ els.flyBtn.onclick = ()=>{
     } else {
       flying = false;
       els.flyBtn.disabled = false;
-      els.flyBtn.textContent = '\u25B6 Run the clock';
+      els.flyBtn.textContent = '▶ Run the clock';
       els.heroCounter.classList.remove('running');
-      els.heroSub.innerHTML = 'undetectable to the eye, real to an atomic clock \u2014 drag a slider or press again';
+      els.heroSub.innerHTML = 'undetectable to the eye, real to an atomic clock — drag a slider or press again';
     }
   }
   flyRAF = requestAnimationFrame(frame);
@@ -674,6 +877,8 @@ els.flyBtn.onclick = ()=>{
 // ---------- tabs ----------
 els.tabs.querySelectorAll('button').forEach(btn=>{
   btn.onclick = ()=>{
+    if(flying){ cancelAnimationFrame(flyRAF); flying = false; els.flyBtn.disabled = false;
+      els.flyBtn.textContent = '▶ Run the clock'; els.heroCounter.classList.remove('running'); }
     els.tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     scenario = btn.dataset.scenario;

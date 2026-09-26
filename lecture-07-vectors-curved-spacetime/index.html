@@ -29,16 +29,21 @@ main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding
 aside{display:flex;flex-direction:column;gap:12px}
 .panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:14px 16px}
 .panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 10px}
-input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0 0}
 select{width:100%;padding:6px 8px;border:1px solid var(--dim);border-radius:6px;
        background:#fff;color:var(--ink);font-size:13.5px}
 
-.row{margin:0 0 10px}
+.col{display:flex;flex-direction:column;gap:12px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+@media (max-width:760px){ .pair{grid-template-columns:1fr} }
+.row{margin:0 0 12px}
 .row:last-child{margin-bottom:0}
-.lab{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 4px}
-.lab b{font-weight:600;color:var(--ink)}
-.val{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
-     font-size:12.5px;color:var(--blue)}
+.ctl{margin:0 0 12px}
+.ctl:last-child{margin-bottom:0}
+.ctl label{display:block;font-size:12.5px;color:var(--mute2)}
+.ctl label b{font-weight:600;color:var(--ink)}
+.ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  font-size:12.5px;color:var(--blue)}
 
 table.read{width:100%;border-collapse:collapse;font-size:12.5px}
 table.read td{padding:3px 0;vertical-align:baseline}
@@ -49,9 +54,14 @@ table.read td.v{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",mon
 .note b{color:var(--mute2);font-weight:600}
 .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;
         margin-right:6px;vertical-align:baseline}
-button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid var(--dim);
-       border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
-button:hover{border-color:var(--blued);color:var(--blued)}
+.btn{font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:8px 14px;border-radius:8px;border:1px solid var(--blued);background:#fff;color:var(--blued);cursor:pointer}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+table.read td.v.live{color:var(--brown)}
 
 footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
        font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
@@ -69,8 +79,35 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
   </header>
 
   <main>
-    <div class="canvasWrap">
-      <canvas id="c" width="1100" height="620"></canvas>
+    <div class="col">
+      <div class="canvasWrap">
+        <canvas id="c" width="1100" height="620"></canvas>
+      </div>
+      <div class="pair">
+        <div class="panel">
+          <h2>One vector, two descriptions</h2>
+          <table class="read">
+            <tr><td class="k"><span class="swatch" style="background:#8A5A18"></span>a<sup>1</sup>, a<sup>2</sup> &nbsp;<i>coordinate</i></td>
+                <td class="v" id="acoord"></td></tr>
+            <tr><td class="k"><span class="swatch" style="background:#0F6E93"></span>a<sup>1&#770;</sup>, a<sup>2&#770;</sup> &nbsp;<i>orthonormal</i></td>
+                <td class="v" id="aorth"></td></tr>
+            <tr><td class="k">g<sub>&alpha;&beta;</sub>a<sup>&alpha;</sup>a<sup>&beta;</sup></td><td class="v" id="n1"></td></tr>
+            <tr><td class="k">&delta;<sub>&alpha;&#770;&beta;&#770;</sub>a<sup>&alpha;&#770;</sup>a<sup>&beta;&#770;</sup></td><td class="v" id="n2"></td></tr>
+          </table>
+          <p class="note" id="dragnote"></p>
+          <div class="btnrow"><button class="btn" id="reset">Reset vector</button></div>
+        </div>
+        <div class="panel">
+          <h2>What to notice</h2>
+          <p class="note">The plane is <b>flat</b> and the sphere <b>curved</b>, yet in both the
+            coordinate basis fails to be unit length: that is about the <b>coordinates</b>, not curvature.</p>
+          <p class="note">The two norms always agree. One geometric object, relabelled by
+            a<sup>&alpha;&#770;</sup> = a<sup>&alpha;</sup>(e<sub>&alpha;</sub>)<sup>&alpha;&#770;</sup>;
+            only the orthonormal numbers are what a local observer measures.</p>
+          <p class="note">In spacetime, &delta;<sub>&alpha;&#770;&beta;&#770;</sub> becomes
+            &eta;<sub>&alpha;&#770;&beta;&#770;</sub>.</p>
+        </div>
+      </div>
     </div>
 
     <aside>
@@ -83,18 +120,22 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
             <option value="schw">Schwarzschild slice, t and &theta; fixed (r, &phi;)</option>
           </select>
         </div>
-        <div class="row">
-          <span class="lab"><b id="u1lab">r</b> <span class="val" id="u1val"></span></span>
+        <div class="ctl">
+          <label for="u1"><b id="u1lab">r</b> <span class="val" id="u1val"></span></label>
           <input type="range" id="u1" min="0" max="1000" value="520">
         </div>
-        <div class="row">
-          <span class="lab"><b>&phi;</b> <span class="val" id="u2val"></span></span>
+        <div class="ctl">
+          <label for="u2"><b>&phi;</b> <span class="val" id="u2val"></span></label>
           <input type="range" id="u2" min="0" max="1000" value="140">
         </div>
-        <div class="row" id="mrow" style="display:none">
-          <span class="lab"><b>M</b> <span class="val" id="mval"></span></span>
+        <div class="ctl" id="mrow" style="display:none">
+          <label for="mm"><b>M</b> <span class="val" id="mval"></span></label>
           <input type="range" id="mm" min="0" max="1000" value="450">
         </div>
+        <div class="btnrow">
+          <button class="btn primary" id="walk">&#9654;&nbsp; Walk</button>
+        </div>
+        <p class="note" id="walkhint"></p>
       </div>
 
       <div class="panel">
@@ -106,38 +147,6 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
           <tr><td class="k">|e<sub>2</sub>| = &radic;g<sub>22</sub></td><td class="v" id="l2"></td></tr>
         </table>
         <p class="note" id="geomnote"></p>
-      </div>
-
-      <div class="panel">
-        <h2>One vector, two descriptions</h2>
-        <table class="read">
-          <tr><td class="k"><span class="swatch" style="background:#8A5A18"></span>a<sup>1</sup>, a<sup>2</sup> &nbsp;<i>coordinate</i></td>
-              <td class="v" id="acoord"></td></tr>
-          <tr><td class="k"><span class="swatch" style="background:#0F6E93"></span>a<sup>1&#770;</sup>, a<sup>2&#770;</sup> &nbsp;<i>orthonormal</i></td>
-              <td class="v" id="aorth"></td></tr>
-          <tr><td class="k">g<sub>&alpha;&beta;</sub>a<sup>&alpha;</sup>a<sup>&beta;</sup></td><td class="v" id="n1"></td></tr>
-          <tr><td class="k">&delta;<sub>&alpha;&#770;&beta;&#770;</sub>a<sup>&alpha;&#770;</sup>a<sup>&beta;&#770;</sup></td><td class="v" id="n2"></td></tr>
-        </table>
-        <p class="note">Drag the <b>orange tip</b> in the right-hand panel to change the vector,
-          and drag the <b>point</b> in the left-hand panel to move it around the geometry.
-          <span id="dragnote"></span></p>
-        <div class="row" style="margin-top:10px"><button id="reset">Reset vector</button></div>
-      </div>
-
-      <div class="panel">
-        <h2>What to notice</h2>
-        <p class="note">
-          The plane is <b>flat</b> and the sphere is <b>curved</b>, yet in both the coordinate basis
-          fails to be unit length. This distinction is about the <b>coordinates</b>, not the curvature.
-          <br><br>
-          The two norms in the table above always agree: the vector is one geometric object, and
-          a<sup>&alpha;&#770;</sup> = a<sup>&alpha;</sup>(e<sub>&alpha;</sub>)<sup>&alpha;&#770;</sup> just
-          relabels it. Only the orthonormal numbers are what a local observer would measure.
-          <br><br>
-          These are spatial slices, so the orthonormal frame satisfies
-          e<sub>&alpha;&#770;</sub>&middot;e<sub>&beta;&#770;</sub> = &delta;<sub>&alpha;&#770;&beta;&#770;</sub>.
-          In spacetime the same construction gives &eta;<sub>&alpha;&#770;&beta;&#770;</sub>.
-        </p>
       </div>
     </aside>
   </main>
@@ -154,7 +163,17 @@ footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
 "use strict";
 
 var C = document.getElementById('c');
-var X = C.getContext('2d');
+var CW = 1100, CH = 620;        // logical canvas size; all drawing uses these units
+
+// Backing store = logical size x devicePixelRatio; draw in logical units.
+function hidpi(cv, W, H){
+  var dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+var X = hidpi(C, CW, CH);
 
 var INK='#15243C', BLUE='#0F6E93', BLUED='#2E6DA4', BROWN='#8A5A18',
     GREY='#5A6B7B', DIM='#C4CBD8', PANEL='#EDF1F6', WHITE='#ffffff';
@@ -172,6 +191,13 @@ var state = {
   M:0.45,
   ah:[1.35, 0.95]               // vector components in the ORTHONORMAL frame
 };
+
+// Walk: p moves along u1 (r, or theta on the sphere) at fixed phi, sweeping
+// the full allowed range and back. The orthonormal components state.ah are
+// never touched, so the same local vector is carried along while its
+// coordinate components a^alpha = a^alpha-hat / sqrt(g_alpha alpha) change.
+var walk = { on:false, phase:0, last:0, trail:[] };
+var WALK_PERIOD = 9.0;          // seconds for one full out-and-back sweep
 
 // ---------------------------------------------------------------- geometry
 function u1Range(){
@@ -198,10 +224,15 @@ var NOTES = {
         'as r \u2192 2M, so radial proper distance stretches without limit while the '+
         'circumference stays 2\u03C0r.'
 };
+var WALKHINTS = {
+  polar:'Walk: p goes out and back along r.',
+  sphere:'Walk: p goes along a meridian, pole to pole.',
+  schw:'Walk: p goes in toward r = 2M and back.'
+};
 var DRAGNOTES = {
-  polar:'The left panel is a true, undistorted picture of the plane, so the arrows there are drawn at their real lengths.',
-  sphere:'The globe spins with \u03C6 so the point stays in view.',
-  schw:'On the left, circles of constant r have their true circumference, but the radial spacing on the page is <i>not</i> proper distance.'
+  polar:'Drag the <b>orange tip</b> to change the vector; drag <b>p</b> to move it.',
+  sphere:'Drag the <b>orange tip</b> to change the vector; drag the <b>globe</b> to move p.',
+  schw:'Drag the <b>orange tip</b> to change the vector; drag <b>p</b> to move it.'
 };
 
 // ---------------------------------------------------------------- helpers
@@ -258,9 +289,9 @@ function card(r,title){
   X.arcTo(x,y+h,x,y,rad); X.arcTo(x,y,x+w,y,rad); X.closePath();
   X.fill(); X.stroke();
   X.fillStyle=BLUE;
-  X.font='700 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  X.font='700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
   X.textAlign='left'; X.textBaseline='middle';
-  X.fillText(title, r.x0+14, r.y0-14);
+  X.fillText(title, r.x0+4, r.y0-17);
 }
 
 // ---------------------------------------------------------------- panel A
@@ -287,41 +318,52 @@ function drawPlaneLike(isSchw){
     var rh=2*state.M;
     X.fillStyle='rgba(90,107,123,0.20)'; X.strokeStyle=GREY; X.lineWidth=1.2;
     X.beginPath(); X.arc(cx,cy,rh*SA,0,2*Math.PI); X.fill(); X.stroke();
-    uiLabel(cx, cy - rh*SA - 12, 'r = 2M', GREY, 12, 'center');
+    uiLabel(cx, cy - rh*SA - 14, 'r = 2M', GREY, 17, 'center');
   }
+  drawTrailPlane();
   var P=polarScreen(state.u1, state.u2);
   var g=metric(), s1=Math.sqrt(g[0]), s2=Math.sqrt(g[1]);
   if(isSchw){
     X.strokeStyle=BLUED; X.lineWidth=1.8;
     X.beginPath(); X.arc(cx,cy,state.u1*SA,0,2*Math.PI); X.stroke();
-    uiLabel(cx, cy - state.u1*SA - 14, 'circumference = 2\u03C0r  (exact on this chart)',
-            BLUED, 12, 'center');
+    // label the ring on the side opposite p so the two never collide
+    var la=state.u2+Math.PI, lr=state.u1*SA+22;
+    uiLabel(cx+lr*Math.cos(la), cy-lr*Math.sin(la), 'circumference = 2\u03C0r', BLUED, 17,
+            Math.cos(la)>0.3?'left':(Math.cos(la)<-0.3?'right':'center'));
   }
   var er=[Math.cos(state.u2), -Math.sin(state.u2)];      // screen dir of +r
   var ep=[-Math.sin(state.u2), -Math.cos(state.u2)];     // screen dir of +phi
   if(!isSchw){
     arrow(P.x,P.y, P.x+er[0]*s1*SA, P.y+er[1]*s1*SA, BROWN, 3.0);
     arrow(P.x,P.y, P.x+ep[0]*s2*SA, P.y+ep[1]*s2*SA, BROWN, 3.0);
-    sym(P.x+er[0]*s1*SA+er[0]*18, P.y+er[1]*s1*SA+er[1]*18, 'e', 'r', false, BROWN, 16, 'center');
-    sym(P.x+ep[0]*s2*SA+ep[0]*20, P.y+ep[1]*s2*SA+ep[1]*20, 'e', '\u03C6', false, BROWN, 16, 'center');
+    sym(P.x+er[0]*s1*SA+er[0]*22, P.y+er[1]*s1*SA+er[1]*22, 'e', 'r', false, BROWN, 23, 'center');
+    sym(P.x+ep[0]*s2*SA+ep[0]*24, P.y+ep[1]*s2*SA+ep[1]*24, 'e', '\u03C6', false, BROWN, 23, 'center');
     var ax = state.ah[0]*er[0] + state.ah[1]*ep[0];
     var ay = state.ah[0]*er[1] + state.ah[1]*ep[1];
     arrow(P.x,P.y, P.x+ax*SA, P.y+ay*SA, BLUE, 2.6);
-    label(P.x+ax*SA+ax*12, P.y+ay*SA+ay*12, 'a', BLUE, 17, 'center', true);
+    label(P.x+ax*SA+ax*16, P.y+ay*SA+ay*16, 'a', BLUE, 24, 'center', true);
   }
   X.fillStyle=INK;
   X.beginPath(); X.arc(P.x,P.y,5.5,0,2*Math.PI); X.fill();
   X.strokeStyle=WHITE; X.lineWidth=1.6; X.stroke();
-  label(P.x-14, P.y-14, 'p', INK, 15);
+  label(P.x-18, P.y-18, 'p', INK, 22, 'center', true);
   X.restore();
-  uiLabel(A.x0+14, A.y1-16,
-    isSchw ? 'circumference is 2\u03C0r; radial spacing is not proper distance'
-           : 'true picture of the plane \u2014 arrows at real length, ' + SA + ' px per unit',
-    GREY, 12, 'left');
+  uiLabel(A.x0+14, A.y1-18,
+    isSchw ? 'radial spacing here is not proper distance'
+           : 'true picture: arrows at real length', GREY, 17, 'left');
+}
+function drawTrailPlane(){
+  if(walk.trail.length<2) return;
+  X.save(); X.strokeStyle='rgba(138,90,24,0.5)'; X.lineWidth=2.5; X.lineCap='round';
+  X.beginPath();
+  walk.trail.forEach(function(q,i){
+    var P=polarScreen(q[0],q[1]); if(i) X.lineTo(P.x,P.y); else X.moveTo(P.x,P.y);
+  });
+  X.stroke(); X.restore();
 }
 function drawSphere(){
   var cx=(A.x0+A.x1)/2, cy=(A.y0+A.y1)/2, R=198;
-  var tilt=0.42, st=Math.sin(tilt), ct=Math.cos(tilt);
+  var tilt=-0.42, st=Math.sin(tilt), ct=Math.cos(tilt);   // camera above the equator: north cap in view
   function proj(th,ph){
     var dp = ph - state.u2;                      // camera follows phi
     var x = Math.sin(th)*Math.sin(dp);
@@ -361,19 +403,36 @@ function drawSphere(){
   var dphx=R*Math.sin(th), dphy=0;
   arrow(P.x,P.y, P.x+dthx, P.y+dthy, BROWN, 3.0);
   arrow(P.x,P.y, P.x+dphx, P.y+dphy, BROWN, 3.0);
-  sym(P.x+dthx*1.12, P.y+dthy*1.12-6, 'e', '\u03B8', false, BROWN, 16, 'center');
-  sym(P.x+dphx+20, P.y+dphy+6, 'e', '\u03C6', false, BROWN, 16, 'center');
+  sym(P.x+dthx*1.14, P.y+dthy*1.14-8, 'e', '\u03B8', false, BROWN, 23, 'center');
+  sym(P.x+dphx+26, P.y+dphy+8, 'e', '\u03C6', false, BROWN, 23, 'center');
   var uth=[0,-(Math.cos(th)*st - Math.sin(th)*ct)], uph=[1,0];
   var vax=(state.ah[0]*uth[0]+state.ah[1]*uph[0])*R*0.42;
   var vay=(state.ah[0]*uth[1]+state.ah[1]*uph[1])*R*0.42;
   arrow(P.x,P.y, P.x+vax, P.y+vay, BLUED, 2.6);
+  // The meridian walk always runs along e_theta, so the trail is drawn on
+  // top of the arrows with a white halo; otherwise the arrow would hide it.
+  if(walk.trail.length>1){
+    X.save(); X.lineCap='round'; X.lineJoin='round';
+    [true,false].forEach(function(side){           // front solid, back dashed
+      [['rgba(255,255,255,0.85)',6.5],['rgba(138,90,24,0.5)',2.5]].forEach(function(sty){
+        X.strokeStyle=sty[0]; X.lineWidth=sty[1];
+        X.setLineDash(side?[]:[4,5]); first=true; X.beginPath();
+        walk.trail.forEach(function(q){
+          var pt=proj(q[0],q[1]);
+          if(pt.front!==side){ first=true; return; }
+          if(first){ X.moveTo(pt.x,pt.y); first=false; } else X.lineTo(pt.x,pt.y);
+        });
+        X.stroke();
+      });
+    });
+    X.restore();
+  }
   X.fillStyle=INK;
   X.beginPath(); X.arc(P.x,P.y,5.5,0,2*Math.PI); X.fill();
   X.strokeStyle=WHITE; X.lineWidth=1.6; X.stroke();
-  label(P.x-15,P.y-15,'p',INK,15);
+  label(P.x-18,P.y-18,'p',INK,22,'center',true);
   X.restore();
-  uiLabel(A.x0+14, A.y1-16,
-    'globe spins with \u03C6; arrow scale here differs from the tangent panel', GREY, 12, 'left');
+  uiLabel(A.x0+14, A.y1-18, 'arrow scale differs from the tangent panel', GREY, 17, 'left');
 }
 
 // ---------------------------------------------------------------- panel B
@@ -398,11 +457,11 @@ function drawTangent(){
   for(var q=1;q<=4;q++){
     if(ox+q*SC < B.x1-40){
       X.beginPath(); X.moveTo(ox+q*SC, oy-5); X.lineTo(ox+q*SC, oy+5); X.stroke();
-      uiLabel(ox+q*SC, oy+17, String(q), GREY, 11.5, 'center');
+      uiLabel(ox+q*SC, oy+22, String(q), GREY, 17, 'center');
     }
     if(oy-q*SC > B.y0+30){
       X.beginPath(); X.moveTo(ox-5, oy-q*SC); X.lineTo(ox+5, oy-q*SC); X.stroke();
-      uiLabel(ox-15, oy-q*SC, String(q), GREY, 11.5, 'right');
+      uiLabel(ox-12, oy-q*SC, String(q), GREY, 17, 'right');
     }
   }
   X.strokeStyle=DIM; X.lineWidth=1.2;
@@ -412,14 +471,14 @@ function drawTangent(){
   // coordinate basis vectors (true lengths)
   arrow(ox,oy, ox+s1*SC, oy, BROWN, 3.2);
   arrow(ox,oy, ox, oy-s2*SC, BROWN, 3.2);
-  sym(ox+s1*SC+20, oy-17, 'e', '1', false, BROWN, 17, 'center');
-  sym(ox-20, oy-s2*SC-6, 'e', '2', false, BROWN, 17, 'center');
+  sym(ox+s1*SC+24, oy-22, 'e', '1', false, BROWN, 24, 'center');
+  sym(ox+14, oy-s2*SC+4, 'e', '2', false, BROWN, 24, 'left');   // right of the axis; the hat label sits left
 
   // orthonormal basis vectors (always unit)
   arrow(ox,oy, ox+SC, oy, BLUE, 2.2);
   arrow(ox,oy, ox, oy-SC, BLUE, 2.2);
-  sym(ox+SC*0.50, oy+20, 'e', '1', true, BLUE, 16, 'center');
-  sym(ox-22, oy-SC*0.50, 'e', '2', true, BLUE, 16, 'center');
+  sym(ox+SC*0.50, oy+30, 'e', '1', true, BLUE, 23, 'center');
+  sym(ox-32, oy-SC*0.50, 'e', '2', true, BLUE, 23, 'center');
 
   // the vector, plus its coordinate-basis parallelogram
   var vx=ox+state.ah[0]*SC, vy=oy-state.ah[1]*SC;
@@ -428,19 +487,19 @@ function drawTangent(){
   X.beginPath(); X.moveTo(ox, oy-state.ah[1]*SC); X.lineTo(vx,vy); X.stroke();
   X.setLineDash([]);
   arrow(ox,oy, vx, vy, BLUED, 3.4);
-  label(vx+14, vy-12, 'a', BLUED, 17, 'center', true);
+  label(vx+18, vy-16, 'a', BLUED, 24, 'center', true);
   X.fillStyle='#C8791F';
   X.beginPath(); X.arc(vx,vy,7,0,2*Math.PI); X.fill();
   X.strokeStyle=WHITE; X.lineWidth=1.8; X.stroke();
 
   X.restore();
-  uiLabel(B.x0+14, B.y1-16, 'exact \u2014 1 unit of proper length = ' + SC + ' px', GREY, 12, 'left');
+  uiLabel(B.x0+14, B.y1-18, 'exact: 1 unit of proper length = ' + SC + ' px', GREY, 17, 'left');
 }
 
 // ---------------------------------------------------------------- draw
 function draw(){
-  X.clearRect(0,0,1100,620);
-  X.fillStyle=WHITE; X.fillRect(0,0,1100,620);
+  X.clearRect(0,0,CW,CH);
+  X.fillStyle=WHITE; X.fillRect(0,0,CW,CH);
   card(A, state.geom==='sphere' ? 'THE GEOMETRY' : 'THE GEOMETRY');
   card(B, 'THE TANGENT PLANE AT p');
   if(state.geom==='sphere') drawSphere();
@@ -461,17 +520,22 @@ function readouts(){
   document.getElementById('l1').textContent=fmt(s1);
   document.getElementById('l2').textContent=fmt(s2);
   document.getElementById('acoord').textContent=fmt(a1)+',  '+fmt(a2);
+  document.getElementById('acoord').className='v'+(walk.on?' live':'');
+  document.getElementById('walkhint').innerHTML=WALKHINTS[state.geom];
+  document.getElementById('dragnote').innerHTML = walk.on
+    ? '<b>Walking:</b> orthonormal components fixed; coordinate ones change as '+
+      'a<sup>\u03B1</sup> = a<sup>\u03B1\u0302</sup>/\u221Ag<sub>\u03B1\u03B1</sub>.'
+    : DRAGNOTES[state.geom];
   document.getElementById('aorth').textContent=fmt(state.ah[0])+',  '+fmt(state.ah[1]);
   var n1=g[0]*a1*a1+g[1]*a2*a2;
   var n2=state.ah[0]*state.ah[0]+state.ah[1]*state.ah[1];
   document.getElementById('n1').textContent=fmt(n1);
   document.getElementById('n2').textContent=fmt(n2);
   document.getElementById('u1lab').innerHTML=u1Name();
-  document.getElementById('u1val').textContent='= '+fmt(state.u1,2);
-  document.getElementById('u2val').textContent='= '+fmt(state.u2,2)+' rad';
-  document.getElementById('mval').textContent='= '+fmt(state.M,2);
+  document.getElementById('u1val').textContent=fmt(state.u1,2);
+  document.getElementById('u2val').textContent=fmt(state.u2,2)+' rad';
+  document.getElementById('mval').textContent=fmt(state.M,2);
   document.getElementById('geomnote').innerHTML=NOTES[state.geom];
-  document.getElementById('dragnote').innerHTML=DRAGNOTES[state.geom];
 }
 
 // ---------------------------------------------------------------- controls
@@ -489,16 +553,20 @@ function clampU1(){
   state.u1=Math.min(rng[1], Math.max(rng[0], state.u1));
 }
 u1El.addEventListener('input',function(){
+  stopWalk(true);
   var rng=u1Range();
   state.u1=rng[0]+(rng[1]-rng[0])*(+u1El.value)/1000; draw();
 });
 u2El.addEventListener('input',function(){
+  stopWalk(true);
   state.u2=2*Math.PI*(+u2El.value)/1000; draw();
 });
 mEl.addEventListener('input',function(){
+  walk.trail=[];
   state.M=0.9*(+mEl.value)/1000; clampU1(); syncSlidersFromState(); draw();
 });
 gEl.addEventListener('change',function(){
+  stopWalk(true);
   state.geom=gEl.value;
   document.getElementById('mrow').style.display = (state.geom==='schw')?'':'none';
   state.u1 = (state.geom==='sphere') ? 1.15 : 2.2;
@@ -508,11 +576,42 @@ document.getElementById('reset').addEventListener('click',function(){
   state.ah=[1.35,0.95]; draw();
 });
 
+// ---------------------------------------------------------------- walk
+var walkBtn=document.getElementById('walk');
+function setWalkBtn(){ walkBtn.innerHTML = walk.on ? '&#10074;&#10074;&nbsp; Pause' : '&#9654;&nbsp; Walk'; }
+function stopWalk(clear){
+  walk.on=false; if(clear) walk.trail=[]; setWalkBtn();
+}
+function startWalk(){
+  // start the sweep from the current u1 so p doesn't jump
+  var rng=u1Range(), mid=(rng[0]+rng[1])/2, amp=(rng[1]-rng[0])/2;
+  var c=Math.max(-1, Math.min(1, (state.u1-mid)/amp));
+  walk.phase = Math.acos(c)/(2*Math.PI);
+  walk.on=true; walk.last=0; setWalkBtn();
+  requestAnimationFrame(walkFrame);
+}
+function walkFrame(ts){
+  if(!walk.on) return;
+  var dt = walk.last ? Math.min(0.05, (ts-walk.last)/1000) : 0;
+  walk.last = ts;
+  walk.phase = (walk.phase + dt/WALK_PERIOD) % 1;
+  var rng=u1Range(), mid=(rng[0]+rng[1])/2, amp=(rng[1]-rng[0])/2;
+  state.u1 = mid + amp*Math.cos(2*Math.PI*walk.phase);
+  walk.trail.push([state.u1, state.u2]);
+  if(walk.trail.length>600) walk.trail.shift();
+  syncSlidersFromState();
+  draw();
+  requestAnimationFrame(walkFrame);
+}
+walkBtn.addEventListener('click',function(){
+  if(walk.on){ stopWalk(false); draw(); } else startWalk();
+});
+
 // ---------------------------------------------------------------- dragging
 var dragging=null, last=null;
-function toBacking(ev){
+function toBacking(ev){          // client coords -> logical canvas units
   var r=C.getBoundingClientRect();
-  return {x:(ev.clientX-r.left)*(1100/r.width), y:(ev.clientY-r.top)*(620/r.height)};
+  return {x:(ev.clientX-r.left)*(CW/r.width), y:(ev.clientY-r.top)*(CH/r.height)};
 }
 function tipPos(){ return {x:Bo.x+state.ah[0]*SC, y:Bo.y-state.ah[1]*SC}; }
 function pointPos(){
@@ -529,11 +628,29 @@ C.addEventListener('pointerdown',function(ev){
     else if(m.x<B.x0) dragging='pt';
     else dragging='tip';
   }
-  if(dragging){ C.setPointerCapture(ev.pointerId); moveTo(ev); ev.preventDefault(); }
+  if(dragging){
+    if(dragging!=='tip') stopWalk(true);
+    C.setPointerCapture(ev.pointerId); C.style.cursor='grabbing'; moveTo(ev); ev.preventDefault();
+  }
 });
-C.addEventListener('pointermove',function(ev){ if(dragging){ moveTo(ev); ev.preventDefault(); } });
-C.addEventListener('pointerup',function(){ dragging=null; last=null; });
-C.addEventListener('pointercancel',function(){ dragging=null; last=null; });
+function hoverCursor(ev){
+  var m=toBacking(ev), t=tipPos(), p=pointPos();
+  var near = Math.hypot(m.x-t.x, m.y-t.y)<22 ||
+             (p && Math.hypot(m.x-p.x, m.y-p.y)<24) ||
+             (state.geom==='sphere' && m.x>A.x0 && m.x<A.x1 && m.y>A.y0 && m.y<A.y1);
+  C.style.cursor = near ? 'grab' : 'default';
+}
+C.addEventListener('pointermove',function(ev){
+  if(dragging){ moveTo(ev); ev.preventDefault(); } else hoverCursor(ev);
+});
+C.addEventListener('pointerup',function(ev){ dragging=null; last=null; hoverCursor(ev); });
+C.addEventListener('pointercancel',function(){ dragging=null; last=null; C.style.cursor='default'; });
+
+// re-rasterize if the window moves to a display with a different pixel ratio
+window.addEventListener('resize',function(){
+  var dpr=Math.min(window.devicePixelRatio||1,3);
+  if(C.width!==Math.round(CW*dpr)){ X=hidpi(C,CW,CH); draw(); }
+});
 
 function moveTo(ev){
   var m=toBacking(ev);
