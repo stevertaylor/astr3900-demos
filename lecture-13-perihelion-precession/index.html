@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 13: Perihelion Precession — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+  --red:#A43B34; --green:#2E7D57;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px}
+.tab{padding:7px 14px;font:600 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/760}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.55;color:var(--mute2)}
+.model b{color:var(--ink)}
+table.sys{width:100%;border-collapse:collapse;font-size:11.5px;margin:0 0 5px}
+table.sys th{text-align:left;font-weight:600;color:var(--ink);padding:2px 6px 3px 0;
+             border-bottom:1px solid var(--dim)}
+table.sys td{padding:1px 6px 0 0;line-height:1.35;vertical-align:baseline;white-space:nowrap}
+table.sys sup,table.sys sub,.model sup,.model sub{line-height:0}
+table.sys td.n{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:11px}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 8px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=checkbox]{accent-color:var(--blue);margin:0 6px 0 0;vertical-align:-2px}
+.check{font-size:12.5px;color:var(--mute2);margin-top:9px;display:block}
+.derived{font-size:12px;color:var(--grey);margin:2px 0 0}
+.derived span{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;color:var(--ink)}
+
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.5;margin:0}
+.verdict{font-size:12.5px;line-height:1.55;margin:8px 0 0;padding-top:8px;
+         border-top:1px solid var(--dim);color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.yes{color:var(--green)} .no{color:var(--red)}
+.hidden{display:none}
+.verdict a{color:var(--blued);font-weight:600;white-space:nowrap}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 13</div>
+    <h1>Perihelion Precession</h1>
+    <div class="sub">Exact Schwarzschild orbits: watch the perihelion advance, then test 6&pi;(<i>M</i>/<i>&ell;</i>)<sup>2</sup> from the last stable orbit out to Mercury.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tabO" role="tab" aria-selected="true">Orbit</button>
+        <button class="tab" id="tabC" role="tab" aria-selected="false">Precession curve</button>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+
+      <div class="model" id="noteO">
+        <b>Model:</b> a test particle on an exact Schwarzschild geodesic, <i>G</i> = <i>c</i> = 1,
+        lengths in units of <i>M</i>, drawn to scale in (<i>r</i>, <i>&phi;</i>). Only the clock is
+        sped up: the particle keeps its true rate in the distant observer&rsquo;s time <i>t</i>, and
+        1&nbsp;s of animation = <span id="tps">&ndash;</span>&nbsp;<i>M</i> of <i>t</i>.
+        <b>Check:</b> the angle per radial cycle by quadrature along the orbit against the closed form
+        4<i>K</i>(<i>m</i>)/[2(<i>u</i><sub>3</sub>&minus;<i>u</i><sub>1</sub>)]<sup>1/2</sup>.
+      </div>
+
+      <div class="model hidden" id="noteC">
+        <table class="sys">
+          <tr><th>system</th><th><i>M</i></th><th><i>a</i></th><th>&epsilon;</th><th>period</th>
+              <th><i>p</i>/<i>M</i></th><th>formula</th><th>measured</th></tr>
+          <tr><td>Mercury</td><td class="n">1 M<sub>&#8857;</sub></td><td class="n">0.387098 AU</td>
+              <td class="n">0.205630</td><td class="n">87.9691 d</td><td class="n" id="pm0"></td>
+              <td id="dm0"></td><td>&asymp; 43&Prime;/cy</td></tr>
+          <tr><td>S2</td><td class="n">4.261&times;10<sup>6</sup> M<sub>&#8857;</sub></td><td class="n">1031 AU</td>
+              <td class="n">0.884649</td><td class="n">16.0455 yr</td><td class="n" id="pm1"></td>
+              <td id="dm1"></td><td><i>f</i><sub>SP</sub> = 1.10 &plusmn; 0.19</td></tr>
+          <tr><td>B1913+16</td><td class="n">2.828378 M<sub>&#8857;</sub></td><td class="n" id="aHT"></td>
+              <td class="n">0.6171334</td><td class="n">7.751939 h</td><td class="n" id="pm2"></td>
+              <td id="dm2"></td><td>&asymp; 4.2&deg;/yr</td></tr>
+        </table>
+        <b>Formula:</b> 6&pi;<i>GM</i>/[<i>c</i><sup>2</sup><i>a</i>(1&minus;&epsilon;<sup>2</sup>)] per orbit;
+        for the pulsar <i>M</i> is the total mass and <i>a</i> the relative orbit (Kepler&rsquo;s third law),
+        which first post-Newtonian order allows. S2: GRAVITY (2020) fit, 125.058 mas at 8246.7 pc.
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Orbit</h2>
+        <div class="row">
+          <label>perihelion <i>r</i><sub>1</sub> <span class="v" id="vr1">20.0 M</span></label>
+          <input type="range" id="r1" min="0" max="1000" step="1" value="500">
+        </div>
+        <div class="row">
+          <label>aphelion <i>r</i><sub>2</sub> <span class="v" id="vr2">60.0 M</span></label>
+          <input type="range" id="r2" min="0" max="1000" step="1" value="500">
+        </div>
+        <div class="derived">
+          <i>&ell;</i> = <span id="vl">&ndash;</span>&ensp; <i>e</i> = <span id="ve">&ndash;</span>&ensp;
+          <i>p</i> = <span id="vp">&ndash;</span>&ensp; &epsilon; = <span id="vecc">&ndash;</span>
+        </div>
+        <div class="row" style="margin-top:9px">
+          <label>speed <span class="v" id="vsp">1.5 cycles/s</span></label>
+          <input type="range" id="sp" min="0" max="1000" step="1" value="500">
+        </div>
+        <label class="check"><input type="checkbox" id="newt">Newtonian ellipse with the same <i>r</i><sub>1</sub>, <i>r</i><sub>2</sub></label>
+        <div class="btns">
+          <button class="btn primary" id="go">Pause</button>
+          <button class="btn" id="rs">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Count</h2>
+        <table class="read">
+          <tr><td>radial cycles completed</td><td class="n" id="vn">&ndash;</td></tr>
+          <tr><td>perihelion advance so far</td><td class="n" id="vadv">&ndash;</td></tr>
+          <tr><td>lecture, 6&pi;(<i>M</i>/<i>&ell;</i>)<sup>2</sup> per orbit</td><td class="n" id="vfirst">&ndash;</td></tr>
+          <tr><td>lecture, 2&pi;/<i>k</i> &minus; 2&pi; per orbit</td><td class="n" id="vnotes">&ndash;</td></tr>
+          <tr><td>check <span class="gloss">(quadrature vs <i>K</i>(<i>m</i>))</span></td><td class="n" id="vchk">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Predict, then reveal</h2>
+        <div id="ask">
+          <p class="ask">Near the last stable orbit, is the true advance per orbit bigger or smaller
+            than the lecture&rsquo;s 6&pi;(<i>M</i>/<i>&ell;</i>)<sup>2</sup>? Commit before you look.</p>
+          <div class="btns">
+            <button class="btn" id="pBig">Bigger</button>
+            <button class="btn" id="pSmall">Smaller</button>
+          </div>
+        </div>
+        <div id="res" class="hidden">
+          <table class="read">
+            <tr><td>exact advance per orbit</td><td class="n" id="vex">&ndash;</td></tr>
+            <tr><td>exact &divide; 6&pi;(<i>M</i>/<i>&ell;</i>)<sup>2</sup></td><td class="n" id="vrat">&ndash;</td></tr>
+            <tr><td>orbits per full turn, exact / first order</td><td class="n" id="vturn">&ndash;</td></tr>
+          </table>
+          <div class="verdict"><span id="verdict"></span> <a href="#" id="hide">Hide again</a></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 13</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// =====================================================================================
+// Physics. Units G = c = M = 1. Equatorial Schwarzschild geodesic with turning points
+// r1 (perihelion) and r2 (aphelion). With u = 1/r the orbit equation is
+//   (du/dphi)^2 = 2 (u - u1)(u2 - u)(u3 - u),   u1 = 1/r2, u2 = 1/r1, u3 = 1/2 - u1 - u2,
+// the lecture's boxed equation e^2/l^2 - (1 - 2u)(1/l^2 + u^2) written in factored form,
+// which fixes  1/l^2 = u1 u2 + u3 (u1 + u2)  and  e^2 = 1 - 2 u1 u2 u3 l^2.
+// Stable bound orbits need u3 > u2 (the third root inside the perihelion).
+// =====================================================================================
+var TWO_PI = 2*Math.PI;
+var NCH = 2048;                  // samples per radial cycle
+var DELTA = 0.01;                // require m = (u2-u1)/(u3-u1) <= 1 - DELTA
+var R1MIN = 4.1, R1MAX = 500, R2MAX = 2000;
+var SPMIN = 0.2, SPMAX = 20;     // radial cycles per second of animation
+var PHI0 = 200*Math.PI/180;      // direction of the first perihelion (as on the slides)
+
+function ellK(m){                // complete elliptic integral K(m), by the AGM
+  var a = 1, b = Math.sqrt(1 - m), i;
+  for(i = 0; i < 60 && Math.abs(a - b) > 1e-16*a; i++){ var an = 0.5*(a + b); b = Math.sqrt(a*b); a = an; }
+  return Math.PI/(2*a);
+}
+
+// Everything the lecture formulas need for turning points (r1, r2); null if not stable+bound.
+function roots(r1, r2){
+  var u1 = 1/r2, u2 = 1/r1, u3 = 0.5 - u1 - u2;
+  if(!(u3 > u2) || !(u2 >= u1)) return null;
+  var l2 = 1/(u1*u2 + u3*(u1 + u2));
+  var m = (u3 - u1) > 0 ? (u2 - u1)/(u3 - u1) : 1;
+  var dPhiK = 4*ellK(m)/Math.sqrt(2*(u3 - u1));
+  var k = Math.sqrt(1 - 6/l2);
+  return { u1:u1, u2:u2, u3:u3, l2:l2, m:m, dPhiK:dPhiK,
+           exact: dPhiK - TWO_PI, first: 6*Math.PI/l2, notes: TWO_PI/k - TWO_PI };
+}
+
+// Largest aphelion radius constraint: smallest r2 allowed for a given r1 (m <= 1 - DELTA).
+function r2Min(r1){
+  var u2 = 1/r1;
+  var u1max = (0.5*(1 - DELTA) - u2*(2 - DELTA))/(1 - 2*DELTA);
+  if(u1max <= 0) return Infinity;
+  return Math.max(r1, 1/u1max);
+}
+
+// One radial cycle, tabulated on chi in [0, 2 pi] with u = u1 + (u2-u1)(1 + cos chi)/2
+// (chi = 0 at perihelion). Then dphi/dchi = [2(u3 - u)]^(-1/2), smooth at the turning
+// points; dt/dphi = e/(l u^2 (1 - 2u)) and dtau/dphi = 1/(l u^2).
+function orbit(r1, r2){
+  var R = roots(r1, r2);
+  var O = R;
+  O.r1 = r1; O.r2 = r2;
+  O.l = Math.sqrt(R.l2);
+  O.e = Math.sqrt(1 - 2*R.u1*R.u2*R.u3*R.l2);
+  O.p = 2*r1*r2/(r1 + r2);
+  O.ecc = (r2 - r1)/(r2 + r1);
+  var phi = new Float64Array(NCH + 1), t = new Float64Array(NCH + 1), u = new Float64Array(NCH + 1);
+  var h = TWO_PI/NCH, i;
+  function rates(chi){
+    var uu = R.u1 + (R.u2 - R.u1)*0.5*(1 + Math.cos(chi));
+    var dphi = 1/Math.sqrt(2*(R.u3 - uu));
+    return [uu, dphi, dphi*O.e/(O.l*uu*uu*(1 - 2*uu))];
+  }
+  var prev = rates(0); u[0] = prev[0];
+  for(i = 1; i <= NCH; i++){                      // Simpson on each sub-interval
+    var mid = rates((i - 0.5)*h), cur = rates(i*h);
+    phi[i] = phi[i-1] + h/6*(prev[1] + 4*mid[1] + cur[1]);
+    t[i]   = t[i-1]   + h/6*(prev[2] + 4*mid[2] + cur[2]);
+    u[i] = cur[0]; prev = cur;
+  }
+  O.phiTab = phi; O.tTab = t; O.uTab = u;
+  O.dPhi = phi[NCH];                 // angle swept per radial cycle (quadrature)
+  O.Tr = t[NCH];                     // coordinate time per radial cycle
+  O.check = Math.abs(O.dPhi - R.dPhiK)/R.dPhiK;
+  return O;
+}
+
+// Position at global sample index G = n*NCH + fractional index within the cycle.
+function posAtG(G){
+  var n = Math.floor(G/NCH), x = G - n*NCH, i = Math.floor(x), f = x - i;
+  if(i >= NCH){ i = NCH - 1; f = 1; }
+  var ph = O.phiTab[i] + f*(O.phiTab[i+1] - O.phiTab[i]);
+  var uu = O.uTab[i]  + f*(O.uTab[i+1]  - O.uTab[i]);
+  return { phi: PHI0 + n*O.dPhi + ph, r: 1/uu };
+}
+// Global sample index at coordinate time t (binary search in the time table).
+function gAtT(t){
+  var n = Math.floor(t/O.Tr), tc = t - n*O.Tr, lo = 0, hi = NCH;
+  while(hi - lo > 1){ var md = (lo + hi) >> 1; if(O.tTab[md] <= tc) lo = md; else hi = md; }
+  var f = (tc - O.tTab[lo])/(O.tTab[hi] - O.tTab[lo]);
+  return n*NCH + lo + Math.min(Math.max(f, 0), 1);
+}
+
+// Real systems: first-order formula (weak field, exact curve indistinguishable there).
+var MSUN = 1476.625;             // G M_sun / c^2 in metres
+var AU = 1.495978707e11, DAY = 86400, YR = 365.25*DAY, CY = 100*YR;
+var GMSUN = 1.32712440018e20, CSI = 299792458;
+function keplerA(Mtot, P){ return Math.cbrt(GMSUN*Mtot*P*P/(4*Math.PI*Math.PI)); }
+var SYS = [
+  { name:"Mercury",      M:1,        a:0.387098*AU,     ecc:0.205630,  P:87.9691*DAY },
+  { name:"S2",           M:4.261e6,  a:0.125058*8246.7*AU, ecc:0.884649, P:16.0455*YR },
+  { name:"PSR B1913+16", M:2.828378, a:null,            ecc:0.6171334, P:7.751938773864*3600 }
+];
+SYS[2].a = keplerA(SYS[2].M, SYS[2].P);
+SYS.forEach(function(s){
+  s.p = s.a*(1 - s.ecc*s.ecc)/(s.M*MSUN);          // semi-latus rectum in units of M
+  s.dphi = 6*Math.PI/s.p;                           // rad per orbit
+});
+
+// =====================================================================================
+// State
+// =====================================================================================
+var P = { r1:20, r2:60, cps:1.5, newt:false, tab:"orbit", revealed:false, guess:null };
+var O = null;
+var S = { t:0, g:0, lastG:0, n:0, running:false, peri:[] };
+var REDUCED = false;
+
+function slToR(v, lo, hi){ return lo*Math.pow(hi/lo, v/1000); }
+function rToSl(r, lo, hi){ return Math.round(1000*Math.log(r/lo)/Math.log(hi/lo)); }
+
+// =====================================================================================
+// Canvas
+// =====================================================================================
+var INK="#15243C", BLUE="#0F6E93", BLUED="#2E6DA4", BROWN="#8A5A18", GREY="#5A6B7B",
+    MUTE2="#33465C", DIM="#C4CBD8", PANEL="#EDF1F6";
+var OW = 1100, OH = 760;
+// The canvas shows at about 740 CSS px in the 1200px page: logical px x 0.673 must clear
+// 11 CSS px for labels and 13 for titles (addendum): 17 -> 11.4, 20 -> 13.5.
+var FV = "italic 17px Georgia, 'Times New Roman', serif";
+var FL = "17px Helvetica, Arial, sans-serif";
+var FI = "13px Helvetica, Arial, sans-serif";                  // indices
+var FT = "20px Georgia, 'Times New Roman', serif";
+var FTV = "italic 20px Georgia, 'Times New Roman', serif";
+var FTI = "15px Helvetica, Arial, sans-serif";
+
+var cvs, ctx, trail, ttx;
+
+function fit(cv, LW, LH){
+  var dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
+  cv.width = Math.round(LW*dpr); cv.height = Math.round(LH*dpr);
+  var c = cv.getContext("2d");
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return c;
+}
+
+/* Mixed-font run. parts = [[text, kind, colour], ...]; kind: "v" italic serif variable,
+   "l" upright sans, "i" subscript index, "s" superscript, "T"/"TV"/"TI" title-size
+   upright / variable / index. Indices are drawn separately -- never Unicode sub/superscripts. */
+function font(k){
+  return {v:FV, l:FL, i:FI, s:FI, T:FT, TV:FTV, TI:FTI, TS:FTI}[k] || FL;
+}
+function dy(k){ return (k === "i" || k === "TI") ? 5 : ((k === "s" || k === "TS") ? -8 : 0); }
+function runW(c, parts){
+  var w = 0; parts.forEach(function(p){ c.font = font(p[1]); w += c.measureText(p[0]).width; });
+  return w;
+}
+function run(c, x, y, parts, align, bg){
+  var w = runW(c, parts);
+  var x0 = align === "center" ? x - w/2 : (align === "right" ? x - w : x);
+  if(bg){ c.fillStyle = bg; c.fillRect(x0 - 5, y - 17, w + 10, 25); }
+  parts.forEach(function(p){
+    c.font = font(p[1]); c.fillStyle = p[2] || GREY; c.textAlign = "left";
+    c.fillText(p[0], x0, y + dy(p[1]));
+    x0 += c.measureText(p[0]).width;
+  });
+  return { x0: x0 - w, x1: x0, w: w };
+}
+// the recurring label 6 pi (M / l)^2
+function firstParts(col){
+  return [["6π(", "l", col], ["M", "v", col], ["/", "l", col], ["ℓ", "v", col],
+          [")", "l", col], ["2", "s", col]];
+}
+
+// ------------------------------------------------------------------ orbit panel
+function view(){
+  var R = Math.min(OW, OH)/2 - 44;
+  return { cx: OW/2, cy: OH/2 + 4, sc: R/O.r2 };
+}
+var dragView = null;
+function V(){ return dragView || view(); }
+function toXY(r, ph, v){ return [v.cx + r*v.sc*Math.cos(ph), v.cy - r*v.sc*Math.sin(ph)]; }
+
+function clearTrail(){
+  ttx.setTransform(1, 0, 0, 1, 0, 0);
+  ttx.clearRect(0, 0, trail.width, trail.height);
+  var dpr = trail.width/OW; ttx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+// Draw the path between global indices g0 and g1 onto the trail layer.
+function extendTrail(g0, g1){
+  if(g1 <= g0) return;
+  var cb = (Math.floor(g0/NCH) + 1)*NCH;          // next cycle boundary
+  if(g1 > cb){ extendTrail(g0, cb); extendTrail(cb, g1); return; }
+  var v = V(), a, b, g;
+  // fade the old loops once per completed cycle so the current loop stays legible
+  var c0 = Math.floor(g0/NCH), c1 = Math.floor(g1/NCH);
+  if(c1 > c0){                  // reduce the alpha of what is already there; never paint white
+    ttx.save(); ttx.globalCompositeOperation = "destination-out";
+    ttx.fillStyle = "rgba(0,0,0," + (1 - Math.pow(0.87, Math.min(c1 - c0, 40))).toFixed(4) + ")";
+    ttx.fillRect(0, 0, OW, OH); ttx.restore();
+  }
+  ttx.strokeStyle = INK; ttx.globalAlpha = 0.75; ttx.lineWidth = 1.4; ttx.lineJoin = "round";
+  ttx.beginPath();
+  a = posAtG(g0); b = toXY(a.r, a.phi, v); ttx.moveTo(b[0], b[1]);
+  var step = 2;
+  for(g = Math.ceil(g0/step)*step; g < g1; g += step){
+    a = posAtG(g); b = toXY(a.r, a.phi, v); ttx.lineTo(b[0], b[1]);
+  }
+  a = posAtG(g1); b = toXY(a.r, a.phi, v); ttx.lineTo(b[0], b[1]);
+  ttx.stroke(); ttx.globalAlpha = 1;
+}
+
+function niceLen(x){
+  var e = Math.pow(10, Math.floor(Math.log10(x))), f = x/e;
+  return (f >= 5 ? 5 : (f >= 2 ? 2 : 1))*e;
+}
+
+function drawOrbitPanel(){
+  var v = V(), cx = v.cx, cy = v.cy, sc = v.sc, i;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, OW, OH);
+
+  // caption and scale bar (corners are outside the circle r2 by construction)
+  run(ctx, 22, 34, [["Orbit in the equatorial plane, to scale", "T", INK]], "left");
+  var L = niceLen(0.28*O.r2), Lp = L*sc;
+  ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.moveTo(24, OH - 30); ctx.lineTo(24 + Lp, OH - 30);
+  ctx.moveTo(24, OH - 36); ctx.lineTo(24, OH - 24);
+  ctx.moveTo(24 + Lp, OH - 36); ctx.lineTo(24 + Lp, OH - 24); ctx.stroke();
+  run(ctx, 24 + Lp + 10, OH - 24, [[String(L), "l", INK], [" ", "l", INK], ["M", "v", INK]], "left");
+
+  // legend, bottom right
+  var lx = OW - 300, ly = OH - 88;
+  ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(lx + 8, ly - 6, 6, 0, TWO_PI); ctx.fill();
+  run(ctx, lx + 24, ly, [["horizon, ", "l", GREY], ["r", "v", GREY], [" = 2", "l", GREY], ["M", "v", GREY]], "left");
+  ctx.strokeStyle = GREY; ctx.lineWidth = 1.3; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.arc(lx + 8, ly + 22, 7, 0, TWO_PI); ctx.stroke(); ctx.setLineDash([]);
+  run(ctx, lx + 24, ly + 28, [["ISCO, ", "l", GREY], ["r", "v", GREY], [" = 6", "l", GREY], ["M", "v", GREY]], "left");
+  ctx.fillStyle = BROWN; ctx.beginPath(); ctx.arc(lx + 8, ly + 50, 4.5, 0, TWO_PI); ctx.fill();
+  run(ctx, lx + 24, ly + 56, [["successive perihelia", "l", GREY]], "left");
+
+  // Newtonian ellipse with the same turning points (closed, fixed orientation)
+  if(P.newt){
+    ctx.strokeStyle = GREY; ctx.lineWidth = 1.6; ctx.setLineDash([7, 6]); ctx.beginPath();
+    for(i = 0; i <= 720; i++){
+      var ph = PHI0 + TWO_PI*i/720, rr = O.p/(1 + O.ecc*Math.cos(ph - PHI0)), q = toXY(rr, ph, v);
+      if(i === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(lx - 4, ly - 34); ctx.lineTo(lx + 18, ly - 34); ctx.stroke();
+    ctx.setLineDash([]);
+    run(ctx, lx + 24, ly - 28, [["Newtonian ellipse, same ", "l", GREY], ["r", "v", GREY], ["1", "i", GREY],
+        [", ", "l", GREY], ["r", "v", GREY], ["2", "i", GREY]], "left");
+  }
+
+  // trail layer
+  ctx.drawImage(trail, 0, 0, OW, OH);
+
+
+  // perihelion markers
+  var nDone = S.n;
+  ctx.fillStyle = BROWN;
+  for(i = 1; i <= nDone; i++){
+    var q1 = toXY(O.r1, PHI0 + i*O.dPhi, v);
+    ctx.beginPath(); ctx.arc(q1[0], q1[1], 4, 0, TWO_PI); ctx.fill();
+  }
+  // first-perihelion and latest-perihelion radii, and the accumulated angle between them
+  var r1p = O.r1*sc, ref = toXY(O.r1, PHI0, v), lat = toXY(O.r1, PHI0 + nDone*O.dPhi, v);
+  ctx.strokeStyle = BROWN; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ref[0], ref[1]); ctx.stroke();
+  if(nDone > 0){
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(lat[0], lat[1]); ctx.stroke();
+    var adv = (nDone*(O.dPhi - TWO_PI)) % TWO_PI, ra = Math.max(0.55*r1p, 16);
+    if(r1p > 20 && adv > 0.01){
+      ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, ra, -PHI0, -(PHI0 + adv), true); ctx.stroke();
+    }
+  }
+  // first-order prediction after the same number of cycles (only after the reveal)
+  if(P.revealed && nDone > 0){
+    var php = PHI0 + nDone*(TWO_PI + O.first), qe = toXY(O.r1*1.35, php, v);
+    ctx.strokeStyle = BLUE; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(qe[0], qe[1]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = BLUE; ctx.beginPath(); ctx.arc(qe[0], qe[1], 3.5, 0, TWO_PI); ctx.fill();
+  }
+
+  // horizon and ISCO
+  ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(cx, cy, Math.max(2*sc, 3), 0, TWO_PI); ctx.fill();
+  if(6*sc > 5){
+    ctx.strokeStyle = GREY; ctx.lineWidth = 1.3; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.arc(cx, cy, 6*sc, 0, TWO_PI); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // handles: first perihelion (r1) and first aphelion (r2)
+  var qa = toXY(O.r2, PHI0 + 0.5*O.dPhi, v);
+  [[ref, "1", PHI0], [qa, "2", PHI0 + 0.5*O.dPhi]].forEach(function(h){
+    ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.strokeStyle = BLUED; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(h[0][0], h[0][1], 8, 0, TWO_PI); ctx.fill(); ctx.stroke();
+    var ox = Math.cos(h[2]), oy = -Math.sin(h[2]);
+    run(ctx, h[0][0] + 28*ox, h[0][1] + 28*oy + 6, [["r", "TV", BLUED], [h[1], "TI", BLUED]], "center",
+        "rgba(255,255,255,0.9)");
+  });
+
+  // the particle
+  var pp = posAtG(S.g), qp = toXY(pp.r, pp.phi, v);
+  ctx.fillStyle = BLUE; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(qp[0], qp[1], 6.5, 0, TWO_PI); ctx.fill(); ctx.stroke();
+
+  // after the reveal, a key to the dashed blue radius
+  if(P.revealed && nDone > 0){
+    ctx.strokeStyle = BLUE; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(22, 64); ctx.lineTo(48, 64); ctx.stroke(); ctx.setLineDash([]);
+    run(ctx, 56, 70, [["where ", "l", BLUE]].concat(firstParts(BLUE)), "left");
+    run(ctx, 56, 94, [["puts the latest perihelion", "l", BLUE]], "left");
+  }
+}
+
+// ------------------------------------------------------------------ precession-curve panel
+var PX0 = 118, PX1 = 1070, LX0 = Math.log10(5), LX1 = 8.3;
+var PY0 = 48, PY1 = 420, LY0 = -8.2, LY1 = 1.6;          // log10(rad)
+var QY0 = 478, QY1 = 652, RY0 = 1, RY1 = 3;                // ratio panel
+function xOf(p){ return PX0 + (Math.log10(p) - LX0)/(LX1 - LX0)*(PX1 - PX0); }
+function yOf(d){ return PY1 - (Math.log10(d) - LY0)/(LY1 - LY0)*(PY1 - PY0); }
+function yR(q){ return QY1 - (q - RY0)/(RY1 - RY0)*(QY1 - QY0); }
+
+function curveSamples(ecc){
+  var pmin = 6 + 2*ecc, out = [], i, N = 420;
+  var l0 = Math.log10(pmin*(1 + 2e-4)), l1 = LX1;
+  for(i = 0; i <= N; i++){
+    // cluster samples near the separatrix, where the exact curve turns up
+    var s = i/N, lp = l0 + (l1 - l0)*s*s, p = Math.pow(10, lp);
+    var R = roots(p/(1 + ecc), p/(1 - ecc));
+    if(R) out.push({ p:p, exact:R.exact, first:R.first, notes:R.notes });
+  }
+  return out;
+}
+
+function polyline(c, pts, col, w, dash, clipTop, clipBot){
+  c.save(); c.beginPath(); c.rect(PX0, clipTop, PX1 - PX0, clipBot - clipTop); c.clip();
+  c.strokeStyle = col; c.lineWidth = w; c.setLineDash(dash || []);
+  c.beginPath(); pts.forEach(function(q, i){ if(i === 0) c.moveTo(q[0], q[1]); else c.lineTo(q[0], q[1]); });
+  c.stroke(); c.restore();
+}
+
+function drawCurvePanel(){
+  var c = ctx, i, k;
+  c.fillStyle = "#fff"; c.fillRect(0, 0, OW, OH);
+  run(c, PX0, 30, [["Precession per orbit against orbit size", "T", INK]], "left");
+  run(c, PX1, 30, [["curves for the sidebar orbit\u2019s ", "l", GREY], ["\u03b5", "v", GREY],
+      [" = " + O.ecc.toFixed(3), "l", GREY]], "right");
+
+  // grid and ticks (decades)
+  c.lineWidth = 1; c.strokeStyle = "#E3E7EE";
+  for(k = 1; k <= 8; k++){ var x = xOf(Math.pow(10, k)); c.beginPath(); c.moveTo(x, PY0); c.lineTo(x, PY1);
+    c.moveTo(x, QY0); c.lineTo(x, QY1); c.stroke(); }
+  for(k = -7; k <= 1; k++){ var y = yOf(Math.pow(10, k)); c.beginPath(); c.moveTo(PX0, y); c.lineTo(PX1, y); c.stroke(); }
+  [1, 1.5, 2, 2.5, 3].forEach(function(q){ var y = yR(q); c.beginPath(); c.moveTo(PX0, y); c.lineTo(PX1, y); c.stroke(); });
+  c.strokeStyle = GREY; c.lineWidth = 1.2; c.strokeRect(PX0, PY0, PX1 - PX0, PY1 - PY0);
+  c.strokeRect(PX0, QY0, PX1 - PX0, QY1 - QY0);
+  for(k = 1; k <= 8; k++){
+    var xt = xOf(Math.pow(10, k));
+    run(c, xt, QY1 + 28, [["10", "l", GREY], [String(k), "TS", GREY]], "center");
+  }
+  for(k = -7; k <= 1; k += 2){
+    var yt = yOf(Math.pow(10, k));
+    run(c, PX0 - 10, yt + 6, [["10", "l", GREY], [String(k).replace("-", "−"), "TS", GREY]], "right");
+  }
+  [1, 2, 3].forEach(function(q){ run(c, PX0 - 10, yR(q) + 6, [[q.toFixed(0), "l", GREY]], "right"); });
+  // axis titles
+  run(c, (PX0 + PX1)/2, QY1 + 62, [["semi-latus rectum  ", "l", INK], ["p", "v", INK], [" = ", "l", INK],
+      ["a", "v", INK], ["(1 − ε", "l", INK], ["2", "s", INK], [")  in units of ", "l", INK], ["M", "v", INK]], "center");
+  c.save(); c.translate(30, (PY0 + PY1)/2); c.rotate(-Math.PI/2);
+  run(c, 0, 0, [["δφ", "v", INK], ["prec", "i", INK], [" per orbit (rad)", "l", INK]], "center");
+  c.restore();
+  c.save(); c.translate(30, (QY0 + QY1)/2); c.rotate(-Math.PI/2);
+  run(c, 0, 0, [["ratio to ", "l", INK]].concat(firstParts(INK)), "center");
+  c.restore();
+
+  // curves for the current eccentricity
+  var S0 = curveSamples(O.ecc);
+  var top = PY0, bot = PY1;
+  polyline(c, S0.map(function(s){ return [xOf(s.p), yOf(s.first)]; }), BLUE, 2.2, null, top, bot);
+  polyline(c, S0.map(function(s){ return [xOf(s.p), yOf(s.notes)]; }), BLUE, 1.8, [7, 5], top, bot);
+  polyline(c, S0.map(function(s){ return [xOf(s.p), yR(1)]; }), BLUE, 2.2, null, QY0, QY1);
+  polyline(c, S0.map(function(s){ return [xOf(s.p), yR(s.notes/s.first)]; }), BLUE, 1.8, [7, 5], QY0, QY1);
+  if(P.revealed){
+    polyline(c, S0.map(function(s){ return [xOf(s.p), yOf(s.exact)]; }), BROWN, 2.4, null, top, bot);
+    polyline(c, S0.map(function(s){ return [xOf(s.p), yR(s.exact/s.first)]; }), BROWN, 2.4, null, QY0, QY1);
+  } else {
+    run(c, (PX0 + PX1)/2 + 120, QY0 + 58, [["exact curve hidden until you commit to a prediction", "l", BROWN]],
+        "center", "#fff");
+  }
+  // separatrix p = 6 + 2 eps
+  var xs = xOf(6 + 2*O.ecc);
+  c.strokeStyle = GREY; c.lineWidth = 1.2; c.setLineDash([3, 4]);
+  c.beginPath(); c.moveTo(xs, PY0); c.lineTo(xs, PY1); c.moveTo(xs, QY0); c.lineTo(xs, QY1); c.stroke(); c.setLineDash([]);
+
+  // real systems, on the weak-field line
+  var labs = [
+    { s:SYS[2], txt:"PSR B1913+16", dx: 14, dy:-40 },
+    { s:SYS[1], txt:"S2", dx: 14, dy:-40 },
+    { s:SYS[0], txt:"Mercury", dx:-14, dy: 26, right:true }
+  ];
+  labs.forEach(function(L){
+    var x = xOf(L.s.p), y = yOf(L.s.dphi);
+    c.fillStyle = INK; c.beginPath(); c.arc(x, y, 6, 0, TWO_PI); c.fill();
+    run(c, x + L.dx, y + L.dy, [[L.txt, "l", INK]], L.right ? "right" : "left", "#fff");
+    run(c, x + L.dx, y + L.dy + 23, [[L.s.rate, "l", GREY]], L.right ? "right" : "left", "#fff");
+  });
+
+  // this orbit
+  var xo = xOf(O.p);
+  c.fillStyle = BLUE; c.strokeStyle = "#fff"; c.lineWidth = 2;
+  c.beginPath(); c.arc(xo, yOf(O.first), 6.5, 0, TWO_PI); c.fill(); c.stroke();
+  if(P.revealed){
+    c.fillStyle = BROWN; c.beginPath(); c.arc(xo, yOf(O.exact), 6.5, 0, TWO_PI); c.fill(); c.stroke();
+    c.beginPath(); c.arc(xo, yR(Math.min(O.exact/O.first, RY1)), 6.5, 0, TWO_PI); c.fill(); c.stroke();
+  }
+
+  // legend (upper right, empty region of the log-log plot)
+  var gx = PX1 - 350, gy = PY0 + 30;
+  c.fillStyle = "#fff"; c.fillRect(gx - 12, gy - 22, 350, P.revealed ? 118 : 90);
+  function key(y, col, dash, parts){
+    c.strokeStyle = col; c.lineWidth = 2.2; c.setLineDash(dash || []);
+    c.beginPath(); c.moveTo(gx, y - 6); c.lineTo(gx + 36, y - 6); c.stroke(); c.setLineDash([]);
+    run(c, gx + 46, y, parts, "left");
+  }
+  key(gy, BLUE, null, firstParts(BLUE).concat([["  (lecture, first order)", "l", GREY]]));
+  key(gy + 28, BLUE, [7, 5], [["2π/", "l", BLUE], ["k", "v", BLUE], [" − 2π", "l", BLUE],
+      ["  (lecture, quasi-circular)", "l", GREY]]);
+  if(P.revealed) key(gy + 56, BROWN, null, [["exact geodesic", "l", BROWN]]);
+  c.fillStyle = BLUE; c.beginPath(); c.arc(gx + 18, gy + (P.revealed ? 78 : 50), 6, 0, TWO_PI); c.fill();
+  run(c, gx + 46, gy + (P.revealed ? 84 : 56), [["this orbit (sidebar)", "l", GREY]], "left");
+
+  run(c, xs + 8, PY1 - 12, [["last stable orbit", "l", GREY]], "left", "#fff");
+}
+
+function draw(){ if(P.tab === "orbit") drawOrbitPanel(); else drawCurvePanel(); }
+
+// =====================================================================================
+// Readouts
+// =====================================================================================
+function deg(x){ var d = x*180/Math.PI; return (Math.abs(d) >= 100 ? d.toFixed(1) : (Math.abs(d) >= 10 ? d.toFixed(2) : d.toFixed(3))) + "°"; }
+function setText(id, s){ var el = document.getElementById(id); if(el) el.innerHTML = s; }
+function fmtR(r){ return (r >= 100 ? r.toFixed(0) : r.toFixed(1)) + " M"; }
+
+function readouts(){
+  setText("vr1", fmtR(O.r1)); setText("vr2", fmtR(O.r2));
+  setText("vl", O.l.toFixed(3) + " M"); setText("ve", O.e.toFixed(5));
+  setText("vp", fmtR(O.p)); setText("vecc", O.ecc.toFixed(3));
+  setText("vsp", (P.cps >= 10 ? P.cps.toFixed(0) : P.cps.toFixed(1)) + " cycles/s");
+  setText("tps", Math.round(P.cps*O.Tr).toLocaleString("en-US"));
+  setText("vn", String(S.n));
+  var adv = S.n*(O.dPhi - TWO_PI);
+  setText("vadv", deg(adv) + " = " + (adv/TWO_PI).toFixed(2) + " turns");
+  setText("vfirst", deg(O.first)); setText("vnotes", deg(O.notes));
+  setText("vchk", O.check < 1e-12 ? "&lt; 10<sup>−12</sup>" : O.check.toExponential(1));
+  setText("vex", deg(O.exact));
+  setText("vrat", (O.exact/O.first).toFixed(3));
+  setText("vturn", (TWO_PI/O.exact).toFixed(1) + " / " + (TWO_PI/O.first).toFixed(1));
+  if(P.revealed){
+    var ok = P.guess === "bigger";
+    setText("verdict", "<b>Bigger</b>, for every orbit, and without bound as <i>p</i> approaches the last " +
+      "stable orbit, (6 + 2ε)<i>M</i>. You said <span class='" + (ok ? "yes" : "no") + "'>" + P.guess + "</span>.");
+  }
+}
+
+function sysTable(){
+  function f(x, n){ return x.toPrecision(n); }
+  SYS[0].rate = (SYS[0].dphi*206264.806*CY/SYS[0].P).toFixed(1) + "″ per century";
+  SYS[1].rate = (SYS[1].dphi*180/Math.PI*60).toFixed(1) + "′ per orbit";
+  SYS[2].rate = (SYS[2].dphi*180/Math.PI*YR/SYS[2].P).toFixed(2) + "° per year";
+  SYS[0].short = SYS[0].rate.replace(" per century", "/cy");
+  SYS[1].short = SYS[1].rate.replace(" per orbit", "/orbit");
+  SYS[2].short = SYS[2].rate.replace(" per year", "/yr");
+  setText("aHT", (SYS[2].a/1e9).toFixed(3) + "&times;10<sup>6</sup> km");
+  SYS.forEach(function(s, i){
+    setText("pm" + i, s.p >= 1e5 ? s.p.toExponential(2).replace(/e\+?(\d+)/, "&times;10<sup>$1</sup>") : s.p.toFixed(0));
+    setText("dm" + i, s.short);
+  });
+}
+
+// =====================================================================================
+// Simulation control
+// =====================================================================================
+var raf = null, lastTs = null;
+
+function syncCounters(){
+  S.g = gAtT(S.t);
+  S.n = Math.floor(S.g/NCH);
+}
+function advanceTo(t){
+  S.t = t; syncCounters();
+  extendTrail(S.lastG, S.g); S.lastG = S.g;
+}
+function resetSim(pre){
+  S.t = 0; S.g = 0; S.lastG = 0; S.n = 0;
+  clearTrail();
+  if(pre) advanceTo(pre*O.Tr);
+}
+function frame(ts){
+  if(!S.running){ raf = null; return; }
+  if(lastTs === null) lastTs = ts;
+  var dt = Math.min((ts - lastTs)/1000, 0.05); lastTs = ts;
+  advanceTo(S.t + dt*P.cps*O.Tr);
+  readouts(); draw();
+  raf = requestAnimationFrame(frame);
+}
+function play(){
+  if(S.running) return;
+  S.running = true; lastTs = null;
+  document.getElementById("go").textContent = "Pause";
+  raf = requestAnimationFrame(frame);
+}
+function pause(){
+  S.running = false;
+  document.getElementById("go").textContent = "Play";
+  if(raf !== null){ cancelAnimationFrame(raf); raf = null; }
+}
+
+function setOrbit(r1, r2, keep){
+  r1 = Math.min(Math.max(r1, R1MIN), R1MAX);
+  r2 = Math.min(Math.max(r2, r2Min(r1)), R2MAX);
+  if(!isFinite(r2) || r2 < r1){ r2 = Math.max(r1, r2); }
+  P.r1 = r1; P.r2 = r2;
+  O = orbit(r1, r2);
+  document.getElementById("r1").value = String(rToSl(r1, R1MIN, R1MAX));
+  document.getElementById("r2").value = String(rToSl(Math.max(r2, R1MIN), R1MIN, R2MAX));
+  resetSim(0);
+}
+
+// ------------------------------------------------------------------ pointer: drag r1 / r2
+var dragging = null, wasRunning = false;
+function logical(ev){
+  var b = cvs.getBoundingClientRect();
+  return { x:(ev.clientX - b.left)*(OW/b.width), y:(ev.clientY - b.top)*(OH/b.height) };
+}
+function handleAt(pt){
+  if(P.tab !== "orbit") return null;
+  var v = view(), a = toXY(O.r1, PHI0, v), b = toXY(O.r2, PHI0 + 0.5*O.dPhi, v);
+  if(Math.hypot(pt.x - a[0], pt.y - a[1]) < 16) return "r1";
+  if(Math.hypot(pt.x - b[0], pt.y - b[1]) < 16) return "r2";
+  return null;
+}
+
+function init(){
+  try { REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ REDUCED = false; }
+  cvs = document.getElementById("c"); ctx = fit(cvs, OW, OH);
+  trail = document.createElement("canvas"); ttx = fit(trail, OW, OH);
+
+  var sl1 = document.getElementById("r1"), sl2 = document.getElementById("r2"), sp = document.getElementById("sp");
+  sl1.value = String(rToSl(P.r1, R1MIN, R1MAX)); sl2.value = String(rToSl(P.r2, R1MIN, R2MAX));
+  sp.value = String(rToSl(P.cps, SPMIN, SPMAX));
+
+  function fromSliders(which){
+    var r1 = slToR(+sl1.value, R1MIN, R1MAX), r2 = slToR(+sl2.value, R1MIN, R2MAX);
+    if(which === "r1" && r2 < r1) r2 = r1;
+    if(which === "r2" && r2 < r1) r2 = r1;
+    setOrbit(r1, r2); readouts(); draw();
+  }
+  sl1.addEventListener("input", function(){ fromSliders("r1"); });
+  sl2.addEventListener("input", function(){ fromSliders("r2"); });
+  sp.addEventListener("input", function(){ P.cps = slToR(+sp.value, SPMIN, SPMAX); readouts(); });
+  document.getElementById("newt").addEventListener("change", function(e){ P.newt = e.target.checked; draw(); });
+  document.getElementById("go").addEventListener("click", function(){ if(S.running) pause(); else play(); });
+  document.getElementById("rs").addEventListener("click", function(){ resetSim(0); readouts(); draw(); });
+
+  function setTab(t){
+    P.tab = t;
+    document.getElementById("tabO").classList.toggle("active", t === "orbit");
+    document.getElementById("tabC").classList.toggle("active", t === "curve");
+    document.getElementById("tabO").setAttribute("aria-selected", t === "orbit");
+    document.getElementById("tabC").setAttribute("aria-selected", t === "curve");
+    document.getElementById("noteO").classList.toggle("hidden", t !== "orbit");
+    document.getElementById("noteC").classList.toggle("hidden", t !== "curve");
+    draw();
+  }
+  document.getElementById("tabO").addEventListener("click", function(){ setTab("orbit"); });
+  document.getElementById("tabC").addEventListener("click", function(){ setTab("curve"); });
+
+  function reveal(g){
+    P.revealed = true; P.guess = g;
+    document.getElementById("ask").classList.add("hidden");
+    document.getElementById("res").classList.remove("hidden");
+    readouts(); draw();
+  }
+  document.getElementById("pBig").addEventListener("click", function(){ reveal("bigger"); });
+  document.getElementById("pSmall").addEventListener("click", function(){ reveal("smaller"); });
+  document.getElementById("hide").addEventListener("click", function(ev){
+    ev.preventDefault();
+    P.revealed = false; P.guess = null;
+    document.getElementById("ask").classList.remove("hidden");
+    document.getElementById("res").classList.add("hidden");
+    readouts(); draw();
+  });
+
+  cvs.addEventListener("pointermove", function(ev){
+    var pt = logical(ev);
+    if(dragging){
+      var v = dragView, rr = Math.hypot(pt.x - v.cx, pt.y - v.cy)/v.sc;
+      if(dragging === "r1") setOrbit(Math.min(rr, P.r2), P.r2);
+      else setOrbit(P.r1, Math.max(rr, P.r1));
+      extendTrail(0, NCH);                     // preview one radial cycle while dragging
+      readouts(); draw();
+      return;
+    }
+    cvs.style.cursor = handleAt(pt) ? "grab" : "default";
+  });
+  cvs.addEventListener("pointerdown", function(ev){
+    var h = handleAt(logical(ev));
+    if(!h) return;
+    dragging = h; dragView = view(); wasRunning = S.running; pause();
+    cvs.style.cursor = "grabbing";
+    if(cvs.setPointerCapture) cvs.setPointerCapture(ev.pointerId);
+  });
+  function endDrag(ev){
+    if(!dragging) return;
+    dragging = null; dragView = null; cvs.style.cursor = "grab";
+    if(cvs.releasePointerCapture) try { cvs.releasePointerCapture(ev.pointerId); } catch(e){}
+    resetSim(0); readouts(); draw();          // redraw the trail at the new scale
+    if(wasRunning) play();
+  }
+  cvs.addEventListener("pointerup", endDrag);
+  cvs.addEventListener("pointercancel", endDrag);
+
+  sysTable();
+  setOrbit(P.r1, P.r2);
+  resetSim(3.3);                  // open with a few loops already traced
+  readouts(); draw();
+  if(!REDUCED) play(); else pause();
+
+  // hooks for automated checks
+  window.__demo = { P:P, S:S, get O(){ return O; }, SYS:SYS, roots:roots, orbit:orbit, ellK:ellK,
+    setOrbit:function(a, b){ setOrbit(a, b); readouts(); draw(); }, setTab:setTab, reveal:reveal,
+    advance:function(c){ advanceTo(S.t + c*O.Tr); readouts(); draw(); }, pause:pause, play:play,
+    r2Min:r2Min, draw:draw };
+}
+
+if(typeof document !== "undefined" && document.getElementById) init();
+})();
+</script>
+</body>
+</html>
