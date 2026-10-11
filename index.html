@@ -311,6 +311,15 @@ const DEMOS = [
     path:'lecture-20-tidal-forces/index.html',
     blurb:'Drop a dust ball or rubble pile onto the Earth, the Sun, a white dwarf or a neutron star, predict how tides will deform it, and watch the stretch along the fall line and squeeze across it, with the tidal tensor read out live.'
   },
+  {
+    id:'kerr-explorer',
+    title:'Kerr Orbit Explorer',
+    tag:'Feature · Kerr',
+    pill:'K',
+    accent:'#e8edf6',
+    path:'kerr-orbit-explorer/index.html',
+    blurb:'A 3D coordinate map of a spinning black hole. Drag a/M from 0 to 0.999, launch timelike probes and light, and step through ten guided scenes: zoom-whirls, Lense–Thirring precession, the photon shell, plunging in two charts, and the Penrose process.'
+  },
 ];
 
 const $=id=>document.getElementById(id);
@@ -328,7 +337,7 @@ $('grid').innerHTML = DEMOS.map(d=>`
 
 /* build bar pills */
 pills.innerHTML = DEMOS.map(d=>`
-  <button class="pill" data-id="${d.id}" title="${d.tag}: ${d.title}"><span class="pdot" style="background:${d.accent}"></span>${d.tag.replace('Lecture ','')}</button>`).join('');
+  <button class="pill" data-id="${d.id}" title="${d.tag}: ${d.title}"><span class="pdot" style="background:${d.accent}"></span>${d.pill||d.tag.replace('Lecture ','')}</button>`).join('');
 
 document.querySelectorAll('.card,.pill').forEach(el=>
   el.addEventListener('click',()=>{ location.hash = el.dataset.id; }));
