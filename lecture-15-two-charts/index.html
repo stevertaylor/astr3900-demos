@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 15: One Spacetime, Two Charts — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px;margin:0 0 10px}
+.tab{flex:1;padding:7px 8px;white-space:nowrap;font:600 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses the LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/800}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.55;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model sup,.model sub,table.read sup,table.read sub,.verdict sub,.verdict sup,.ask sub{line-height:0}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12.5px;color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=checkbox]{accent-color:var(--blue);margin:0 5px 0 0;vertical-align:-2px}
+.checks{margin:0 2px;display:flex;align-items:baseline}
+.hint{margin-left:auto;font-size:12.5px;color:var(--grey)}
+.check{display:inline-block;font-size:12.5px;color:var(--mute2);margin:0 14px 0 0}
+.fine{font-size:12px;color:var(--grey);margin:2px 0 0;line-height:1.45}
+
+.btns{display:flex;gap:8px;margin-top:9px}
+.btn{flex:1;padding:8px 10px;font-size:13px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+table.read td{padding:1px 0;vertical-align:baseline}
+table.read td.gap{width:14px}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.5;margin:8px 0 0}
+.verdict{font-size:12.5px;line-height:1.5;margin:8px 0 0;padding-top:8px;
+         border-top:1px solid var(--dim);color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.hidden{display:none}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 15</div>
+    <h1>One Spacetime, Two Charts</h1>
+    <div class="sub">Radial light rays, light cones and a falling probe near a black hole, drawn exactly in Eddington&ndash;Finkelstein or Schwarzschild coordinates, or anywhere in between.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="chkCones" checked>light-cone lattice</label>
+        <label class="check"><input type="checkbox" id="chkRays" checked>background light rays</label>
+        <span class="hint">Drag the brown event; drag empty space to scroll in time.</span>
+      </div>
+      <div class="model">
+        <b>Model:</b> exact radial light rays and radial free fall in the Schwarzschild geometry, <i>G</i> = <i>c</i> = 1,
+        <i>M</i> = 1 (so <i>r</i> is in units of <i>M</i>). Every event is stored by (<i>r</i>, <i>v</i>) with
+        <i>v</i> = <i>t</i> + <i>r</i> + 2<i>M</i>&thinsp;ln|<i>r</i>/2<i>M</i> &minus; 1|, which no chart change alters. The vertical axis is
+        <i>T</i> = <i>t</i> + &lambda;&middot;2<i>M</i>&thinsp;ln|<i>r</i>/2<i>M</i> &minus; 1|, drawn at the same scale as <i>r</i>:
+        &lambda; = 1 is the Eddington&ndash;Finkelstein <i>t&#771;</i> = <i>v</i> &minus; <i>r</i>, &lambda; = 0 is Schwarzschild <i>t</i>.
+        Light is advanced in <i>t&#771;</i> and the probe in its own proper time <i>&tau;</i>, each at 3<i>M</i> per second of animation.
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <div class="tabs" role="tablist" aria-label="Chart">
+          <button class="tab active" id="tabEF" role="tab" aria-selected="true" style="flex:1.45">Eddington&ndash;Finkelstein</button>
+          <button class="tab" id="tabSC" role="tab" aria-selected="false">Schwarzschild</button>
+        </div>
+        <label for="lam">In between: &lambda; <span class="v" id="lamV">1.00</span></label>
+        <input type="range" id="lam" min="0" max="1" step="0.01" value="1">
+      </div>
+
+      <div class="panel">
+        <h2>A flash of light</h2>
+        <label for="re">Event at radius <i>r</i> <span class="v" id="reV">4.50 M</span></label>
+        <input type="range" id="re" min="0.2" max="7.8" step="0.01" value="4.5">
+        <div class="fine" id="evRead">&nbsp;</div>
+        <p class="ask">Does the outward flash reach the observer at <i>r</i> = 8<i>M</i>?</p>
+        <div class="btns">
+          <button class="btn primary" id="send">Send light</button>
+          <button class="btn" id="pause">Play</button>
+        </div>
+        <div class="verdict" id="fv"><b>?</b> Predict first, then press Send light. The answer appears when the light has finished moving.</div>
+      </div>
+
+      <div class="panel">
+        <h2>A falling probe</h2>
+        <label for="r0">Released from rest at <i>r</i><sub>0</sub> <span class="v" id="r0V">6.00 M</span></label>
+        <input type="range" id="r0" min="2.5" max="9.5" step="0.05" value="6">
+        <p class="ask">What is Schwarzschild <i>t</i> when it reaches <i>r</i> = 2<i>M</i>?</p>
+        <div class="btns">
+          <button class="btn primary" id="drop">Drop probe</button>
+          <button class="btn" id="reset">Reset</button>
+        </div>
+        <table class="read">
+          <tr><td>proper time <i>&tau;</i></td><td class="n" id="pTau">&ndash;</td><td class="gap"></td><td>radius <i>r</i></td><td class="n" id="pR">&ndash;</td></tr>
+          <tr><td>Schwarzschild <i>t</i></td><td class="n" id="pT">&ndash;</td><td class="gap"></td><td>EF <i>t&#771;</i></td><td class="n" id="pTt">&ndash;</td></tr>
+          <tr><td colspan="4">check |<u><i>U</i></u>&middot;<u><i>U</i></u> + 1| <span class="gloss">(should be 0)</span></td><td class="n" id="pUU">&ndash;</td></tr>
+        </table>
+        <div class="verdict" id="pv"><b>?</b> Predict first. The answer appears when the probe reaches <i>r</i> = 2<i>M</i>, with its proper time there.</div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 15</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// =====================================================================================
+// Physics (G = c = M = 1).  Events are stored by (r, v); charts only relabel them.
+// =====================================================================================
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var R_OBS = 8;                 // static observer
+var RATE = 3;                  // M of t~ (light) or tau (probe) per second of animation
+
+function Lg(r){ return Math.log(Math.abs(r/2 - 1)); }              // ln|r/2M - 1|
+function rstar(r){ return r + 2*Lg(r); }                            // tortoise coordinate
+function isEF(lam){ return lam >= 0.9999; }
+// chart time T = t + lam 2M ln|r/2M-1| = v - r - (1-lam) 2M ln|r/2M-1|
+function Tof(r, v, lam){
+  if(isEF(lam)) return v - r;
+  if(r === 2) return Infinity;
+  return v - r - (1 - lam)*2*Lg(r);
+}
+function vOf(r, T, lam){ return isEF(lam) ? T + r : T + r + (1 - lam)*2*Lg(r); }
+function tSchw(r, v){ return r === 2 ? Infinity : v - rstar(r); }
+// future-directed radial null vectors (dr, dv): ingoing (v = const) and the second family
+function nullDirs(r){
+  var a = [-1, 0], b;
+  if(Math.abs(r - 2) < 1e-12) b = [0, 1];
+  else if(r > 2) b = [1, 2/(1 - 2/r)];
+  else b = [-1, -2/(1 - 2/r)];
+  return [a, b];
+}
+function dTof(r, dr, dv, lam){ return isEF(lam) ? dv - dr : dv - dr - (1 - lam)*2*dr/(r - 2); }
+
+// radius samples from a down/up to b, dense near r = 2M when the interval contains it
+function sampleR(a, b, n){
+  var pts = [], i, lo = Math.min(a, b), hi = Math.max(a, b);
+  n = n || 500;
+  for(i = 0; i <= n; i++) pts.push(a + (b - a)*i/n);
+  if(lo < 2 && hi > 2){
+    for(i = 0; i <= 160; i++){
+      var d = Math.pow(10, -10 + 10*i/160)*0.6;
+      if(2 + d < hi) pts.push(2 + d);
+      if(2 - d > lo) pts.push(2 - d);
+    }
+  }
+  pts.sort(function(x, y){ return a > b ? y - x : x - y; });
+  var out = [pts[0]];
+  for(i = 1; i < pts.length; i++) if(Math.abs(pts[i] - out[out.length - 1]) > 1e-13) out.push(pts[i]);
+  return out;
+}
+
+// ---- a flash from the event (re, ve): two radial rays, sampled in r, clocked by t~ = v - r ----
+function makeFlash(re, ve){
+  var F = { re: re, ve: ve, tte: ve - re, rays: [] }, i, r, v;
+  // ray 1: ingoing, v = ve, r from re to 0
+  var r1 = sampleR(re, 0, 700), R1 = [], V1 = [], TT1 = [];
+  for(i = 0; i < r1.length; i++){ R1.push(r1[i]); V1.push(ve); TT1.push(ve - r1[i]); }
+  F.rays.push({ kind: "in", r: R1, v: V1, tt: TT1 });
+  // ray 2: the other family, u = v - 2 r* = const
+  var R2 = [], V2 = [], TT2 = [], N = 700;
+  if(re > 2 + 1e-9){
+    var lr0 = Math.log(re - 2), lr1 = Math.log(R_OBS - 2);
+    for(i = 0; i <= N; i++){
+      r = (i === 0) ? re : 2 + Math.exp(lr0 + (lr1 - lr0)*i/N);
+      if(re > R_OBS) r = re + (R_OBS - re)*i/N;
+      v = ve + 2*(rstar(r) - rstar(re));
+      R2.push(r); V2.push(v); TT2.push(v - r);
+    }
+  } else if(re < 2 - 1e-9){
+    var l0 = Math.log(2 - re), l1 = Math.log(2);
+    for(i = 0; i <= N; i++){
+      r = (i === 0) ? re : (i === N ? 0 : 2 - Math.exp(l0 + (l1 - l0)*i/N));
+      v = ve + 2*(rstar(r) - rstar(re));
+      R2.push(r); V2.push(v); TT2.push(v - r);
+    }
+  } else {
+    for(i = 0; i <= N; i++){ var tt = F.tte + 7*i/N; R2.push(2); V2.push(tt + 2); TT2.push(tt); }
+  }
+  F.rays.push({ kind: "out", r: R2, v: V2, tt: TT2 });
+  F.mode = re > 2 + 1e-9 ? "out" : (re < 2 - 1e-9 ? "in" : "on");
+  F.ttEnd = Math.max(TT1[TT1.length - 1], TT2[TT2.length - 1]);
+  F.tt = F.tte; F.done = false; F.revealed = false;
+  return F;
+}
+// position of a ray front at t~ (linear interpolation along the samples)
+function rayAt(ray, tt){
+  var n = ray.tt.length;
+  if(tt <= ray.tt[0]) return { i: 0, r: ray.r[0], v: ray.v[0], end: false };
+  if(tt >= ray.tt[n - 1]) return { i: n - 1, r: ray.r[n - 1], v: ray.v[n - 1], end: true };
+  var lo = 0, hi = n - 1;
+  while(hi - lo > 1){ var m = (lo + hi) >> 1; if(ray.tt[m] <= tt) lo = m; else hi = m; }
+  var f = (tt - ray.tt[lo])/(ray.tt[hi] - ray.tt[lo]);
+  return { i: lo, r: ray.r[lo] + f*(ray.r[hi] - ray.r[lo]), v: ray.v[lo] + f*(ray.v[hi] - ray.v[lo]), end: false };
+}
+
+// ---- probe released from rest at r0: cycloid r = (r0/2)(1 + cos eta), tau = (r0/2)^(3/2)(eta + sin eta);
+//      v by quadrature of dv/dtau = 1/(e - dr/dtau), which stays finite through r = 2M ----
+function makeProbe(r0, v0){
+  var N = 6000, e = Math.sqrt(1 - 2/r0), A = Math.pow(r0/2, 1.5), k = Math.sqrt(r0/2), i;
+  var P = { r0: r0, e: e, A: A, k: k, eta: new Float64Array(N + 1), tau: new Float64Array(N + 1),
+            r: new Float64Array(N + 1), v: new Float64Array(N + 1) };
+  function f(eta){
+    if(eta >= Math.PI) return 0;
+    var rdot = -Math.tan(eta/2)/k;
+    return A*(1 + Math.cos(eta))/(e - rdot);
+  }
+  var prevF = f(0);
+  for(i = 0; i <= N; i++){
+    var s = i/N, eta = Math.PI*(1 - (1 - s)*(1 - s));
+    P.eta[i] = eta; P.tau[i] = A*(eta + Math.sin(eta)); P.r[i] = (r0/2)*(1 + Math.cos(eta));
+    if(i === 0){ P.v[i] = v0; }
+    else {
+      var fi = f(eta);
+      P.v[i] = P.v[i - 1] + 0.5*(fi + prevF)*(eta - P.eta[i - 1]);
+      prevF = fi;
+    }
+  }
+  P.r[N] = 0;
+  P.etaH = Math.acos(4/r0 - 1);
+  P.tauH = A*(P.etaH + Math.sin(P.etaH));
+  P.tauEnd = A*Math.PI;
+  P.t0 = v0 - rstar(r0);
+  P.tau0 = 0; P.tauNow = 0; P.done = false; P.crossed = false; P.lastTout = null; P.revealed = false;
+  return P;
+}
+function probeAt(P, tau){
+  var n = P.tau.length;
+  if(tau >= P.tauEnd) return { i: n - 2, eta: Math.PI, r: 0, v: P.v[n - 1] };
+  var lo = 0, hi = n - 1;
+  while(hi - lo > 1){ var m = (lo + hi) >> 1; if(P.tau[m] <= tau) lo = m; else hi = m; }
+  var fr = (tau - P.tau[lo])/(P.tau[hi] - P.tau[lo]);
+  var eta = P.eta[lo] + fr*(P.eta[hi] - P.eta[lo]);
+  return { i: lo, eta: eta, r: (P.r0/2)*(1 + Math.cos(eta)), v: P.v[lo] + fr*(P.v[hi] - P.v[lo]) };
+}
+function probeUU(P, eta){
+  if(eta >= Math.PI - 1e-9) return 0;
+  var r = (P.r0/2)*(1 + Math.cos(eta)), rdot = -Math.tan(eta/2)/P.k, vdot = 1/(P.e - rdot);
+  return -(1 - 2/r)*vdot*vdot + 2*vdot*rdot;
+}
+
+// =====================================================================================
+// State
+// =====================================================================================
+var CW = 1100, CH = 800;
+var PL = 96, PR = 1084, PT = 42, PB = 750, SC = 98;          // plot box and px per M (both axes)
+var HT = (PB - PT)/SC;                                        // visible span of T, in M
+var T_HOME = -1.0;
+var S = { lam: 1, Tb: T_HOME, ev: null, flash: null, probe: null, playing: false, follow: true,
+          showCones: true, showRays: true, track: null };
+S.ev = { r: 4.5, v: vOf(4.5, T_HOME + 1.2, 1) };
+
+// =====================================================================================
+// Canvas (DPR-aware; all drawing in logical coordinates)
+// =====================================================================================
+var cv = document.getElementById("c"), ctx = cv.getContext("2d");
+function setupCanvas(){
+  var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  cv.width = Math.round(CW*dpr); cv.height = Math.round(CH*dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+setupCanvas();
+
+var COL = { ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B",
+            dim:"#C4CBD8", panel:"#EDF1F6", mute2:"#33465C", shade:"#EEF1F4" };
+var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+var BGL = "rgba(255,255,255,0.92)";
+var FQ = "<b>?</b> Predict first, then press Send light. The answer appears when the light has finished moving.";
+var PQ = "<b>?</b> Predict first. The answer appears when the probe reaches <i>r</i> = 2<i>M</i>, with its proper time there.";
+var LABELS = [], PATHPTS = [];
+
+function X(r){ return PL + r*SC; }
+function Y(T){ return PB - (T - S.Tb)*SC; }
+
+function mathLabel(segs, px, py, size, color, align, bg, tag){
+  var i, w = 0, parts = [];
+  for(i = 0; i < segs.length; i++){
+    var s = segs[i][0], k = segs[i][1], small = /sub|sup/.test(k), fs = small ? 0.68*size : size;
+    var ital = (k === "i" || k === "sub" || k === "sup");
+    var font = (ital ? "italic " : "") + (k === "b" ? "600 " : "") + fs + "px " + (ital ? "Georgia,serif" : SANS);
+    ctx.font = font;
+    var mw = ctx.measureText(s).width;
+    var dy = k.indexOf("sub") >= 0 ? 0.28*size : (k.indexOf("sup") >= 0 ? -0.42*size : 0);
+    parts.push([s, font, mw, dy, ital && !small]);
+    w += mw + (ital && !small ? 0.04*size : 0);
+  }
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.12*size, tag: tag || "" };
+  if(bg){ ctx.fillStyle = bg; ctx.fillRect(box.x, box.y, box.w, box.h); }
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic";
+  var cx = x0;
+  for(i = 0; i < parts.length; i++){
+    ctx.font = parts[i][1]; ctx.fillText(parts[i][0], cx, py + parts[i][3]);
+    cx += parts[i][2] + (parts[i][4] ? 0.04*size : 0);
+  }
+  LABELS.push(box);
+  return box;
+}
+// italic t with a drawn tilde (no combining characters on canvas)
+function tTilde(px, py, size, color, align, bg){
+  var b = mathLabel([["t", "i"]], px, py, size, color, align, bg, "ttilde");
+  var cx = b.x + b.w/2 + 0.06*size, cy = py - 0.86*size, w = 0.42*size;
+  ctx.strokeStyle = color; ctx.lineWidth = Math.max(1.3, size/14); ctx.beginPath();
+  for(var i = 0; i <= 12; i++){
+    var x = cx - w/2 + w*i/12, y = cy - 0.07*size*Math.sin(2*Math.PI*i/12);
+    if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  b.y -= 0.18*size; b.h += 0.18*size;
+  return b;
+}
+
+function recordLine(xs, ys, step){
+  for(var i = 0; i < xs.length; i += (step || 1)){
+    if(xs[i] >= PL - 2 && xs[i] <= PR + 2 && ys[i] >= PT - 2 && ys[i] <= PB + 2) PATHPTS.push([xs[i], ys[i]]);
+  }
+}
+
+// polyline of (r, v) samples in the current chart: breaks across r = 2M where T is singular
+function strokeRV(rs, vs, n, color, lw, dash, alpha, record, extra){
+  var lam = S.lam, Tmax = S.Tb + 4*HT, Tmin = S.Tb - 3*HT, i, started = false, prevSide = null;
+  var xs = [], ys = [];
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash || []); ctx.globalAlpha = alpha || 1;
+  ctx.beginPath();
+  function add(r, v){
+    var side = r > 2 ? 1 : (r < 2 ? -1 : 0);
+    var T = Tof(r, v, lam);
+    if(!isEF(lam) && prevSide !== null && side !== prevSide){ started = false; }
+    prevSide = side;
+    if(!isFinite(T)){ started = false; return; }
+    T = Math.max(Tmin, Math.min(Tmax, T));
+    var x = X(r), y = Y(T);
+    if(!started){ ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    xs.push(x); ys.push(y);
+  }
+  for(i = 0; i < n; i++) add(rs[i], vs[i]);
+  if(extra) add(extra[0], extra[1]);
+  ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  if(record) recordLine(xs, ys, 2);
+}
+
+// sector light cone at (r, T) from the two future null directions
+function drawCone(r, T, Lc, stroke, fill, record){
+  if(!isEF(S.lam) && Math.abs(r - 2) < 1e-9) return null;
+  var d = nullDirs(r), p = [X(r), Y(T)], u = [], j;
+  for(j = 0; j < 2; j++){
+    var dr = d[j][0], dv = d[j][1];
+    var sx = dr*SC, sy = -dTof(r, dr, dv, S.lam)*SC, nn = Math.hypot(sx, sy);
+    u.push([sx/nn, sy/nn]);
+  }
+  var a0 = Math.atan2(u[0][1], u[0][0]), a1 = Math.atan2(u[1][1], u[1][0]);
+  var mid = [u[0][0] + u[1][0], u[0][1] + u[1][1]];
+  var am = Math.atan2(mid[1], mid[0]);
+  // sweep from a0 to a1 through am
+  function norm(a){ while(a < 0) a += 2*Math.PI; while(a >= 2*Math.PI) a -= 2*Math.PI; return a; }
+  var ccw = norm(am - a0) > norm(a1 - a0);       // true if going a0 -> a1 positively misses am
+  var k;
+  for(k = 0; k < 2; k++){
+    var s0 = k === 0 ? a0 : a0 + Math.PI, s1 = k === 0 ? a1 : a1 + Math.PI;
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]);
+    ctx.arc(p[0], p[1], Lc, s0, s1, ccw);
+    ctx.closePath();
+    ctx.globalAlpha = k === 0 ? 0.85 : 0.4; ctx.fillStyle = fill; ctx.fill(); ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.beginPath();
+  for(j = 0; j < 2; j++){
+    ctx.moveTo(p[0] - Lc*u[j][0], p[1] - Lc*u[j][1]); ctx.lineTo(p[0] + Lc*u[j][0], p[1] + Lc*u[j][1]);
+  }
+  ctx.stroke();
+  if(record){
+    for(j = 0; j < 2; j++) for(k = -6; k <= 6; k++) PATHPTS.push([p[0] + Lc*u[j][0]*k/6, p[1] + Lc*u[j][1]*k/6]);
+  }
+  return u;
+}
+
+function arrowHead(px, py, ang, color, s){
+  s = s || 9;
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(px + s*Math.cos(ang), py - s*Math.sin(ang));
+  ctx.lineTo(px + s*Math.cos(ang + 2.6), py - s*Math.sin(ang + 2.6));
+  ctx.lineTo(px + s*Math.cos(ang - 2.6), py - s*Math.sin(ang - 2.6));
+  ctx.closePath(); ctx.fill();
+}
+
+function fmtM(x, d){
+  if(!isFinite(x)) return "∞";
+  var a = Math.abs(x);
+  var s = x.toFixed(a >= 1000 ? 0 : (a >= 100 ? 1 : (d === undefined ? 2 : d)));
+  return s.replace("-", "−");
+}
+
+// ---- off-chart marker indicator (top/bottom edge) ----
+function edgeMarker(r, T, color, name){
+  var x = X(r), up = !(T < S.Tb), y = up ? PT + 8 : PB - 8;
+  arrowHead(x, y, up ? Math.PI/2 : -Math.PI/2, color, 10);
+  var right = x > PR - 230, tx = x + (right ? -14 : 14), ty = up ? PT + 30 : PB - 24;
+  var segs = [[name + (up ? " (above)" : " (below)"), "n"]];
+  if(!isFinite(T)) segs = [[name + " at ", "n"], [S.lam <= 0.0001 ? "t" : "T", "i"], [" = ∞", "n"]];
+  mathLabel(segs, tx, ty, 17, color, right ? "right" : "left", BGL, "edge");
+}
+
+// =====================================================================================
+// Drawing
+// =====================================================================================
+function chartSymbol(px, py, size, color, align){
+  if(isEF(S.lam)) return tTilde(px, py, size, color, align, null);
+  if(S.lam <= 0.0001) return mathLabel([["t", "i"]], px, py, size, color, align, null, "axis");
+  return mathLabel([["T", "i"]], px, py, size, color, align, null, "axis");
+}
+
+function drawBackgroundRays(){
+  var lam = S.lam, Tb = S.Tb, step = 1.0, k, i;
+  var rin = sampleR(10.2, 0, 300);
+  ctx.save();
+  // family 1: v = const
+  var v0 = Math.floor((Tb - 24)/step)*step;
+  for(var v = v0; v < Tb + HT + 11; v += step){
+    var vs = []; for(i = 0; i < rin.length; i++) vs.push(v);
+    strokeRV(rin, vs, rin.length, COL.blue, 1.1, [5, 5], 0.32, false);
+  }
+  // family 2: u = v - 2 r* = const, outside and inside branches
+  var rout = sampleR(2, 10.2, 300).filter(function(x){ return x > 2; });
+  var rins = sampleR(0, 2, 300).filter(function(x){ return x < 2; });
+  var uLo = Math.floor((Tb - 10 - 2*(1 + lam)*Math.log(4) - 1)/step)*step;
+  for(var u = uLo; u < Tb + HT + 6; u += step){
+    var vo = [], vi = [];
+    for(i = 0; i < rout.length; i++) vo.push(u + 2*rstar(rout[i]));
+    strokeRV(rout, vo, rout.length, COL.brown, 1.1, [5, 5], 0.32, false);
+    if(u >= Tb - 1){
+      for(i = 0; i < rins.length; i++) vi.push(u + 2*rstar(rins[i]));
+      strokeRV(rins, vi, rins.length, COL.brown, 1.1, [5, 5], 0.32, false);
+    }
+  }
+  ctx.restore();
+}
+
+function drawLattice(){
+  var rs = [0.6, 1.35, 2.0, 3.1, 4.6, 6.3, 9.3], c, k;
+  for(c = 0; c < rs.length; c++){
+    var r = rs[c];
+    if(!isEF(S.lam) && r === 2.0) continue;
+    var off = (c % 2) ? 1.25 : 0, k0 = Math.floor((S.Tb - off)/2.5) - 1;
+    for(k = k0; k < k0 + 6; k++){
+      var T = 2.5*k + off;
+      if(Y(T) < PT + 28 || Y(T) > PB - 28) continue;
+      drawCone(r, T, 24, "rgba(21,36,60,0.6)", "#B9CCE2", false);
+    }
+  }
+}
+
+function drawFlash(F){
+  var j;
+  for(j = 0; j < 2; j++){
+    var ray = F.rays[j], col = j === 0 ? COL.blue : COL.brown;
+    var pos = rayAt(ray, F.tt);
+    var n = Math.min(ray.r.length, pos.i + 1);
+    strokeRV(ray.r, ray.v, n, col, 3.0, [], 1, true, [pos.r, pos.v]);
+    // front
+    var T = Tof(pos.r, pos.v, S.lam);
+    if(isFinite(T) && Y(T) >= PT && Y(T) <= PB){
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X(pos.r), Y(T), 6, 0, 2*Math.PI); ctx.fill();
+    } else if(!pos.end || (pos.end && j === 1 && F.mode === "out")){
+      if(!(pos.r === 0)) edgeMarker(pos.r, T, col, j === 0 ? "inward flash" : "outward flash");
+    }
+  }
+}
+
+function drawProbe(P){
+  var pos = probeAt(P, P.tauNow), n = pos.i + 1;
+  strokeRV(P.r, P.v, n, COL.blued, 3.2, [], 1, true, [pos.r, pos.v]);
+  // proper-time ticks, every 1 M of tau
+  for(var tk = 1; tk <= P.tauNow + 1e-9 && tk < P.tauEnd; tk++){
+    var q = probeAt(P, tk), q2 = probeAt(P, Math.min(P.tauEnd - 1e-6, tk + 0.02));
+    var T1 = Tof(q.r, q.v, S.lam), T2 = Tof(q2.r, q2.v, S.lam);
+    if(!isFinite(T1) || !isFinite(T2)) continue;
+    var x1 = X(q.r), y1 = Y(T1), dx = X(q2.r) - x1, dy = Y(T2) - y1, nn = Math.hypot(dx, dy);
+    if(nn < 1e-9 || y1 < PT || y1 > PB) continue;
+    var nx = -dy/nn*8, ny = dx/nn*8;
+    ctx.strokeStyle = COL.blued; ctx.lineWidth = 2.2; ctx.beginPath();
+    ctx.moveTo(x1 - nx, y1 - ny); ctx.lineTo(x1 + nx, y1 + ny); ctx.stroke();
+  }
+  var T = Tof(pos.r, pos.v, S.lam);
+  if(pos.r > 0 && isFinite(T) && Y(T) >= PT && Y(T) <= PB){
+    if(pos.r > 0.05) drawCone(pos.r, T, 30, COL.blued, "#BBD3EA", true);
+    ctx.fillStyle = COL.blued; ctx.beginPath(); ctx.arc(X(pos.r), Y(T), 6.5, 0, 2*Math.PI); ctx.fill();
+  } else if(pos.r > 0){
+    edgeMarker(pos.r, T, COL.blued, "probe");
+  }
+}
+
+function placeLabel(segs, x, y, color, cands){
+  // first candidate box that avoids the main curves and other labels
+  var i;
+  for(i = 0; i < cands.length; i++){
+    var c = cands[i], test = measureSegs(segs, 18);
+    var x0 = c[2] === "right" ? x + c[0] - test : (c[2] === "center" ? x + c[0] - test/2 : x + c[0]);
+    var bx = { x: x0 - 3, y: y + c[1] - 15, w: test + 6, h: 20 };
+    if(bx.x < PL + 2 || bx.x + bx.w > PR - 2 || bx.y < PT || bx.y + bx.h > PB) continue;
+    if(!hitsPath(bx) && !hitsLabels(bx)) return mathLabel(segs, x + c[0], y + c[1], 18, color, c[2], BGL, "placed");
+  }
+  return null;
+}
+function measureSegs(segs, size){
+  var w = 0;
+  for(var i = 0; i < segs.length; i++){
+    var ital = segs[i][1] === "i";
+    ctx.font = (ital ? "italic " : "") + size + "px " + (ital ? "Georgia,serif" : SANS);
+    w += ctx.measureText(segs[i][0]).width + (ital ? 0.04*size : 0);
+  }
+  return w;
+}
+function hitsPath(bx){
+  for(var i = 0; i < PATHPTS.length; i++){
+    var p = PATHPTS[i];
+    if(p[0] > bx.x - 2 && p[0] < bx.x + bx.w + 2 && p[1] > bx.y - 2 && p[1] < bx.y + bx.h + 2) return true;
+  }
+  return false;
+}
+function hitsLabels(bx){
+  for(var i = 0; i < LABELS.length; i++){
+    var a = LABELS[i];
+    if(a.x < bx.x + bx.w && bx.x < a.x + a.w && a.y < bx.y + bx.h && bx.y < a.y + a.h) return true;
+  }
+  return false;
+}
+
+function drawSingularity(){
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath();
+  for(var y = PT; y <= PB; y += 2){
+    var x = PL + 4.5*Math.sin((y - PT)/7);
+    if(y === PT) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  for(var yy = PT; yy <= PB; yy += 4) PATHPTS.push([PL, yy]);
+  ctx.save(); ctx.translate(26, (PT + PB)/2); ctx.rotate(-Math.PI/2);
+  ctx.font = "600 17px " + SANS; ctx.fillStyle = COL.grey; ctx.textAlign = "center";
+  ctx.fillText("SINGULARITY", 0, 0); ctx.restore(); ctx.textAlign = "left";
+  LABELS.push({ x: 14, y: (PT + PB)/2 - 62, w: 22, h: 124, tag: "sing" });
+}
+
+function draw(){
+  LABELS = []; PATHPTS = [];
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, CW, CH);
+  // interior shading
+  ctx.fillStyle = COL.shade; ctx.fillRect(PL, PT, 2*SC, PB - PT);
+
+  ctx.save(); ctx.beginPath(); ctx.rect(PL, PT, PR - PL, PB - PT); ctx.clip();
+  if(S.showRays) drawBackgroundRays();
+  if(S.showCones) drawLattice();
+  // horizon and observer
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = isEF(S.lam) ? 3.2 : 2.2;
+  ctx.setLineDash(isEF(S.lam) ? [] : [9, 6]);
+  ctx.beginPath(); ctx.moveTo(X(2), PT); ctx.lineTo(X(2), PB); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(X(R_OBS), PT); ctx.lineTo(X(R_OBS), PB); ctx.stroke();
+  for(var yy = PT; yy <= PB; yy += 4){ PATHPTS.push([X(2), yy]); PATHPTS.push([X(R_OBS), yy]); }
+  if(S.flash) drawFlash(S.flash);
+  if(S.probe) drawProbe(S.probe);
+  // event
+  var eT = Tof(S.ev.r, S.ev.v, S.lam), evOn = isFinite(eT) && Y(eT) >= PT && Y(eT) <= PB;
+  if(evOn){
+    drawCone(S.ev.r, eT, 40, COL.brown, "#E9D9BE", true);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = COL.brown; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(X(S.ev.r), Y(eT), 9, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COL.brown; ctx.beginPath(); ctx.arc(X(S.ev.r), Y(eT), 4, 0, 2*Math.PI); ctx.fill();
+  }
+  ctx.restore();
+
+  drawSingularity();
+  // axes
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6; ctx.beginPath();
+  ctx.moveTo(PL, PB); ctx.lineTo(PR + 6, PB); ctx.stroke();
+  arrowHead(PR + 10, PB, 0, COL.ink);
+  var rt;
+  for(rt = 0; rt <= 8; rt += 2){
+    ctx.beginPath(); ctx.moveTo(X(rt), PB); ctx.lineTo(X(rt), PB + 7); ctx.stroke();
+    mathLabel(rt === 0 ? [["0", "n"]] : [[String(rt), "n"], ["M", "i"]], X(rt), PB + 29, 18, COL.grey, "center", null, "axis");
+  }
+  mathLabel([["r", "i"]], PR - 6, PB + 29, 21, COL.ink, "right", null, "axis");
+  // T ticks (every 1 M), labels on the left
+  var t0 = Math.ceil(S.Tb), tt;
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.2;
+  for(tt = t0; tt <= S.Tb + HT; tt += 1){
+    var y = Y(tt);
+    if(y < PT + 34 || y > PB - 6) continue;
+    ctx.beginPath(); ctx.moveTo(PL - 14, y); ctx.lineTo(PL - 8, y); ctx.stroke();
+    mathLabel(tt === 0 ? [["0", "n"]] : [[String(tt).replace("-", "−"), "n"], ["M", "i"]], PL - 18, y + 6, 17,
+              COL.grey, "right", null, "axis");
+  }
+  chartSymbol(PL - 18, PT + 16, 23, COL.ink, "right");
+  // labels in the top margin, above the plot
+  var hzSegs = [["r", "i"], [" = 2", "n"], ["M", "i"]];
+  if(!isEF(S.lam)) hzSegs = hzSegs.concat([["  (at ", "n"], [S.lam <= 0.0001 ? "t" : "T", "i"], [" = ±∞ in this chart)", "n"]]);
+  mathLabel(hzSegs, X(2) - 10, PT - 13, 18, COL.ink, "left", null, "hz");
+  mathLabel([["observer at ", "n"], ["r", "i"], [" = 8", "n"], ["M", "i"]], X(R_OBS) + 10, PT - 13, 18, COL.grey, "center", null, "obs");
+  if(evOn){
+    placeLabel([["event", "n"]], X(S.ev.r), Y(eT), COL.brown,
+               [[48, -22, "left"], [-48, -22, "right"], [48, 34, "left"], [-48, 34, "right"], [0, -52, "center"], [0, 66, "center"]]);
+  } else {
+    edgeMarker(S.ev.r, eT, COL.brown, "event");
+  }
+  if(S.probe){
+    var pp = probeAt(S.probe, S.probe.tauNow), pT = Tof(pp.r, pp.v, S.lam);
+    if(pp.r > 0 && isFinite(pT) && Y(pT) >= PT && Y(pT) <= PB){
+      placeLabel([["probe", "n"]], X(pp.r), Y(pT), COL.blued,
+                 [[38, 6, "left"], [-38, 6, "right"], [38, -24, "left"], [-38, -24, "right"], [38, 32, "left"], [-38, 32, "right"]]);
+    }
+  }
+}
+
+// =====================================================================================
+// UI
+// =====================================================================================
+var $ = function(id){ return document.getElementById(id); };
+var lamS = $("lam"), reS = $("re"), r0S = $("r0");
+
+function chartName(){
+  return isEF(S.lam) ? "Eddington–Finkelstein" : (S.lam <= 0.0001 ? "Schwarzschild" : "in between");
+}
+function setLam(l){
+  S.lam = Math.max(0, Math.min(1, l));
+  lamS.value = S.lam; $("lamV").textContent = S.lam.toFixed(2);
+  $("tabEF").classList.toggle("active", isEF(S.lam)); $("tabEF").setAttribute("aria-selected", isEF(S.lam));
+  $("tabSC").classList.toggle("active", S.lam <= 0.0001); $("tabSC").setAttribute("aria-selected", S.lam <= 0.0001);
+  updateRead(); draw();
+}
+function updateRead(){
+  var e = S.ev, T = Tof(e.r, e.v, S.lam), where = e.r > 2 ? "outside" : (e.r < 2 ? "inside" : "on");
+  $("reV").textContent = e.r.toFixed(2) + " M";
+  $("evRead").innerHTML = "Event " + where + " the horizon: <i>v</i> = " + fmtM(e.v) + "<i>M</i>, " +
+    (isEF(S.lam) ? "<i>t&#771;</i>" : (S.lam <= 0.0001 ? "<i>t</i>" : "<i>T</i>")) +
+    " = " + (isFinite(T) ? fmtM(T) + "<i>M</i>" : "&infin;") + " in this chart.";
+  var P = S.probe;
+  if(P){
+    var p = probeAt(P, P.tauNow);
+    $("pTau").textContent = P.tauNow.toFixed(2) + " M";
+    $("pR").textContent = p.r.toFixed(3) + " M";
+    var ts = p.r === 2 ? Infinity : tSchw(p.r, p.v);
+    $("pT").textContent = p.r <= 0 ? "–" : (isFinite(ts) ? fmtM(ts) + " M" : "∞");
+    $("pTt").textContent = fmtM(p.v - p.r) + " M";
+    $("pUU").textContent = p.r > 1e-6 ? Math.abs(probeUU(P, p.eta) + 1).toExponential(1) : "–";
+  } else {
+    ["pTau", "pR", "pT", "pTt", "pUU"].forEach(function(id){ $(id).textContent = "–"; });
+  }
+  $("pause").disabled = !(anyActive());
+  $("pause").textContent = S.playing ? "Pause" : "Play";
+}
+function anyActive(){
+  return (S.flash && !S.flash.done) || (S.probe && !S.probe.done);
+}
+
+function setEventR(r){
+  // slider: keep the Eddington-Finkelstein time of the event fixed
+  var tt = S.ev.v - S.ev.r;
+  S.ev.r = r; S.ev.v = tt + r;
+  clearFlash();
+}
+function clearFlash(){
+  S.flash = null; $("fv").innerHTML = FQ;
+  updateRead(); draw();
+}
+
+function revealFlash(F){
+  if(F.revealed) return;
+  F.revealed = true;
+  var html;
+  if(F.mode === "out"){
+    var dt = rstar(R_OBS) - rstar(F.re), dtt = dt + 2*(Lg(R_OBS) - Lg(F.re));
+    html = "<b>Yes:</b> it reaches <i>r</i> = 8<i>M</i>. Trip time &Delta;<i>t</i> = " + dt.toFixed(2) +
+      "<i>M</i> (Schwarzschild) or &Delta;<i>t&#771;</i> = " + dtt.toFixed(2) +
+      "<i>M</i> (EF): the chart changes the numbers, not the arrival.";
+  } else if(F.mode === "in"){
+    var d1 = F.re, d2 = F.rays[1].tt[F.rays[1].tt.length - 1] - F.tte;
+    html = "<b>No:</b> inside <i>r</i> = 2<i>M</i> both flashes move to smaller <i>r</i> and end on <i>r</i> = 0 " +
+      "(after &Delta;<i>t&#771;</i> = " + d1.toFixed(2) + "<i>M</i> and " + d2.toFixed(2) + "<i>M</i>), in every chart.";
+  } else {
+    html = "<b>No:</b> the outward flash stays on <i>r</i> = 2<i>M</i> for ever. It is one of the light rays the horizon is made of.";
+  }
+  $("fv").innerHTML = html;
+}
+function revealProbe(P){
+  if(P.revealed) return;
+  P.revealed = true;
+  var last = P.lastTout !== null ? "<i>t</i> = " + P.lastTout.toFixed(1) + "<i>M</i>" : "large";
+  $("pv").innerHTML = "<b>Infinite:</b> <i>t</i> grows without bound as <i>r</i> &rarr; 2<i>M</i> (last frame outside: " +
+    last + "), but <i>&tau;</i> = " + P.tauH.toFixed(2) + "<i>M</i> at the crossing and <i>t&#771;</i> stays finite. " +
+    "<i>r</i> = 0 at <i>&tau;</i> = " + P.tauEnd.toFixed(2) + "<i>M</i>.";
+  
+}
+
+function send(){
+  S.flash = makeFlash(S.ev.r, S.ev.v);
+  $("fv").innerHTML = FQ;
+  S.follow = true; S.track = "flash";
+  if(reduced){ S.flash.tt = S.flash.ttEnd; S.flash.done = true; revealFlash(S.flash); S.playing = false; updateRead(); draw(); return; }
+  play();
+}
+function drop(){
+  var r0 = parseFloat(r0S.value);
+  var T0 = S.Tb + 0.12*HT;
+  S.probe = makeProbe(r0, vOf(r0, T0, S.lam));
+  $("pv").innerHTML = PQ;
+  S.follow = true; S.track = "probe";
+  if(reduced){ advanceProbe(S.probe, S.probe.tauEnd + 1); S.playing = false; updateRead(); draw(); return; }
+  play();
+}
+function resetAll(){
+  stop(); S.flash = null; S.probe = null; S.Tb = T_HOME; S.follow = true; S.track = null;
+  $("fv").innerHTML = FQ; $("pv").innerHTML = PQ;
+  updateRead(); draw();
+}
+
+function advanceProbe(P, dtau){
+  var before = probeAt(P, P.tauNow);
+  P.tauNow = Math.min(P.tauEnd, P.tauNow + dtau);
+  var after = probeAt(P, P.tauNow);
+  if(!P.crossed && after.r <= 2){
+    P.crossed = true;
+    if(before.r > 2) P.lastTout = tSchw(before.r, before.v);
+    revealProbe(P);
+  }
+  if(P.tauNow >= P.tauEnd) P.done = true;
+}
+
+// ---- animation loop: runs only while something moves ----
+var raf = null, last = null;
+function frame(ts){
+  if(last === null) last = ts;
+  var dt = Math.min(0.05, (ts - last)/1000); last = ts;
+  step(dt);
+  draw(); updateRead();
+  if(S.playing && anyActive()) raf = requestAnimationFrame(frame);
+  else { raf = null; last = null; S.playing = false; updateRead(); }
+}
+function step(dt){
+  var F = S.flash, P = S.probe;
+  if(F && !F.done){
+    F.tt = Math.min(F.ttEnd, F.tt + RATE*dt);
+    if(F.tt >= F.ttEnd){ F.done = true; revealFlash(F); }
+  }
+  if(P && !P.done) advanceProbe(P, RATE*dt);
+  follow(dt);
+}
+function follow(dt){
+  if(!S.follow) return;
+  var T = null;
+  if(S.track === "flash" && S.flash && S.flash.mode === "out" && !S.flash.done){
+    var p = rayAt(S.flash.rays[1], S.flash.tt); T = Tof(p.r, p.v, S.lam);
+  } else if(S.track === "probe" && S.probe && !S.probe.done){
+    var q = probeAt(S.probe, S.probe.tauNow); T = q.r > 0 ? Tof(q.r, q.v, S.lam) : null;
+  }
+  if(T === null || !isFinite(T) || Math.abs(T - S.Tb) > 200) return;
+  var target = S.Tb;
+  if(T > S.Tb + 0.74*HT) target = T - 0.74*HT;
+  else if(T < S.Tb + 0.18*HT) target = T - 0.18*HT;
+  S.Tb += (target - S.Tb)*Math.min(1, 7*dt);
+}
+function play(){
+  if(!anyActive()) return;
+  S.playing = true; updateRead();
+  if(!raf){ last = null; raf = requestAnimationFrame(frame); }
+}
+function stop(){ S.playing = false; if(raf){ cancelAnimationFrame(raf); raf = null; last = null; } updateRead(); }
+
+$("tabEF").addEventListener("click", function(){ setLam(1); });
+$("tabSC").addEventListener("click", function(){ setLam(0); });
+lamS.addEventListener("input", function(){ setLam(parseFloat(lamS.value)); });
+reS.addEventListener("input", function(){ setEventR(parseFloat(reS.value)); });
+r0S.addEventListener("input", function(){ $("r0V").textContent = parseFloat(r0S.value).toFixed(2) + " M"; });
+$("chkCones").addEventListener("change", function(){ S.showCones = this.checked; draw(); });
+$("chkRays").addEventListener("change", function(){ S.showRays = this.checked; draw(); });
+$("send").addEventListener("click", send);
+$("drop").addEventListener("click", drop);
+$("reset").addEventListener("click", resetAll);
+$("pause").addEventListener("click", function(){ if(S.playing) stop(); else play(); });
+
+// ---- direct manipulation: drag the event; drag empty space to scroll in T ----
+var drag = null;
+function toLogical(ev){
+  var b = cv.getBoundingClientRect();
+  return [(ev.clientX - b.left)*CW/b.width, (ev.clientY - b.top)*CH/b.height];
+}
+function overEvent(p){
+  var T = Tof(S.ev.r, S.ev.v, S.lam);
+  if(!isFinite(T)) return false;
+  return Math.hypot(p[0] - X(S.ev.r), p[1] - Y(T)) < 22;
+}
+cv.addEventListener("pointerdown", function(ev){
+  var p = toLogical(ev);
+  if(overEvent(p)) drag = { kind: "event" };
+  else if(p[0] > PL && p[0] < PR && p[1] > PT && p[1] < PB) drag = { kind: "pan", y: p[1], Tb: S.Tb };
+  else return;
+  cv.setPointerCapture(ev.pointerId); cv.style.cursor = "grabbing"; ev.preventDefault();
+});
+cv.addEventListener("pointermove", function(ev){
+  var p = toLogical(ev);
+  if(!drag){ cv.style.cursor = overEvent(p) ? "grab" : "default"; return; }
+  if(drag.kind === "event"){
+    var r = (p[0] - PL)/SC, T = S.Tb + (PB - p[1])/SC;
+    r = Math.max(0.2, Math.min(7.8, r));
+    T = Math.max(S.Tb + 0.02*HT, Math.min(S.Tb + 0.98*HT, T));
+    if(isEF(S.lam)){ if(Math.abs(r - 2) < 0.05) r = 2; }
+    else if(Math.abs(r - 2) < 0.03) r = r < 2 ? 1.97 : 2.03;
+    S.ev.r = r;
+    S.ev.v = vOf(S.ev.r, T, S.lam);
+    reS.value = S.ev.r;
+    clearFlash();
+  } else {
+    S.Tb = drag.Tb + (p[1] - drag.y)/SC; S.follow = false; draw(); updateRead();
+  }
+});
+function endDrag(){ drag = null; cv.style.cursor = "default"; }
+cv.addEventListener("pointerup", endDrag);
+cv.addEventListener("pointercancel", endDrag);
+
+// ---- initial state: Eddington-Finkelstein chart, a flash half-way out from r = 4.5M, paused ----
+r0S.dispatchEvent(new Event("input"));
+S.flash = makeFlash(S.ev.r, S.ev.v);
+S.flash.tt = S.flash.tte + 4.0;
+S.track = "flash";
+updateRead(); draw();
+
+// test hook (used by the build's headless checks; harmless in the page)
+window.__L15 = { S: S, setLam: setLam, draw: draw, send: send, drop: drop, resetAll: resetAll, step: step, stop: stop, updateRead: updateRead,
+                 makeFlash: makeFlash, makeProbe: makeProbe, probeAt: probeAt, probeUU: probeUU, rayAt: rayAt,
+                 Tof: Tof, vOf: vOf, rstar: rstar, revealFlash: revealFlash, setEventR: setEventR,
+                 labels: function(){ return LABELS.slice(); }, pathPts: function(){ return PATHPTS.slice(); },
+                 geom: { PL: PL, PR: PR, PT: PT, PB: PB, SC: SC, CW: CW, CH: CH } };
+})();
+</script>
+</body>
+</html>

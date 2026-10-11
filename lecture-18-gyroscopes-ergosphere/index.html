@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 18: Gyroscopes and the Ergosphere — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px;color:var(--ink)}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+.tabs{display:flex;gap:8px;margin:14px 0 0}
+.tab{background:#fff;border:1px solid var(--dim);border-radius:8px;padding:9px 14px;font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);cursor:pointer}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:14px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;aspect-ratio:760/600;display:block;touch-action:none}
+.model{font-size:12.5px;line-height:1.45;color:var(--grey);margin:8px 4px 0}
+aside{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 14px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 8px}
+label.ctl{display:block;font-size:13.5px;margin:2px 0 4px}
+label.ctl .val{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:13px;color:var(--mute2)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn{background:#fff;border:1px solid var(--blued);color:var(--blued);border-radius:8px;padding:8px 14px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.small{padding:4px 9px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:default}
+table.ro{width:100%;border-collapse:collapse;font-size:13.5px}
+table.ro td{padding:3px 0;vertical-align:baseline}
+table.ro td.v{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:13px;color:var(--mute2)}
+.prompt{font-size:13.5px;line-height:1.45;margin:0}
+.verdict{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid var(--dim);font-size:13.5px;line-height:1.45}
+.verdict b{color:var(--brown)}
+.hidden{display:none}
+.note{font-size:12.5px;color:var(--grey);line-height:1.4;margin:6px 0 0}
+i.v{font-family:Georgia,"Times New Roman",serif}
+.bar canvas{width:100%;height:auto;aspect-ratio:330/96;display:block}
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 · Lecture 18</div>
+    <h1>Gyroscopes and the Ergosphere</h1>
+    <div class="sub">Watch a gyroscope's spin precess around a black hole, then drop a particle with no angular momentum into a spinning one.</div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" id="tabGyro" role="tab">Gyroscope in orbit</button>
+    <button class="tab" id="tabKerr" role="tab">Kerr: dragged in</button>
+  </div>
+
+  <!-- ================= TAB 1 ================= -->
+  <section id="paneGyro">
+  <main>
+    <div>
+      <div class="canvasWrap"><canvas id="cg" width="760" height="600"></canvas></div>
+      <p class="model">Model: exact circular geodesic of Schwarzschild (<i class="v">G</i> = <i class="v">c</i> = 1). The spin follows the gyroscope equation, eqs. (3)–(4) in coordinate time <i class="v">t</i>, and is drawn in the gyro's own rest frame relative to its radial direction. The orbit is drawn at a fixed size. Slow motion: one orbit takes 4 s on screen.</p>
+    </div>
+    <aside>
+      <div class="panel">
+        <h2>Orbit</h2>
+        <label class="ctl" for="sR">Orbit radius <i class="v">R</i> <span class="val" id="vR">6.00 M</span></label>
+        <input type="range" id="sR" min="0" max="1000" step="1">
+        <div class="row">
+          <button class="btn small" data-r="4">4M</button>
+          <button class="btn small" data-r="6">6M</button>
+          <button class="btn small" data-r="10">10M</button>
+          <button class="btn small" data-r="50">50M</button>
+          <button class="btn small" id="bEarth">Earth (GP-B)</button>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="gPlay">Run</button>
+          <button class="btn" id="gReset">Reset</button>
+        </div>
+        <p class="note" id="gStab"></p>
+      </div>
+      <div class="panel">
+        <h2>Predict, then run</h2>
+        <p class="prompt">The spin starts pointing radially outward. After one full orbit, in which direction will it point? Commit to an answer, then press Run.</p>
+        <div class="verdict hidden" id="gVerdict"></div>
+      </div>
+      <div class="panel">
+        <h2>Readouts</h2>
+        <table class="ro">
+          <tr><td>Orbits completed</td><td class="v" id="gN">0</td></tr>
+          <tr><td>Spin turned, vs distant stars</td><td class="v" id="gAcc">—</td></tr>
+          <tr><td><i class="v">Ω′</i> / <i class="v">Ω</i> = (1 − 3<i class="v">M</i>/<i class="v">R</i>)<sup>1/2</sup></td><td class="v" id="gRatio">—</td></tr>
+          <tr><td>Per orbit, exact</td><td class="v" id="gExact">—</td></tr>
+          <tr><td>Per orbit, weak field 3π<i class="v">M</i>/<i class="v">R</i></td><td class="v" id="gWeak">—</td></tr>
+          <tr id="gYearRow" class="hidden"><td>Per year (Earth, GP-B orbit)</td><td class="v" id="gYear">—</td></tr>
+        </table>
+        <p class="note">Values appear once the first orbit is complete.</p>
+      </div>
+    </aside>
+  </main>
+  </section>
+
+  <!-- ================= TAB 2 ================= -->
+  <section id="paneKerr" class="hidden">
+  <main>
+    <div>
+      <div class="canvasWrap"><canvas id="ck" width="760" height="600"></canvas></div>
+      <p class="model">Model: equatorial Kerr geodesic with <i class="v">e</i> = 1, <i class="v">ℓ</i> = 0 (dropped from rest far away), integrated from the boxed <i class="v">dt</i>/<i class="v">dτ</i> and <i class="v">dφ</i>/<i class="v">dτ</i> in Boyer–Lindquist coordinates, with <i class="v">r</i> drawn as a radius. The clock is coordinate time <i class="v">t</i> (a far-away clock): 4<i class="v">M</i> of <i class="v">t</i> per second on screen. In these coordinates the particle never crosses <i class="v">r</i><sub>+</sub>; it ends up circling at the horizon's rate <i class="v">Ω</i><sub>H</sub>.</p>
+    </div>
+    <aside>
+      <div class="panel">
+        <h2>Black hole</h2>
+        <label class="ctl" for="sA">Spin <i class="v">a</i>/<i class="v">M</i> <span class="val" id="vA">0.90</span></label>
+        <input type="range" id="sA" min="0" max="0.999" step="0.001" value="0.9">
+        <div class="row">
+          <button class="btn primary" id="kPlay">Run</button>
+          <button class="btn" id="kReset">Reset</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Predict, then run</h2>
+        <p class="prompt">The particle has <i class="v">ℓ</i> = 0: no angular momentum at all. Does it fall straight in? Press Run.</p>
+        <div class="verdict hidden" id="kVerdict"></div>
+        <table class="ro" style="margin-top:6px">
+          <tr><td>Radius <i class="v">r</i></td><td class="v" id="kR">—</td></tr>
+          <tr><td>Swung round, <i class="v">Δφ</i></td><td class="v" id="kPhi">—</td></tr>
+          <tr><td>Far-away time <i class="v">t</i> / own time <i class="v">τ</i></td><td class="v" id="kT">—</td></tr>
+        </table>
+      </div>
+      <div class="panel bar">
+        <h2>Can the probe hover?</h2>
+        <p class="note" style="margin:0 0 6px">Drag the probe. Allowed angular velocities <i class="v">dφ</i>/<i class="v">dt</i> for an observer at fixed <i class="v">r</i>:</p>
+        <canvas id="cb" width="330" height="96"></canvas>
+        <table class="ro" style="margin-top:4px">
+          <tr><td>Probe radius</td><td class="v" id="pR">—</td></tr>
+          <tr><td><i class="v">g<sub>tt</sub></i></td><td class="v" id="pG">—</td></tr>
+          <tr><td>Hover (<i class="v">dφ</i>/<i class="v">dt</i> = 0)?</td><td class="v" id="pH">—</td></tr>
+        </table>
+      </div>
+    </aside>
+  </main>
+  </section>
+
+  <footer>
+    <span>S. Taylor · Vanderbilt University</span>
+    <span>ASTR 3900/8090 · Lecture 18</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+const C = {bg:"#FBFBF8", panel:"#EDF1F6", ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18",
+           grey:"#5A6B7B", mute2:"#33465C", dim:"#C4CBD8", erg:"#F1E6D3", hor:"#15243C"};
+const SERIF = 'italic 17px Georgia, "Times New Roman", serif';
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- canvas setup (logical size x devicePixelRatio) ----------
+function setup(cv){
+  const LW = +cv.getAttribute("width"), LH = +cv.getAttribute("height");
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  cv.width = Math.round(LW * dpr); cv.height = Math.round(LH * dpr);
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {cv, ctx, LW, LH};
+}
+function toLogical(S, ev){
+  const rc = S.cv.getBoundingClientRect();
+  return {x:(ev.clientX - rc.left) * S.LW / rc.width, y:(ev.clientY - rc.top) * S.LH / rc.height};
+}
+// text helpers: italic Georgia for variables, upright sans for numbers/words; subscripts drawn separately
+function tVar(ctx, s, x, y, size, col, align){
+  ctx.font = `italic ${size}px Georgia, "Times New Roman", serif`; ctx.fillStyle = col;
+  ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y);
+  return ctx.measureText(s).width;
+}
+function tSans(ctx, s, x, y, size, col, align, weight){
+  ctx.font = `${weight || 400} ${size}px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
+  ctx.fillStyle = col; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y);
+  return ctx.measureText(s).width;
+}
+// variable with subscript (sub in upright sans unless subItalic)
+function tSub(ctx, base, sub, x, y, size, col, opts){
+  opts = opts || {};
+  ctx.font = `italic ${size}px Georgia, "Times New Roman", serif`;
+  const wb = ctx.measureText(base).width;
+  ctx.font = opts.subItalic ? `italic ${Math.round(size*0.72)}px Georgia, serif` : `${Math.round(size*0.72)}px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
+  const ws = ctx.measureText(sub).width;
+  let x0 = x;
+  if (opts.align === "center") x0 = x - (wb + ws + 1) / 2;
+  if (opts.align === "right") x0 = x - (wb + ws + 1);
+  tVar(ctx, base, x0, y, size, col, "left");
+  ctx.font = opts.subItalic ? `italic ${Math.round(size*0.72)}px Georgia, serif` : `${Math.round(size*0.72)}px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
+  ctx.fillStyle = col; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText(sub, x0 + wb + 1, y + size * 0.30);
+  return wb + ws + 1;
+}
+function bgBox(ctx, x, y, w, h){ ctx.fillStyle = "rgba(255,255,255,0.88)"; ctx.fillRect(x, y, w, h); }
+// mixed line: parts = [["v","r"],["s"," = 2"],["v","M"],["sub","r","e"]]; returns width; draws if draw !== false
+function mix(ctx, parts, x, y, size, col, align, weight, draw){
+  const fontOf = k => k === "v" ? `italic ${size}px Georgia, "Times New Roman", serif`
+                              : `${weight || 400} ${size}px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
+  let w = 0;
+  for (const p of parts){
+    if (p[0] === "sub"){ ctx.font = fontOf("v"); w += ctx.measureText(p[1]).width + 1;
+      ctx.font = `${Math.round(size*0.72)}px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`; w += ctx.measureText(p[2]).width; }
+    else { ctx.font = fontOf(p[0]); w += ctx.measureText(p[1]).width; }
+  }
+  if (draw === false) return w;
+  let x0 = x; if (align === "center") x0 = x - w / 2; if (align === "right") x0 = x - w;
+  for (const p of parts){
+    if (p[0] === "sub"){ x0 += tSub(ctx, p[1], p[2], x0, y, size, col); }
+    else if (p[0] === "v"){ x0 += tVar(ctx, p[1], x0, y, size, col, "left"); }
+    else { x0 += tSans(ctx, p[1], x0, y, size, col, "left", weight); }
+  }
+  return w;
+}
+function arrow(ctx, x0, y0, x1, y1, col, lw, head, dash){
+  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2;
+  if (dash) ctx.setLineDash(dash);
+  const ang = Math.atan2(y1 - y0, x1 - x0), h = head || 11;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - 0.8*h*Math.cos(ang), y1 - 0.8*h*Math.sin(ang)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 - h*Math.cos(ang - 0.38), y1 - h*Math.sin(ang - 0.38));
+  ctx.lineTo(x1 - h*Math.cos(ang + 0.38), y1 - h*Math.sin(ang + 0.38));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+// ---------- tabs ----------
+const tabG = document.getElementById("tabGyro"), tabK = document.getElementById("tabKerr");
+const paneG = document.getElementById("paneGyro"), paneK = document.getElementById("paneKerr");
+function showTab(which){
+  const g = which === "gyro";
+  tabG.classList.toggle("active", g); tabK.classList.toggle("active", !g);
+  paneG.classList.toggle("hidden", !g); paneK.classList.toggle("hidden", g);
+  G.pause(); K.pause();
+  if (g) G.draw(); else K.draw();
+}
+tabG.addEventListener("click", () => showTab("gyro"));
+tabK.addEventListener("click", () => showTab("kerr"));
+
+// =====================================================================
+// TAB 1: gyroscope in a circular Schwarzschild orbit
+// =====================================================================
+const G = (function(){
+  const S = setup(document.getElementById("cg"));
+  const ctx = S.ctx;
+  const sR = document.getElementById("sR"), vR = document.getElementById("vR");
+  const bPlay = document.getElementById("gPlay"), bReset = document.getElementById("gReset");
+  const out = id => document.getElementById(id);
+  // Earth, GP-B: GM/c^2 = 4.435 mm, R = 6378 + 642 km
+  const GM_E = 3.986004418e14, CL = 299792458, R_EARTH = 6378.137e3, R_GPB = R_EARTH + 642e3;
+  const M_E = GM_E / CL / CL, RM_EARTH = R_GPB / M_E;
+  const LMIN = Math.log10(3.02), LMAX = Math.log10(200);
+  const st = {R: 6, earth: false, u: 0, playing: false, revealed: false, last: 0, raf: 0};
+  const CX = 300, CY = 300, RO = 200;               // orbit centre and drawn radius (logical px)
+
+  function sliderToR(v){ return Math.pow(10, LMIN + (LMAX - LMIN) * v / 1000); }
+  function rToSlider(R){ return Math.round(1000 * (Math.log10(R) - LMIN) / (LMAX - LMIN)); }
+  function perOrbit(R){ const x = 3 / R; return 2 * Math.PI * x / (1 + Math.sqrt(1 - x)); }  // 2pi[1-(1-3/R)^1/2], no cancellation
+  function fmtDeg(rad){
+    const d = rad * 180 / Math.PI;
+    if (Math.abs(d) >= 0.01) return d.toFixed(d < 10 ? 2 : 1) + "°";
+    return (rad).toExponential(2) + " rad";
+  }
+  function setR(R, earth){
+    st.R = R; st.earth = !!earth; st.u = 0; st.revealed = false; pause();
+    sR.value = earth ? 1000 : rToSlider(R);
+    vR.innerHTML = earth ? "1.58×10<sup>9</sup> M" : R.toFixed(R < 10 ? 2 : 1) + " M";
+    update(); draw();
+  }
+  function update(){
+    const R = st.R;
+    out("gStab").textContent = st.earth ? "Earth orbit at the Gravity Probe B altitude (642 km)."
+      : (R < 6 ? "Below 6M: this circular orbit exists but is unstable." : "Stable circular orbit (R ≥ 6M).");
+    out("gN").textContent = Math.floor(st.u + 1e-9);
+    const show = st.revealed;
+    const dphi = perOrbit(R);
+    out("gAcc").textContent = show ? fmtDeg(dphi * st.u) : "—";
+    out("gRatio").textContent = show ? (Math.sqrt(1 - 3 / R)).toFixed(st.earth ? 12 : 4) : "—";
+    out("gExact").textContent = show ? fmtDeg(dphi) : "—";
+    out("gWeak").textContent = show ? fmtDeg(3 * Math.PI / R) : "—";
+    out("gYearRow").classList.toggle("hidden", !st.earth);
+    if (st.earth){
+      const P = 2 * Math.PI * Math.sqrt(R_GPB ** 3 / GM_E);
+      const mas = dphi * (365.25 * 86400 / P) * 206264806.2;
+      out("gYear").textContent = show ? mas.toFixed(0) + " mas" : "—";
+    }
+    const v = out("gVerdict");
+    if (show){
+      const d = dphi * 180 / Math.PI;
+      let txt;
+      if (st.earth) txt = `Per orbit the spin turns only <b>${dphi.toExponential(2)} rad</b>, in the orbital direction. Over a year that adds up to about 6.6 arcseconds, which is what Gravity Probe B measured.`;
+      else if (Math.abs(d - 180) < 0.6) txt = `After one orbit the spin points <b>radially inward</b>: it has turned <b>${d.toFixed(1)}°</b> in the direction of the orbit.`;
+      else txt = `After one orbit the spin has turned <b>${d.toFixed(1)}°</b> relative to the distant stars, in the direction of the orbital motion. A flat-space gyroscope would not have turned at all.`;
+      v.innerHTML = txt; v.classList.remove("hidden");
+    } else v.classList.add("hidden");
+  }
+
+  function draw(){
+    const R = st.R, u = st.u;
+    ctx.clearRect(0, 0, S.LW, S.LH);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, S.LW, S.LH);
+    // orbit
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(CX, CY, RO, 0, 2*Math.PI); ctx.stroke();
+    // direction arrows on the orbit (counter-clockwise on screen)
+    for (const a0 of [2.0, 4.4]){
+      const a1 = a0 + 0.10;
+      arrow(ctx, CX + RO*Math.cos(a0), CY - RO*Math.sin(a0), CX + RO*Math.cos(a1), CY - RO*Math.sin(a1), C.ink, 1.8, 12);
+    }
+    // central body: horizon r = 2M to scale for the black-hole case, Earth to scale otherwise
+    let rb = st.earth ? RO * R_EARTH / R_GPB : RO * 2 / R;
+    rb = Math.max(rb, 3);
+    ctx.fillStyle = st.earth ? "#9DB7C9" : C.hor; ctx.beginPath(); ctx.arc(CX, CY, rb, 0, 2*Math.PI); ctx.fill();
+    if (!st.earth && rb > 30){ mix(ctx, [["v","r"],["s"," = 2"],["v","M"]], CX, CY, 15, "#fff", "center"); }
+    else if (st.earth) tSans(ctx, "Earth", CX, CY, 15, C.ink, "center", 600);
+    else { bgBox(ctx, CX + rb + 4, CY - 11, 118, 22); mix(ctx, [["s","horizon "],["v","r"],["s"," = 2"],["v","M"]], CX + rb + 6, CY, 14, C.grey); }
+    // gyro position and radial direction
+    const th = 2 * Math.PI * u;                              // radial angle (orbital phase)
+    const gx = CX + RO * Math.cos(th), gy = CY - RO * Math.sin(th);
+    ctx.save(); ctx.strokeStyle = C.dim; ctx.lineWidth = 1.2; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(CX + (rb + 4) * Math.cos(th), CY - (rb + 4) * Math.sin(th)); ctx.lineTo(CX + (RO + 70) * Math.cos(th), CY - (RO + 70) * Math.sin(th)); ctx.stroke(); ctx.restore();
+    // flat-space reference (fixed direction = initial spin, +x)
+    arrow(ctx, gx, gy, gx + 62, gy, "rgba(90,107,123,0.55)", 1.6, 10, [5, 4]);
+    // spin: comoving angle -Omega' t from the radial direction
+    const ang = th - 2 * Math.PI * u * Math.sqrt(1 - 3 / R);
+    arrow(ctx, gx, gy, gx + 72 * Math.cos(ang), gy - 72 * Math.sin(ang), C.brown, 2.6, 13);
+    ctx.fillStyle = C.brown; ctx.beginPath(); ctx.arc(gx, gy, 5.5, 0, 2*Math.PI); ctx.fill();
+    // labels (kept off the orbit and arrows)
+    const lx = gx + 80 * Math.cos(ang), ly = gy - 80 * Math.sin(ang);
+    tVar(ctx, "S", lx + (Math.cos(ang) >= 0 ? 4 : -14), ly, 18, C.brown);
+    if (!st.earth) tVar(ctx, "M", CX - 6, CY + Math.max(rb, 10) + 16, 17, C.ink);
+    // compass: spin direction relative to distant stars
+    const QX = 640, QY = 470, QR = 62;
+    ctx.fillStyle = C.panel; ctx.strokeStyle = C.dim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(QX, QY, QR + 16, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+    tSans(ctx, "spin vs distant stars", QX, QY - QR - 32, 14, C.mute2, "center", 600);
+    arrow(ctx, QX, QY, QX + QR, QY, "rgba(90,107,123,0.6)", 1.5, 9, [4, 3]);
+    tSans(ctx, "start", QX + QR - 2, QY + 12, 12, C.grey, "right");
+    const net = ang - th + th;                               // absolute direction of S
+    const nTicks = Math.min(Math.floor(u + 1e-9), 40), dphi = perOrbit(R);
+    for (let k = 1; k <= nTicks; k++){
+      const a = k * dphi;
+      ctx.strokeStyle = C.brown; ctx.lineWidth = 1.4; ctx.beginPath();
+      ctx.moveTo(QX + (QR + 4)*Math.cos(a), QY - (QR + 4)*Math.sin(a)); ctx.lineTo(QX + (QR + 13)*Math.cos(a), QY - (QR + 13)*Math.sin(a)); ctx.stroke();
+    }
+    arrow(ctx, QX, QY, QX + QR * Math.cos(net), QY - QR * Math.sin(net), C.brown, 2.4, 11);
+    // legend
+    const LX = 598, LY = 170;
+    arrow(ctx, LX, LY, LX + 32, LY, C.brown, 2.4, 11); tSans(ctx, "gyroscope spin", LX + 40, LY, 14, C.ink);
+    arrow(ctx, LX, LY + 26, LX + 32, LY + 26, "rgba(90,107,123,0.6)", 1.6, 10, [5, 4]); tSans(ctx, "flat-space gyro", LX + 40, LY + 26, 14, C.ink);
+    ctx.save(); ctx.strokeStyle = C.dim; ctx.lineWidth = 1.2; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(LX, LY + 52); ctx.lineTo(LX + 32, LY + 52); ctx.stroke(); ctx.restore();
+    tSans(ctx, "radial direction", LX + 40, LY + 52, 14, C.ink);
+    tSans(ctx, "orbits: " + Math.floor(u + 1e-9), 20, S.LH - 22, 14, C.grey);
+  }
+
+  function frame(ts){
+    if (!st.playing) return;
+    const dt = Math.min(0.05, (ts - st.last) / 1000); st.last = ts;
+    const before = st.u;
+    st.u += dt / 4;                                           // 1 orbit = 4 s
+    if (!st.revealed && st.u >= 1){ st.revealed = true; }
+    if (Math.floor(before) !== Math.floor(st.u) || st.revealed) update();
+    draw();
+    st.raf = requestAnimationFrame(frame);
+  }
+  function play(){
+    if (reduceMotion){ st.u = Math.floor(st.u) + 1; st.revealed = true; update(); draw(); return; }
+    st.playing = true; bPlay.textContent = "Pause"; st.last = performance.now(); st.raf = requestAnimationFrame(frame);
+  }
+  function pause(){ st.playing = false; bPlay.textContent = "Run"; cancelAnimationFrame(st.raf); }
+  bPlay.addEventListener("click", () => st.playing ? pause() : play());
+  bReset.addEventListener("click", () => { st.u = 0; st.revealed = false; pause(); update(); draw(); });
+  sR.addEventListener("input", () => { const v = +sR.value; setR(v >= 1000 ? 200 : sliderToR(v), false); });
+  document.querySelectorAll("button[data-r]").forEach(b => b.addEventListener("click", () => setR(+b.dataset.r, false)));
+  document.getElementById("bEarth").addEventListener("click", () => setR(RM_EARTH, true));
+  setR(6, false);
+  return {draw, pause, setR, st, play, update, perOrbit};
+})();
+
+// =====================================================================
+// TAB 2: Kerr, zero-angular-momentum infall (equatorial), probe hover test
+// =====================================================================
+const K = (function(){
+  const S = setup(document.getElementById("ck"));
+  const B = setup(document.getElementById("cb"));
+  const ctx = S.ctx, bx = B.ctx;
+  const sA = document.getElementById("sA"), vA = document.getElementById("vA");
+  const bPlay = document.getElementById("kPlay"), bReset = document.getElementById("kReset");
+  const out = id => document.getElementById(id);
+  const CX = 285, CY = 300, VIEW = 6.6, SC = 268 / VIEW;    // px per M
+  const R0 = 6.0, PHI_IN = Math.PI / 2;                       // enters the view from the top
+  const st = {a: 0.9, r: R0, phi: 0, t: 0, tau: 0, trail: [], playing: false, started: false, last: 0, raf: 0,
+              phiStart: 0, phiAtRe: null, probe: {r: 1.75, phi: -0.75}, drag: false};
+
+  const rplus = a => 1 + Math.sqrt(1 - a * a);
+  // rates in coordinate time t for e = 1, l = 0 (from the boxed dt/dtau and dphi/dtau; M = 1)
+  function rates(r, a){
+    const D = r * r - 2 * r + a * a;
+    const A = r * r + a * a + 2 * a * a / r;               // = Delta * dt/dtau
+    const drdtau = -Math.sqrt(2 * (r * r + a * a) / (r * r * r));
+    return {drdt: drdtau * D / A, dphidt: 2 * a / (r * r * r + a * a * r + 2 * a * a), dtaudt: D / A};
+  }
+  // swing accumulated on the way in from infinity to R0: int_R0^inf dphi/dr dr (substitute u = 1/r)
+  function swingBefore(a){
+    if (a === 0) return 0;
+    const n = 400, U = 1 / R0; let s = 0;
+    for (let i = 0; i <= n; i++){
+      const u = U * i / n, w = (i === 0 || i === n) ? 1 : (i % 2 ? 4 : 2);
+      let f;
+      if (u === 0) f = 0;
+      else { const r = 1 / u, D = r*r - 2*r + a*a; f = (2*a/(r*D)) / Math.sqrt(2*(r*r + a*a)/(r*r*r)) / (u*u); }
+      s += w * f;
+    }
+    return s * (U / n) / 3;
+  }
+  function reset(){
+    pause();
+    st.r = R0; st.t = 0; st.tau = 0; st.started = false; st.phiAtRe = null;
+    st.probe.r = Math.max(st.probe.r, rplus(st.a) + 0.02);
+    st.phiStart = swingBefore(st.a); st.phi = st.phiStart; st.trail = [];
+    out("kVerdict").classList.add("hidden");
+    readouts(); draw();
+  }
+  function step(h){
+    const a = st.a;
+    const f = (r) => rates(r, a);
+    // RK4 on (r, phi, tau)
+    const k1 = f(st.r);
+    const k2 = f(st.r + 0.5 * h * k1.drdt);
+    const k3 = f(st.r + 0.5 * h * k2.drdt);
+    const k4 = f(st.r + h * k3.drdt);
+    const rp = rplus(a);
+    st.r = Math.max(st.r + h * (k1.drdt + 2*k2.drdt + 2*k3.drdt + k4.drdt) / 6, rp * (1 + 1e-9));
+    st.phi += h * (k1.dphidt + 2*k2.dphidt + 2*k3.dphidt + k4.dphidt) / 6;
+    st.tau += h * (k1.dtaudt + 2*k2.dtaudt + 2*k3.dtaudt + k4.dtaudt) / 6;
+    st.t += h;
+    if (st.phiAtRe === null && st.r <= 2) st.phiAtRe = st.phi;
+  }
+  function advance(dtM){
+    const n = Math.max(1, Math.ceil(dtM / 0.02));
+    for (let i = 0; i < n; i++){
+      step(dtM / n);
+      if (i % 3 === 0) st.trail.push([st.r, st.phi]);
+    }
+    if (st.trail.length > 20000) st.trail.splice(0, st.trail.length - 20000);
+  }
+  function xy(r, phi){ return [CX + SC * r * Math.cos(PHI_IN + phi), CY - SC * r * Math.sin(PHI_IN + phi)]; }
+
+  function readouts(){
+    const a = st.a;
+    vA.textContent = a.toFixed(a >= 0.99 ? 3 : 2);
+    if (!st.started){
+      out("kR").textContent = "—"; out("kPhi").textContent = "—"; out("kT").textContent = "—";
+    } else {
+      out("kR").textContent = st.r.toFixed(3) + " M";
+      out("kPhi").textContent = (st.phi * 180 / Math.PI).toFixed(1) + "°";
+      out("kT").textContent = st.t.toFixed(1) + " M / " + st.tau.toFixed(2) + " M";
+    }
+    // probe
+    const r = st.probe.r, D = r*r - 2*r + a*a, gtt = -(1 - 2 / r), gtp = -2 * a / r, gpp = r*r + a*a + 2*a*a / r;
+    const om = 2 * a / (r * gpp), half = Math.sqrt(Math.max(D, 0)) / gpp;
+    st.win = [om - half, om + half, om];
+    out("pR").textContent = r.toFixed(2) + " M";
+        out("pG").innerHTML = (gtt >= 0 ? "+" : "−") + Math.abs(gtt).toFixed(3) + (gtt >= 0 ? " (inside <i class='v'>r</i><sub>e</sub>)" : "");
+    out("pH").textContent = gtt < 0 ? "yes" : "no: must co-rotate";
+    out("pH").style.color = gtt < 0 ? C.blue : C.brown;
+    drawBar();
+  }
+  function verdict(){
+    if (!st.started) return;
+    const v = out("kVerdict");
+    if (st.a === 0){
+      v.innerHTML = "With <i class='v'>a</i> = 0 the path is a straight radial line: no rotation, no dragging.";
+    } else if (st.phiAtRe !== null){
+      v.innerHTML = `<b>Not straight in.</b> It had already swung <b>${(st.phiAtRe*180/Math.PI).toFixed(1)}°</b> by the time it reached <i class='v'>r<sub>e</sub></i> = 2<i class='v'>M</i>: dragging acts outside the ergosphere too. Inside it the swing grows without limit in these coordinates, as the particle settles into circling at <i class='v'>Ω</i><sub>H</sub> = ${(st.a/(rplus(st.a)**2 + st.a**2)).toFixed(3)}/<i class='v'>M</i>.`;
+    } else return;
+    v.classList.remove("hidden");
+  }
+
+  function draw(){
+    const a = st.a, rp = rplus(a);
+    ctx.clearRect(0, 0, S.LW, S.LH);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, S.LW, S.LH);
+    // ergosphere annulus (equator: r_+ < r < 2M) and static limit
+    ctx.fillStyle = C.erg; ctx.beginPath(); ctx.arc(CX, CY, 2 * SC, 0, 2*Math.PI); ctx.fill();
+    ctx.save(); ctx.strokeStyle = C.brown; ctx.lineWidth = 1.4; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.arc(CX, CY, 2 * SC, 0, 2*Math.PI); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = C.hor; ctx.beginPath(); ctx.arc(CX, CY, rp * SC, 0, 2*Math.PI); ctx.fill();
+    // rotation arrow on the horizon
+    if (a > 0.01){
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(CX, CY, rp * SC * 0.55, -0.4, -2.6, true); ctx.stroke();
+      const ea = -2.6;
+      arrow(ctx, CX + rp*SC*0.55*Math.cos(ea + 0.25), CY + rp*SC*0.55*Math.sin(ea + 0.25), CX + rp*SC*0.55*Math.cos(ea), CY + rp*SC*0.55*Math.sin(ea), "#fff", 1.6, 9);
+    }
+    // radius rings for scale
+    ctx.strokeStyle = C.dim; ctx.lineWidth = 1;
+    for (const rr of [4, 6]){ ctx.beginPath(); ctx.arc(CX, CY, rr * SC, 0, 2*Math.PI); ctx.stroke(); }
+    bgBox(ctx, CX + 4 * SC * 0.7071 + 2, CY + 4 * SC * 0.7071 - 9, 30, 18); mix(ctx, [["s","4"],["v","M"]], CX + 4 * SC * 0.7071 + 4, CY + 4 * SC * 0.7071, 14, C.grey);
+    bgBox(ctx, CX + 6 * SC * 0.7071 + 2, CY + 6 * SC * 0.7071 - 9, 30, 18); mix(ctx, [["s","6"],["v","M"]], CX + 6 * SC * 0.7071 + 4, CY + 6 * SC * 0.7071, 14, C.grey);
+    // labels for horizon and ergosphere boundary (left side, off the path)
+    const leader = (r0, ang, r1, col) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(CX + r0 * SC * Math.cos(ang), CY - r0 * SC * Math.sin(ang));
+      ctx.lineTo(CX + r1 * SC * Math.cos(ang), CY - r1 * SC * Math.sin(ang)); ctx.stroke(); ctx.restore();
+      return [CX + r1 * SC * Math.cos(ang), CY - r1 * SC * Math.sin(ang)]; };
+    let L1 = leader(2.0, 2.75, 3.3, C.brown);
+    bgBox(ctx, L1[0] - 104, L1[1] - 11, 100, 22);
+    mix(ctx, [["sub","r","e"],["s"," = 2"],["v","M"]], L1[0] - 6, L1[1], 16, C.brown, "right");
+    let L2 = leader(rp, 3.35, 3.3, C.ink);
+    bgBox(ctx, L2[0] - 116, L2[1] - 11, 112, 22);
+    mix(ctx, [["s","horizon "],["sub","r","+"]], L2[0] - 6, L2[1], 16, C.ink, "right");
+    if (a > 0.05){
+      let L3 = leader((rp + 2) / 2, 4.05, 3.3, C.brown);
+      bgBox(ctx, L3[0] - 92, L3[1] - 2, 90, 22);
+      tSans(ctx, "ergosphere", L3[0] - 4, L3[1] + 9, 14, C.brown, "right", 600);
+    }
+    // incoming direction: Schwarzschild comparison, revealed after start
+    if (st.started){
+      ctx.save(); ctx.strokeStyle = "rgba(90,107,123,0.55)"; ctx.lineWidth = 1.4; ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.moveTo(CX, CY - SC * VIEW); ctx.lineTo(CX, CY - SC * rp); ctx.stroke(); ctx.restore();
+      bgBox(ctx, CX + 8, CY - SC * 5.2 - 11, 130, 22); mix(ctx, [["s","straight in ("],["v","a"],["s"," = 0)"]], CX + 10, CY - SC * 5.2, 14, C.grey);
+    }
+    // trail
+    if (st.started && st.trail.length > 1){
+      ctx.strokeStyle = C.blue; ctx.lineWidth = 2.2; ctx.beginPath();
+      let p = xy(R0, st.phiStart); ctx.moveTo(p[0], p[1]);
+      for (const q of st.trail){ p = xy(q[0], q[1]); ctx.lineTo(p[0], p[1]); }
+      ctx.stroke();
+    }
+    // particle
+    const pp = xy(st.r, st.phi);
+    ctx.fillStyle = C.blue; ctx.beginPath(); ctx.arc(pp[0], pp[1], 6, 0, 2*Math.PI); ctx.fill();
+    if (!st.started){
+      arrow(ctx, pp[0], pp[1] - 46, pp[0], pp[1] - 12, C.blue, 2, 11);
+      bgBox(ctx, pp[0] + 12, pp[1] - 41, 186, 22); mix(ctx, [["s","from rest far away, "],["v","ℓ"],["s"," = 0"]], pp[0] + 14, pp[1] - 30, 14, C.blue);
+    }
+    // probe
+    const q = xy(st.probe.r, st.probe.phi);
+    const hover = st.probe.r > 2;
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = hover ? C.blue : C.brown; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.arc(q[0], q[1], 9, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = hover ? C.blue : C.brown; ctx.beginPath(); ctx.arc(q[0], q[1], 3.5, 0, 2*Math.PI); ctx.fill();
+    const tx = q[0] + 14, ty = q[1] + 18;
+    bgBox(ctx, tx - 2, ty - 10, 46, 20); tSans(ctx, "probe", tx, ty, 13, hover ? C.blue : C.brown, "left", 600);
+    // meridional inset (side view), exact r_e(theta) and r_+
+    const IX = 662, IY = 118, IS = 36;                        // centre and px per M
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = C.dim; ctx.lineWidth = 1;
+    ctx.fillRect(IX - 92, IY - 104, 184, 236); ctx.strokeRect(IX - 92, IY - 104, 184, 236);
+    tSans(ctx, "side view", IX, IY - 90, 13, C.mute2, "center", 600);
+    ctx.fillStyle = C.erg; ctx.strokeStyle = C.brown; ctx.lineWidth = 1.4; ctx.beginPath();
+    for (let i = 0; i <= 200; i++){
+      const th = 2 * Math.PI * i / 200, re = 1 + Math.sqrt(1 - a * a * Math.cos(th) ** 2);
+      const x = IX + IS * re * Math.sin(th), y = IY - IS * re * Math.cos(th);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = C.hor; ctx.beginPath(); ctx.arc(IX, IY, rp * IS, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle = C.grey; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(IX, IY - 2.2 * IS); ctx.lineTo(IX, IY + 2.15 * IS); ctx.stroke(); ctx.setLineDash([]);
+    tSans(ctx, "dashed: spin axis", IX, IY + 2.45 * IS, 12, C.grey, "center");
+    if (a > 0.05) tSans(ctx, "shaded: ergosphere", IX, IY + 2.95 * IS, 12, C.brown, "center");
+    else mix(ctx, [["s","no ergosphere at "],["v","a"],["s"," = 0"]], IX, IY + 2.95 * IS, 12, C.brown, "center");
+    // clock
+    mix(ctx, [["v","t"],["s"," = " + (st.started ? st.t.toFixed(1) + " " : "0")]].concat(st.started ? [["v","M"]] : []), 20, S.LH - 22, 14, C.grey);
+  }
+  function drawBar(){
+    const ctx2 = bx, W = B.LW, H = B.LH;
+    ctx2.clearRect(0, 0, W, H); ctx2.fillStyle = "#fff"; ctx2.fillRect(0, 0, W, H);
+    const lo = -0.4, hi = 0.6, X = v => 14 + (W - 28) * (v - lo) / (hi - lo), Y = 44;
+    ctx2.strokeStyle = C.ink; ctx2.lineWidth = 1.2; ctx2.beginPath(); ctx2.moveTo(X(lo), Y); ctx2.lineTo(X(hi), Y); ctx2.stroke();
+    for (let v = -0.4; v <= 0.6001; v += 0.2){
+      ctx2.beginPath(); ctx2.moveTo(X(v), Y - 4); ctx2.lineTo(X(v), Y + 4); ctx2.stroke();
+      tSans(ctx2, (Math.abs(v) < 1e-9 ? "0" : v.toFixed(1)), X(v), Y + 16, 12, C.grey, "center");
+    }
+    const [w0, w1, om] = st.win, inside = !(w0 < 0 && w1 > 0);
+    const c0 = Math.max(lo, w0), c1 = Math.min(hi, w1);
+    ctx2.fillStyle = inside ? "rgba(138,90,24,0.30)" : "rgba(15,110,147,0.25)";
+    ctx2.fillRect(X(c0), Y - 11, Math.max(2, X(c1) - X(c0)), 22);
+    ctx2.strokeStyle = inside ? C.brown : C.blue; ctx2.lineWidth = 1.5; ctx2.strokeRect(X(c0), Y - 11, Math.max(2, X(c1) - X(c0)), 22);
+    // zero (hovering) and frame-dragging rate
+    ctx2.strokeStyle = C.ink; ctx2.lineWidth = 2; ctx2.beginPath(); ctx2.moveTo(X(0), Y - 18); ctx2.lineTo(X(0), Y + 6); ctx2.stroke();
+    tSans(ctx2, "hover", X(0), Y - 27, 12, C.ink, "center", 600);
+    tSans(ctx2, "allowed window", X(Math.min(Math.max((c0 + c1) / 2, lo + 0.12), hi - 0.12)), Y + 34, 12, inside ? C.brown : C.blue, "center", 600);
+    mix(ctx2, [["v","d"],["v","φ"],["s","/"],["v","dt"],["s","  (units of 1/"],["v","M"],["s",")"]], W - 12, 11, 13, C.grey, "right");
+  }
+
+  function frame(ts){
+    if (!st.playing) return;
+    const dt = Math.min(0.05, (ts - st.last) / 1000); st.last = ts;
+    advance(4 * dt);                                         // 4 M of t per second
+    readouts(); verdict(); draw();
+    if (st.t > 400){ pause(); return; }
+    st.raf = requestAnimationFrame(frame);
+  }
+  function play(){
+    st.started = true;
+    if (reduceMotion){ advance(120); readouts(); verdict(); draw(); return; }
+    st.playing = true; bPlay.textContent = "Pause"; st.last = performance.now(); st.raf = requestAnimationFrame(frame);
+  }
+  function pause(){ st.playing = false; bPlay.textContent = "Run"; cancelAnimationFrame(st.raf); }
+  bPlay.addEventListener("click", () => st.playing ? pause() : play());
+  bReset.addEventListener("click", reset);
+  sA.addEventListener("input", () => { st.a = +sA.value; reset(); });
+  // probe dragging
+  const cv = S.cv;
+  function probeHit(p){ const q = xy(st.probe.r, st.probe.phi); return Math.hypot(p.x - q[0], p.y - q[1]) < 18; }
+  cv.addEventListener("pointerdown", ev => { const p = toLogical(S, ev); if (probeHit(p)){ st.drag = true; cv.setPointerCapture(ev.pointerId); } });
+  cv.addEventListener("pointermove", ev => {
+    const p = toLogical(S, ev);
+    cv.style.cursor = st.drag ? "grabbing" : (probeHit(p) ? "grab" : "default");
+    if (!st.drag) return;
+    const dx = (p.x - CX) / SC, dy = (CY - p.y) / SC;
+    st.probe.r = Math.min(VIEW - 0.15, Math.max(rplus(st.a) + 0.02, Math.hypot(dx, dy)));
+    st.probe.phi = Math.atan2(dy, dx) - PHI_IN;
+    readouts(); draw();
+  });
+  const endDrag = () => { st.drag = false; };
+  cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+  reset();
+  return {draw, pause, reset, st, play, advance, readouts, verdict, rates, swingBefore};
+})();
+
+window.__demo = {G, K};
+})();
+</script>
+</body>
+</html>

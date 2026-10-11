@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 14: Photon Orbits and Light Bending — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+  --red:#A43B34; --green:#2E7D57;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px}
+.tab{padding:7px 14px;font:600 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/560}
+#w{aspect-ratio:1100/240}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.55;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model sup,.model sub,table.read sup,table.read sub{line-height:0}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 8px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=checkbox]{accent-color:var(--blue);margin:0 6px 0 0;vertical-align:-2px}
+.check{font-size:12.5px;color:var(--mute2);margin-top:6px;display:block}
+.fine{font-size:12px;color:var(--grey);margin:2px 0 0}
+.fine input{width:84px;font:12px "SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+            padding:2px 4px;border:1px solid var(--dim);border-radius:5px;color:var(--ink)}
+
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.5;margin:0}
+.verdict{font-size:12.5px;line-height:1.55;margin:8px 0 0;padding-top:8px;
+         border-top:1px solid var(--dim);color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.hidden{display:none}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 14</div>
+    <h1>Photon Orbits and Light Bending</h1>
+    <div class="sub">Launch light past a Schwarzschild mass: find the capture threshold <i>b</i> = &radic;27&thinsp;<i>M</i>, then test the deflection 4<i>M</i>/<i>b</i>.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tabOne" role="tab" aria-selected="true">One photon</button>
+        <button class="tab" id="tabFan" role="tab" aria-selected="false">A beam of photons</button>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="canvasWrap"><canvas id="w"></canvas></div>
+      <div class="model">
+        <b>Model:</b> exact equatorial null geodesics of the Schwarzschild metric, <i>G</i> = <i>c</i> = 1,
+        lengths in units of <i>M</i>, drawn to scale as <i>x</i> = <i>r</i>&thinsp;cos&thinsp;<i>&phi;</i>,
+        <i>y</i> = <i>r</i>&thinsp;sin&thinsp;<i>&phi;</i>. Orbit equation <i>u</i>&Prime; = 3<i>Mu</i><sup>2</sup> &minus; <i>u</i>
+        (<i>u</i> = 1/<i>r</i>), RK4 in <i>&phi;</i>. Only the clock is sped up: photons move at their true rate in the
+        distant observer&rsquo;s time <i>t</i>, with 1&nbsp;s of animation = <span id="tps">&ndash;</span>&nbsp;<i>M</i> of <i>t</i>
+        (1&nbsp;<i>M</i> = 4.93&nbsp;&mu;s for one solar mass). By that clock a captured photon never quite reaches
+        <i>r</i> = 2<i>M</i>; runs stop at 2.02<i>M</i>.
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Launch</h2>
+        <div class="row">
+          <label>impact parameter <i>b</i> <span class="v" id="vb">&ndash;</span></label>
+          <input type="range" id="bs" min="0" max="1000" step="1" value="500">
+          <div class="fine">exact <input type="number" id="bn" min="0.5" max="300" step="0.01"> <i>M</i>
+            &middot; or drag &#9737; or the 1/<i>b</i><sup>2</sup> line</div>
+        </div>
+        <div class="row" style="margin-top:9px">
+          <label>speed <span class="v" id="vsp">&ndash;</span></label>
+          <input type="range" id="sp" min="0" max="1000" step="1" value="500">
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="go">Launch</button>
+          <button class="btn" id="rs">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel" id="panOne">
+        <h2>Measure</h2>
+        <table class="read">
+          <tr><td>1/<i>b</i><sup>2</sup> vs barrier top 1/27<i>M</i><sup>2</sup></td><td class="n" id="vlev">&ndash;</td></tr>
+          <tr><td>outcome</td><td class="n" id="vout">&ndash;</td></tr>
+          <tr><td>closest approach <i>r</i><sub>min</sub></td><td class="n" id="vrmin">&ndash;</td></tr>
+          <tr><td>angle swept, &Delta;<i>&phi;</i></td><td class="n" id="vsw">&ndash;</td></tr>
+          <tr><td>exact deflection &delta;<i>&phi;</i><sub>def</sub></td><td class="n" id="vdef">&ndash;</td></tr>
+          <tr><td>lecture, 4<i>M</i>/<i>b</i></td><td class="n" id="v4">&ndash;</td></tr>
+          <tr><td>exact &divide; (4<i>M</i>/<i>b</i>)</td><td class="n" id="vrat">&ndash;</td></tr>
+          <tr><td>Newtonian, 2<i>M</i>/<i>b</i></td><td class="n" id="v2">&ndash;</td></tr>
+          <tr><td>check <span class="gloss">(null condition along the path)</span></td><td class="n" id="vchk">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel" id="panFan" style="display:none">
+        <h2>The beam</h2>
+        <table class="read">
+          <tr><td>rays launched</td><td class="n" id="fn">&ndash;</td></tr>
+          <tr><td>captured (|<i>b</i>| &lt; &radic;27&thinsp;<i>M</i>)</td><td class="n" id="fc">&ndash;</td></tr>
+          <tr><td>critical <i>b</i> = &radic;27&thinsp;<i>M</i></td><td class="n">5.196 <i>M</i></td></tr>
+        </table>
+        <p class="verdict">Rays are launched together from one plane far to the right, so at any moment the
+          photons mark a wavefront. Watch it wrap round the mass.</p>
+      </div>
+
+      <div class="panel" id="panFanAsk" style="display:none">
+        <h2>Predict, then run</h2>
+        <p class="ask">Which rays will be captured? Of the escaping rays, which one is bent the most, and
+          roughly how far round the mass does it go?</p>
+        <p class="verdict hidden" id="fanVerdict">Every ray with |<i>b</i>| &lt; &radic;27&thinsp;<i>M</i> &asymp; 5.2<i>M</i>
+          is captured (here 0.8&ndash;5.0<i>M</i>, 12 rays). The 5.4<i>M</i> rays escape after sweeping
+          &asymp; 347&deg; in <i>&phi;</i>, a deflection of &asymp; 167&deg;: the closer <i>b</i> is to &radic;27&thinsp;<i>M</i>,
+          the more turns.</p>
+      </div>
+
+      <div class="panel" id="panAsk">
+        <h2>Predict, then launch</h2>
+        <p class="ask" id="ask">Before launching: will this photon escape? Compare the brown 1/<i>b</i><sup>2</sup>
+          line with the top of the barrier, 1/27<i>M</i><sup>2</sup>, at <i>r</i> = 3<i>M</i>.</p>
+        <p class="verdict hidden" id="verdict"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 14</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// =====================================================================================
+// Physics. Units G = c = M = 1. Equatorial null geodesic of Schwarzschild with impact
+// parameter b. With u = 1/r:
+//   (du/dphi)^2 = g(u) = 1/b^2 - u^2 + 2u^3,      d2u/dphi2 = 3u^2 - u,
+// and, with e = 1 (so l = b), the far-away clock runs at dt/dphi = 1/(b u^2 (1 - 2u)).
+// The photon arrives from x -> +infinity along y = b (phi -> 0), as on the slides.
+// =====================================================================================
+var BMIN = 0.5, BMAX = 300, BCRIT = Math.sqrt(27);
+var U_STOP = 1/2.02;                    // capture runs stop at r = 2.02 M
+var PHI_MAX = 40*Math.PI;               // safety cap (only reached absurdly close to b_crit)
+var DEG = 180/Math.PI, ASEC = 3600*DEG;
+
+function g(u, b){ return 1/(b*b) - u*u + 2*u*u*u; }
+
+// Smallest positive root of g (turning point), or null if the photon is captured.
+function turnU(b){
+  if(b <= BCRIT) return null;
+  var lo = 0, hi = 1/3, i;
+  for(i = 0; i < 200; i++){ var m = 0.5*(lo + hi); if(g(m, b) > 0) lo = m; else hi = m; }
+  return 0.5*(lo + hi);
+}
+
+// phi at which the incoming photon reaches u = us (phi -> 0 at u -> 0), by Simpson
+// with u = us*s^2 to tame nothing in particular (g > 0 on the whole range here).
+function phiIn(us, b){
+  var N = 400, h = us/N, s = 0, i;
+  for(i = 0; i <= N; i++){
+    var u = i*h, w = (i === 0 || i === N) ? 1 : (i % 2 ? 4 : 2);
+    s += w/Math.sqrt(g(u, b));
+  }
+  return s*h/3;
+}
+
+// Exact deflection by quadrature: delta = 2 int_0^u0 du/sqrt(g) - pi, with u = u0 (1 - s^2)
+// so the integrand is smooth at the turning point.
+function deflection(b){
+  var u0 = turnU(b);
+  if(u0 === null) return null;
+  var N = 6000, h = 1/N, s = 0, i;
+  for(i = 0; i <= N; i++){
+    var x = i*h, u = u0*(1 - x*x), gv = g(u, b);
+    var f;
+    if(i === 0){            // limit s -> 0: 2 u0 s / sqrt(-g'(u0) u0 s^2) = 2 u0 / sqrt(-g'(u0) u0)
+      var gp = -2*u0 + 6*u0*u0; f = 2*u0/Math.sqrt(-gp*u0);
+    } else f = 2*x*u0/Math.sqrt(Math.max(gv, 1e-300));
+    var w = (i === 0 || i === N) ? 1 : (i % 2 ? 4 : 2);
+    s += w*f;
+  }
+  var I = s*h/3;
+  return { u0: u0, rmin: 1/u0, delta: 2*I - Math.PI, swept: 2*I };
+}
+
+// Integrate one photon from launch radius R0 (on the incoming branch) to escape (back
+// beyond R0) or capture (r = 2.02 M). Returns arrays of x, y, t and the null residual.
+function trace(b, R0){
+  var us = 1/R0;
+  if(us > 0.95/b) us = 0.95/b;          // launch outside the asymptote's reach
+  var phi = phiIn(us, b);
+  var u = us, w = Math.sqrt(Math.max(g(us, b), 0)), t = 0;
+  var X = [], Y = [], T = [], U = [];
+  function push(){ X.push(Math.cos(phi)/u); Y.push(Math.sin(phi)/u); T.push(t); U.push(u); }
+  push();
+  var res = 0, fate = "open", n = 0;
+  function rhs(uu, ww){ return [ww, 3*uu*uu - uu, 1/(b*uu*uu*(1 - 2*uu))]; }
+  while(true){
+    var h = Math.min(0.004, 0.03*Math.max(u, 1e-6)/Math.max(Math.abs(w), 1e-9));
+    h = Math.max(h, 2e-5);
+    // RK4 on (u, w, t)
+    var k1 = rhs(u, w);
+    var k2 = rhs(u + 0.5*h*k1[0], w + 0.5*h*k1[1]);
+    var k3 = rhs(u + 0.5*h*k2[0], w + 0.5*h*k2[1]);
+    var k4 = rhs(u + h*k3[0], w + h*k3[1]);
+    var un = u + h/6*(k1[0] + 2*k2[0] + 2*k3[0] + k4[0]);
+    var wn = w + h/6*(k1[1] + 2*k2[1] + 2*k3[1] + k4[1]);
+    var tn = t + h/6*(k1[2] + 2*k2[2] + 2*k3[2] + k4[2]);
+    if(un >= U_STOP){                    // land exactly on r = 2.02 M
+      var f = (U_STOP - u)/(un - u);
+      phi += f*h; t += f*(tn - t); u = U_STOP; w = w + f*(wn - w); push(); fate = "capture"; break;
+    }
+    if(un <= us && w < 0){               // back out past the launch sphere
+      var f2 = (u - us)/(u - un);
+      phi += f2*h; t += f2*(tn - t); u = us; push(); fate = "escape"; break;
+    }
+    phi += h; u = un; w = wn; t = tn;
+    res = Math.max(res, Math.abs(w*w - g(u, b))*b*b);
+    if(++n % 3 === 0) push();
+    if(phi > PHI_MAX){ push(); break; }
+  }
+  return { b: b, X: X, Y: Y, T: T, U: U, tEnd: t, fate: fate, res: res, phiEnd: phi,
+           sweptPath: phi + phiIn(us, b) };
+}
+
+// position at time t along a traced path
+function posAt(P, t){
+  var T = P.T, lo = 0, hi = T.length - 1;
+  if(t <= 0) return [P.X[0], P.Y[0], P.U[0], 0];
+  if(t >= T[hi]) return [P.X[hi], P.Y[hi], P.U[hi], hi];
+  while(hi - lo > 1){ var m = (lo + hi) >> 1; if(T[m] <= t) lo = m; else hi = m; }
+  var f = (t - T[lo])/(T[hi] - T[lo]);
+  return [P.X[lo] + f*(P.X[hi] - P.X[lo]), P.Y[lo] + f*(P.Y[hi] - P.Y[lo]),
+          P.U[lo] + f*(P.U[hi] - P.U[lo]), lo];
+}
+
+// =====================================================================================
+// State
+// =====================================================================================
+var S = {
+  mode: "one", b: 6.2, speedMul: 1, t: 0, playing: false, revealed: true,
+  path: null, defl: null, fan: [], tFanEnd: 0, view: 14
+};
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function viewFor(b){ return Math.min(Math.max(14, 2.05*b), 640); }   // keeps y = b on the canvas
+var FAN_B = [];
+(function(){ var vals = [0.8, 2, 3, 4, 4.7, 5.0, 5.4, 6, 7, 8.5, 10, 12], i;
+  for(i = 0; i < vals.length; i++){ FAN_B.push(vals[i]); FAN_B.push(-vals[i]); } })();
+var FAN_VIEW = 16;
+
+function launchR(){ var V = S.view; return 1.35*Math.hypot(V, V*CH/CW*1.0) ; }
+
+function recompute(){
+  if(S.mode === "one"){
+    S.view = viewFor(S.b);
+    S.path = trace(S.b, Math.max(launchR(), 2.2*S.b));
+    S.defl = deflection(S.b);
+  } else {
+    S.view = FAN_VIEW;
+    var i;
+    S.fan = [];
+    S.tFanEnd = 0;
+    for(i = 0; i < FAN_B.length; i++){
+      var bb = Math.abs(FAN_B[i]);
+      var P = trace(bb, Math.hypot(1.15*S.view*1.25, bb));
+      P.sign = FAN_B[i] < 0 ? -1 : 1;
+      S.fan.push(P);
+      S.tFanEnd = Math.max(S.tFanEnd, Math.min(P.tEnd, 4*S.view*1.25));
+    }
+  }
+}
+
+// =====================================================================================
+// Canvases (DPR-aware, logical coordinates)
+// =====================================================================================
+var cv = document.getElementById("c"), cw = document.getElementById("w");
+var CW = 1100, CH = 560, WW = 1100, WH = 240;
+var ctx = cv.getContext("2d"), wtx = cw.getContext("2d");
+function setupCanvas(c, x, W, H){
+  var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  c.width = Math.round(W*dpr); c.height = Math.round(H*dpr);
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+setupCanvas(cv, ctx, CW, CH);
+setupCanvas(cw, wtx, WW, WH);
+
+var COL = { ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B",
+            dim:"#C4CBD8", panel:"#EDF1F6", mute2:"#33465C", white:"#ffffff" };
+var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+var LABELS = [];                       // label boxes drawn this frame (for collision tests)
+var PATHPTS = [];                      // sampled curve points drawn this frame (logical px)
+
+// Math label: segments [text, kind] with kind "i" italic Georgia variable, "n" upright
+// sans, "sub"/"sup" small italic lowered/raised, "nsub"/"nsup" small upright.
+function mathLabel(x, c, segs, px, py, size, color, align, bg){
+  var i, w = 0, parts = [];
+  for(i = 0; i < segs.length; i++){
+    var s = segs[i][0], k = segs[i][1], small = /sub|sup/.test(k), fs = small ? 0.76*size : size;
+    var ital = (k === "i" || k === "sub" || k === "sup");
+    var font = (ital ? "italic " : "") + fs + "px " + (ital ? "Georgia,serif" : SANS);
+    x.font = font;
+    var mw = x.measureText(s).width;
+    var dy = k.indexOf("sub") >= 0 ? 0.28*size : (k.indexOf("sup") >= 0 ? -0.42*size : 0);
+    parts.push([s, font, mw, dy]);
+    w += mw + (ital && !small ? 0.04*size : 0);
+  }
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, c: c };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.textBaseline = "alphabetic";
+  var cx = x0;
+  for(i = 0; i < parts.length; i++){
+    x.font = parts[i][1]; x.fillText(parts[i][0], cx, py + parts[i][3]);
+    cx += parts[i][2] + (/italic/.test(parts[i][1]) && !/sub|sup/.test(segs[i][1]) ? 0.04*size : 0);
+  }
+  LABELS.push(box);
+  return box;
+}
+function textLabel(x, c, s, px, py, size, color, align, bg, weight){
+  x.font = (weight || "") + " " + size + "px " + SANS;
+  var w = x.measureText(s).width;
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, c: c };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.textBaseline = "alphabetic"; x.fillText(s, x0, py);
+  LABELS.push(box);
+  return box;
+}
+
+// ---- orbit canvas transform: M at (OX, OY), scale px per M ----
+var OX = 520, OY = 280;
+function sc(){ return 470/S.view; }
+function P2(x, y){ var s = sc(); return [OX + x*s, OY - y*s]; }
+
+function drawPath(P, sign, tNow, color, lw, record){
+  var s = sc(), i, n = P.X.length, started = false;
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.beginPath();
+  var lastI = n - 1;
+  if(tNow !== null){ var pa = posAt(P, tNow); lastI = pa[3]; }
+  for(i = 0; i <= lastI; i++){
+    var q = P2(P.X[i], sign*P.Y[i]);
+    if(!started){ ctx.moveTo(q[0], q[1]); started = true; } else ctx.lineTo(q[0], q[1]);
+    if(record && q[0] > -50 && q[0] < CW + 50 && q[1] > -50 && q[1] < CH + 50 && i % 2 === 0) PATHPTS.push(q);
+  }
+  if(tNow !== null){ var pe = posAt(P, tNow), qe = P2(pe[0], sign*pe[1]); ctx.lineTo(qe[0], qe[1]); }
+  ctx.stroke();
+}
+
+function drawPhoton(x, y, color){
+  ctx.fillStyle = "rgba(15,110,147,0.18)";
+  ctx.beginPath(); ctx.arc(x, y, 11, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, 2*Math.PI); ctx.fill();
+}
+
+function scaleBar(){
+  var s = sc(), V = S.view, nice = [1, 2, 5, 10, 20, 50, 100, 200], L = 1, i;
+  for(i = 0; i < nice.length; i++) if(nice[i]*s <= 170) L = nice[i];
+  var x0 = CW - 34 - L*s, y0 = CH - 30;
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + L*s, y0);
+  ctx.moveTo(x0, y0 - 6); ctx.lineTo(x0, y0 + 6); ctx.moveTo(x0 + L*s, y0 - 6); ctx.lineTo(x0 + L*s, y0 + 6);
+  ctx.stroke();
+  mathLabel(ctx, "c", [[String(L), "n"], ["M", "i"]], x0 + L*s/2, y0 - 12, 18, COL.ink, "center");
+}
+
+var HANDLE = null;
+
+function drawOrbit(){
+  LABELS = []; PATHPTS = [];
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, CW, CH);
+  var s = sc();
+  // axis through M (dashed) and the undeflected line(s)
+  ctx.setLineDash([7, 6]); ctx.strokeStyle = COL.dim; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(0, OY); ctx.lineTo(CW, OY); ctx.stroke();
+  if(S.mode === "one"){
+    var yb = OY - S.b*s;
+    ctx.strokeStyle = COL.grey; ctx.globalAlpha = 0.55;
+    ctx.beginPath(); ctx.moveTo(0, yb); ctx.lineTo(CW, yb); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  ctx.setLineDash([]);
+  // photon sphere r = 3M and horizon r = 2M
+  var r3 = 3*s, r2 = Math.max(2*s, 2.5);
+  if(r3 > 7){
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = COL.brown; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.arc(OX, OY, r3, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(OX, OY, r2, 0, 2*Math.PI); ctx.fill();
+  scaleBar();
+  if(S.mode === "one") drawOne(); else drawFan();
+}
+
+function label3M(){
+  var s = sc(), r3 = 3*s;
+  if(r3 <= 40) return;
+  var spots = [[-1, 1], [1, 1], [-1, -1], [1, -1]], k;
+  for(k = 0; k < spots.length; k++){
+    var px = OX + spots[k][0]*(0.72*r3 + 8), py = OY + spots[k][1]*(0.72*r3 + 8) + (spots[k][1] > 0 ? 16 : -4);
+    var al = spots[k][0] < 0 ? "right" : "left";
+    var w = 62, bx = { x: al === "right" ? px - w : px, y: py - 16, w: w, h: 22 };
+    if(!hitsPath(bx) && !hitsLabels(bx)){
+      mathLabel(ctx, "c", [["r", "i"], [" = 3", "n"], ["M", "i"]], px, py, 18, COL.brown, al, "rgba(255,255,255,0.85)");
+      return;
+    }
+  }
+}
+
+var DEFL = null;
+function drawOne(){
+  var s = sc(), P = S.path, yb = OY - S.b*s;
+  DEFL = null;
+  var show = S.revealed || S.playing || S.t > 0;
+  var col = (S.revealed && P.fate === "capture") ? COL.brown : COL.blue;   // no colour spoiler
+  if(show){
+    var tNow = S.revealed && !S.playing && S.t >= P.tEnd ? null : S.t;
+    drawPath(P, 1, tNow, col, 2.6, true);
+    var pe = tNow === null ? [P.X[P.X.length-1], P.Y[P.Y.length-1]] : posAt(P, S.t);
+    var q = P2(pe[0], pe[1]);
+    if(q[0] > -20 && q[0] < CW + 20 && q[1] > -20 && q[1] < CH + 20) drawPhoton(q[0], q[1], col);
+  }
+  // deflection annotation once revealed (escape only)
+  if(S.revealed && !S.playing && P.fate === "escape" && S.defl){
+    var d = S.defl.delta, th = Math.PI + d;
+    // outgoing direction drawn through M (as on the slides) when the angle is visible
+    var ra = null;
+    if(d*DEG > 3){
+      var L = 0.46*Math.min(CW, CH), r0 = Math.max(2*s, 2.5) + 2;
+      var rmin = S.defl.rmin;
+      ra = (rmin - 0.45 > 3.25) ? (rmin - 0.45)*s : 2.5*s;    // never on the path or the 3M circle
+      ra = Math.max(ra, 40);
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = COL.blued; ctx.lineWidth = 1.3; ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.moveTo(OX + r0*Math.cos(th), OY - r0*Math.sin(th));
+      ctx.lineTo(OX + L*Math.cos(th), OY - L*Math.sin(th)); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.setLineDash([]);
+      ctx.strokeStyle = COL.brown; ctx.lineWidth = 1.8; ctx.beginPath();
+      ctx.arc(OX, OY, ra, -Math.PI, -th, true); ctx.stroke();
+      var q, a;
+      for(q = 0; q <= 1; q += 0.02){
+        a = Math.PI + q*d; PATHPTS.push([OX + ra*Math.cos(a), OY - ra*Math.sin(a)]);
+        var rq = r0 + q*(L - r0); PATHPTS.push([OX + rq*Math.cos(th), OY - rq*Math.sin(th)]);
+      }
+    }
+    DEFL = [fmtAngle(d), ra, th];
+  }
+  label3M();
+  if(DEFL) placeDeflLabel(DEFL[0], DEFL[1], DEFL[2]);
+  // launch handle (drag to set b) on the incoming line, near the right edge
+  var hx = CW - 46, hy = yb;
+  HANDLE = { x: hx, y: hy };
+  if(hy > 10 && hy < CH - 10){
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = COL.blued; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(hx, hy, 10, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COL.blued; ctx.beginPath(); ctx.arc(hx, hy, 3.5, 0, 2*Math.PI); ctx.fill();
+    // b dimension arrow from the axis to the handle
+    var bx = CW - 80;
+    if(Math.abs(OY - hy) > 26){
+      ctx.strokeStyle = COL.blued; ctx.lineWidth = 1.5; ctx.beginPath();
+      ctx.moveTo(bx, OY - 4); ctx.lineTo(bx, hy + 4); ctx.stroke();
+      arrowHead(ctx, bx, hy + 2, -Math.PI/2, COL.blued); arrowHead(ctx, bx, OY - 2, Math.PI/2, COL.blued);
+      mathLabel(ctx, "o", [["b", "i"]], bx - 12, (OY + hy)/2 + 7, 21, COL.blued, "right", "rgba(255,255,255,0.9)");
+    }
+  }
+
+}
+
+function placeDeflLabel(lab, ra, th){
+  // candidate spots: just outside the deflection arc first, then the corners; take the
+  // first whose box avoids the path, the dashed reference lines and other labels
+  var cands = [], i, best = null, k;
+  if(ra !== null){
+    var mid = Math.PI + 0.5*(th - Math.PI);
+    var radii = [ra - 34, ra + 34, ra + 60, ra + 86, ra + 112], k2;
+    for(k2 = 0; k2 < radii.length; k2++){
+      var rr = radii[k2];
+      if(rr < 3*sc() + 16) continue;
+      cands.push([OX + rr*Math.cos(mid) - 10, OY - rr*Math.sin(mid) + 8]);
+    }
+  }
+  if(ra !== null){                                  // just beside the outgoing dashed line, below M
+    cands.push([OX + 95, OY + 0.8*ra + 24], [OX + 95, OY + ra + 40], [OX - 95, OY + ra + 46]);
+  }
+  cands = cands.concat([[150, 44], [150, CH - 40], [380, 44], [380, CH - 40], [150, OY + 60]]);
+  var yb = OY - S.b*sc();
+  for(i = 0; i < cands.length; i++){
+    var bw = 66 + 11.5*lab.length + 12;              // label width at 21 px, plus margin
+    var bx = { x: cands[i][0] - bw/2, y: cands[i][1] - 22, w: bw, h: 32 };
+    if(bx.x < 4 || bx.x + bx.w > CW - 4 || bx.y < 4 || bx.y + bx.h > CH - 4) continue;
+    var onLine = (OY > bx.y - 3 && OY < bx.y + bx.h + 3) || (yb > bx.y - 3 && yb < bx.y + bx.h + 3);
+    if(!hitsPath(bx) && !hitsLabels(bx) && !onLine){ best = cands[i]; break; }
+  }
+  if(!best) best = cands[cands.length - 1];
+  mathLabel(ctx, "o", [["δ", "i"], ["φ", "i"], ["def", "nsub"], [" = " + lab, "n"]],
+            best[0], best[1], 21, COL.brown, "center", "rgba(255,255,255,0.92)");
+}
+function hitsPath(bx){
+  for(var i = 0; i < PATHPTS.length; i++){
+    var p = PATHPTS[i];
+    if(p[0] > bx.x && p[0] < bx.x + bx.w && p[1] > bx.y && p[1] < bx.y + bx.h) return true;
+  }
+  return false;
+}
+function hitsLabels(bx){
+  for(var i = 0; i < LABELS.length; i++){
+    var a = LABELS[i];
+    if(a.x < bx.x + bx.w && bx.x < a.x + a.w && a.y < bx.y + bx.h && bx.y < a.y + a.h) return true;
+  }
+  return false;
+}
+
+function arrowHead(x, px, py, ang, color){
+  x.fillStyle = color; x.beginPath();
+  x.moveTo(px + 9*Math.cos(ang), py - 9*Math.sin(ang));
+  x.lineTo(px + 9*Math.cos(ang + 2.6), py - 9*Math.sin(ang + 2.6));
+  x.lineTo(px + 9*Math.cos(ang - 2.6), py - 9*Math.sin(ang - 2.6));
+  x.closePath(); x.fill();
+}
+
+function drawFan(){
+  var i, nCap = 0, t = S.t, done = !S.playing && t >= S.tFanEnd;
+  for(i = 0; i < S.fan.length; i++){
+    var P = S.fan[i], col = P.fate === "capture" ? COL.brown : COL.blue;
+    if(P.fate === "capture") nCap++;
+    drawPath(P, P.sign, done ? null : t, col, 1.9, false);
+    if(!done && t > 0){
+      var pe = posAt(P, t), q = P2(pe[0], P.sign*pe[1]);
+      if(q[0] > -10 && q[0] < CW + 10 && q[1] > -10 && q[1] < CH + 10 && pe[2] < U_STOP*0.999){
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q[0], q[1], 4.5, 0, 2*Math.PI); ctx.fill();
+      }
+    }
+  }
+  // legend
+  var y = 36;
+  ctx.strokeStyle = COL.blue; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(30, y - 6); ctx.lineTo(60, y - 6); ctx.stroke();
+  textLabel(ctx, "o", "escapes", 68, y, 18, COL.ink, "left");
+  ctx.strokeStyle = COL.brown; ctx.beginPath(); ctx.moveTo(30, y + 22); ctx.lineTo(60, y + 22); ctx.stroke();
+  textLabel(ctx, "o", "captured", 68, y + 28, 18, COL.ink, "left");
+  document.getElementById("fanVerdict").classList.toggle("hidden", !done);
+  document.getElementById("fn").textContent = S.fan.length;
+  document.getElementById("fc").textContent = nCap;
+}
+
+// ---- W_eff canvas ----
+var WX0 = 70, WX1 = 1030, WY0 = 206, WY1 = 22, RMAXW = 16, YMIN = -0.012, YMAX = 0.05;
+function wx(r){ return WX0 + r/RMAXW*(WX1 - WX0); }
+function wy(v){ return WY0 + (v - YMIN)/(YMAX - YMIN)*(WY1 - WY0); }
+var LEVEL = null;
+
+function drawW(){
+  wtx.clearRect(0, 0, WW, WH);
+  wtx.fillStyle = "#fff"; wtx.fillRect(0, 0, WW, WH);
+  // axes
+  wtx.strokeStyle = COL.ink; wtx.lineWidth = 1.4; wtx.beginPath();
+  wtx.moveTo(wx(0), wy(YMIN)); wtx.lineTo(wx(0), wy(YMAX) - 4);
+  wtx.moveTo(wx(0), wy(0)); wtx.lineTo(WX1 + 14, wy(0)); wtx.stroke();
+  arrowHead(wtx, wx(0), wy(YMAX) - 6, Math.PI/2, COL.ink);
+  arrowHead(wtx, WX1 + 16, wy(0), 0, COL.ink);
+  // ticks at 3M, 6M, 10M, 15M (none at 2M, where the curve crosses the axis)
+  var ticks = [3, 6, 10, 15], i;
+  wtx.lineWidth = 1.2;
+  for(i = 0; i < ticks.length; i++){
+    wtx.beginPath(); wtx.moveTo(wx(ticks[i]), wy(0) - 5); wtx.lineTo(wx(ticks[i]), wy(0) + 5); wtx.stroke();
+    mathLabel(wtx, "w", [[String(ticks[i]), "n"], ["M", "i"]], wx(ticks[i]), wy(0) + 24, 17, COL.grey, "center",
+              "rgba(255,255,255,0.9)");
+  }
+  // curve
+  wtx.strokeStyle = COL.ink; wtx.lineWidth = 2.2; wtx.beginPath();
+  var first = true;
+  for(var r = 1.88; r <= RMAXW; r += 0.02){
+    var v = (1 - 2/r)/(r*r), X = wx(r), Y = wy(v);
+    if(first){ wtx.moveTo(X, Y); first = false; } else wtx.lineTo(X, Y);
+  }
+  wtx.stroke();
+  // labels
+  mathLabel(wtx, "w", [["W", "i"], ["eff", "nsub"]], wx(0) - 10, wy(YMAX) + 12, 19, COL.ink, "right");
+  mathLabel(wtx, "w", [["r", "i"]], WX1 + 26, wy(0) + 6, 19, COL.ink, "left");
+  // level line(s) first, labels on top (with background boxes)
+  var peakLabel = function(){
+    wtx.fillStyle = COL.ink; wtx.beginPath(); wtx.arc(wx(3), wy(1/27), 4.5, 0, 2*Math.PI); wtx.fill();
+    mathLabel(wtx, "w", [["1/27", "n"], ["M", "i"], ["2", "nsup"]], wx(3) - 10, wy(1/27) - 8, 17, COL.ink, "right",
+              "rgba(255,255,255,0.92)");
+  };
+  if(S.mode === "one"){
+    var lev = 1/(S.b*S.b), P = S.path, off = lev > YMAX;
+    var ly = off ? WY1 + 14 : wy(lev);
+    var rFrom = 0.4;
+    if(S.revealed && P.fate === "escape" && S.defl) rFrom = S.defl.rmin;
+    var rminOff = rFrom >= RMAXW;                // allowed region r >= r_min lies wholly off this plot
+    wtx.setLineDash([7, 5]); wtx.strokeStyle = COL.brown; wtx.lineWidth = 2;
+    if(!rminOff){ wtx.beginPath(); wtx.moveTo(wx(rFrom), ly); wtx.lineTo(WX1, ly); wtx.stroke(); }
+    wtx.setLineDash([]);
+    if(S.revealed && P.fate === "escape" && S.defl && S.defl.rmin < RMAXW){
+      wtx.setLineDash([3, 3]); wtx.strokeStyle = COL.grey; wtx.lineWidth = 1.2;
+      wtx.beginPath(); wtx.moveTo(wx(S.defl.rmin), wy(0)); wtx.lineTo(wx(S.defl.rmin), ly); wtx.stroke();
+      wtx.setLineDash([]);
+    }
+    peakLabel();
+    var lsegs = [["1/", "n"], ["b", "i"], ["2", "nsup"]];
+    if(off) lsegs.push([" (off scale, above)", "n"]);
+    if(rminOff) lsegs.push([" (", "n"], ["r", "i"], ["min", "nsub"], [" = " + Math.round(rFrom) + " ", "n"], ["M", "i"],
+                           [", off scale)", "n"]);
+    var ytxt = (ly - 9 < WY1 + 4) ? ly + 22 : ly - 9;
+    // keep the label clear of the W_eff curve under it (the longer off-scale label starts near r = 12M)
+    var rLab = rminOff ? 10 : 14;
+    ytxt = Math.min(ytxt, wy((1 - 2/rLab)/(rLab*rLab)) - 9);
+    mathLabel(wtx, "w", lsegs, WX1 - 4, ytxt, 18, COL.brown, "right", "rgba(255,255,255,0.92)");
+    LEVEL = ly;
+    // photon's current r on the level line
+    if(S.playing || (S.t > 0 && S.t < P.tEnd)){
+      var pe = posAt(P, S.t), rr = 1/pe[2];
+      if(rr <= RMAXW){
+        wtx.fillStyle = (S.revealed && P.fate === "capture") ? COL.brown : COL.blue;
+        wtx.beginPath(); wtx.arc(wx(rr), ly, 6, 0, 2*Math.PI); wtx.fill();
+      }
+    }
+  } else {
+    var lc = wy(1/27);
+    wtx.setLineDash([7, 5]); wtx.strokeStyle = COL.brown; wtx.lineWidth = 1.6;
+    wtx.beginPath(); wtx.moveTo(wx(3), lc); wtx.lineTo(WX1, lc); wtx.stroke(); wtx.setLineDash([]);
+    peakLabel();
+    mathLabel(wtx, "w", [["critical: ", "n"], ["b", "i"], ["2", "nsup"], [" = 27", "n"], ["M", "i"], ["2", "nsup"]],
+              WX1 - 4, lc - 9, 17, COL.brown, "right", "rgba(255,255,255,0.92)");
+    LEVEL = null;
+  }
+}
+
+// =====================================================================================
+// Readouts
+// =====================================================================================
+function fmtB(b){ return b < 10 ? b.toFixed(3) : (b < 100 ? b.toFixed(2) : b.toFixed(1)); }
+function fmtAngle(d){
+  var deg = d*DEG;
+  if(deg >= 10) return deg.toFixed(1) + "°";
+  if(deg >= 0.1) return deg.toFixed(deg >= 1 ? 2 : 3) + "°";
+  return (d*ASEC).toFixed(d*ASEC < 100 ? 1 : 0) + "″";
+}
+function sci(x){
+  if(x === 0) return "0";
+  var e = Math.floor(Math.log10(Math.abs(x))), m = x/Math.pow(10, e);
+  return m.toFixed(1) + "×10<sup>" + e + "</sup>";
+}
+function setHTML(id, s){ document.getElementById(id).innerHTML = s; }
+
+function readouts(){
+  setHTML("vb", fmtB(S.b) + " <i>M</i>");
+  var bn = document.getElementById("bn");
+  if(document.activeElement !== bn) bn.value = S.b.toFixed(2);
+  var spd = speedM();
+  setHTML("vsp", spd.toFixed(spd < 10 ? 1 : 0) + " <i>M</i> of <i>t</i>/s");
+  setHTML("tps", spd.toFixed(spd < 10 ? 1 : 0));
+  if(S.mode !== "one") return;
+  var lev = 1/(S.b*S.b), top = 1/27;
+  setHTML("vlev", S.revealed ? ((lev < top ? "below" : (lev > top ? "above" : "at")) + " <span class='gloss'>(" +
+          (lev*27).toFixed(3) + "&times;)</span>") : "?");
+  setHTML("v4", fmtAngle(4/S.b));
+  setHTML("v2", fmtAngle(2/S.b));
+  var P = S.path, D = S.defl, rv = S.revealed;
+  if(!rv){
+    ["vout", "vrmin", "vsw", "vdef", "vrat", "vchk"].forEach(function(id){ setHTML(id, "?"); });
+    return;
+  }
+  setHTML("vout", P.fate === "capture" ? "captured" : (P.fate === "escape" ? "escapes" : "circling"));
+  if(P.fate === "escape" && D){
+    setHTML("vrmin", D.rmin.toFixed(3) + " <i>M</i>");
+    var sw = D.swept*DEG;
+    setHTML("vsw", sw.toFixed(1) + "° <span class='gloss'>(" + (sw/360).toFixed(2) + " turns)</span>");
+    setHTML("vdef", fmtAngle(D.delta));
+    setHTML("vrat", (D.delta/(4/S.b)).toFixed(4));
+  } else {
+    setHTML("vrmin", "&lt; 2.02 <i>M</i>");
+    setHTML("vsw", ((P.phiEnd)*DEG).toFixed(1) + "° <span class='gloss'>to 2.02<i>M</i></span>");
+    setHTML("vdef", "&ndash;"); setHTML("vrat", "&ndash;");
+  }
+  setHTML("vchk", sci(P.res));
+}
+
+function verdict(){
+  var el = document.getElementById("verdict"), ask = document.getElementById("ask");
+  if(S.mode !== "one") return;
+  if(!S.revealed){ el.classList.add("hidden"); return; }
+  var P = S.path, lev = 1/(S.b*S.b);
+  var s;
+  if(P.fate === "capture"){
+    s = "<b>Captured.</b> 1/<i>b</i><sup>2</sup> = " + lev.toFixed(4) + "/<i>M</i><sup>2</sup> clears the barrier top " +
+        "1/27<i>M</i><sup>2</sup> = 0.0370/<i>M</i><sup>2</sup>, so nothing turns the photon round.";
+  } else {
+    var D = S.defl;
+    s = "<b>Escapes.</b> The 1/<i>b</i><sup>2</sup> line meets the barrier at <i>r</i><sub>min</sub> = " + D.rmin.toFixed(2) +
+        "<i>M</i>. Deflection " + fmtAngle(D.delta) + "; the lecture&rsquo;s 4<i>M</i>/<i>b</i> gives " + fmtAngle(4/S.b) +
+        (S.b < 30 ? " &mdash; first order in <i>M</i>/<i>b</i> is not accurate this close." : ".");
+  }
+  el.innerHTML = s; el.classList.remove("hidden");
+}
+
+// =====================================================================================
+// Animation
+// =====================================================================================
+function speedM(){
+  var base = (S.mode === "one") ? (2*Math.max(launchR(), 2.2*S.b))/7 : (2.6*S.view)/6;
+  return base*S.speedMul;
+}
+function tEnd(){ return S.mode === "one" ? S.path.tEnd : S.tFanEnd; }
+var last = null, raf = null;
+function frame(ts){
+  if(!S.playing){ raf = null; last = null; return; }
+  if(last === null) last = ts;
+  var dt = Math.min((ts - last)/1000, 0.05); last = ts;
+  S.t += dt*speedM();
+  if(S.t >= tEnd()){ S.t = tEnd(); S.playing = false; S.revealed = true; }
+  draw();
+  if(S.playing) raf = requestAnimationFrame(frame); else { raf = null; last = null; }
+}
+function play(){
+  if(S.t >= tEnd()) S.t = 0;
+  if(reduced){ S.t = tEnd(); S.playing = false; S.revealed = true; draw(); return; }
+  S.playing = true;
+  if(!raf){ last = null; raf = requestAnimationFrame(frame); }
+  draw();
+}
+function pause(){ S.playing = false; draw(); }
+
+function draw(){
+  drawOrbit(); drawW(); readouts(); verdict();
+  document.getElementById("go").textContent = S.playing ? "Pause" : (S.t > 0 && S.t < tEnd() ? "Resume" : "Launch");
+}
+
+// =====================================================================================
+// Controls
+// =====================================================================================
+var bs = document.getElementById("bs"), bn = document.getElementById("bn"), sp = document.getElementById("sp");
+function bToS(b){ return Math.round(1000*Math.log(b/BMIN)/Math.log(BMAX/BMIN)); }
+function sToB(v){ return BMIN*Math.pow(BMAX/BMIN, v/1000); }
+function setB(b, fromSlider){
+  b = Math.min(Math.max(b, BMIN), BMAX);
+  S.b = b; S.playing = false; S.t = 0; S.revealed = false;
+  if(!fromSlider) bs.value = bToS(b);
+  recompute(); draw();
+}
+bs.addEventListener("input", function(){ setB(sToB(+bs.value), true); });
+bn.addEventListener("change", function(){ var v = parseFloat(bn.value); if(isFinite(v)) setB(v, false); });
+sp.addEventListener("input", function(){ S.speedMul = Math.pow(4, (+sp.value - 500)/500); readouts(); });
+document.getElementById("go").addEventListener("click", function(){ if(S.playing) pause(); else play(); });
+document.getElementById("rs").addEventListener("click", function(){
+  S.playing = false; S.t = 0; draw();
+});
+function setMode(m){
+  S.mode = m; S.playing = false; S.t = 0;
+  document.getElementById("tabOne").classList.toggle("active", m === "one");
+  document.getElementById("tabFan").classList.toggle("active", m === "fan");
+  document.getElementById("tabOne").setAttribute("aria-selected", m === "one");
+  document.getElementById("tabFan").setAttribute("aria-selected", m === "fan");
+  document.getElementById("panOne").style.display = m === "one" ? "" : "none";
+  document.getElementById("panAsk").style.display = m === "one" ? "" : "none";
+  document.getElementById("panFan").style.display = m === "fan" ? "" : "none";
+  document.getElementById("panFanAsk").style.display = m === "fan" ? "" : "none";
+  bs.disabled = bn.disabled = (m === "fan");
+  if(m === "fan"){ S.revealed = true; }
+  recompute();
+  if(m === "fan") S.t = 0.45*S.tFanEnd;          // load mid-flight: the wavefront is visible
+  draw();
+}
+document.getElementById("tabOne").addEventListener("click", function(){ setMode("one"); });
+document.getElementById("tabFan").addEventListener("click", function(){ setMode("fan"); });
+
+// ---- direct manipulation: drag the launch handle, or the 1/b^2 line ----
+function logical(c, e, W, H){
+  var r = c.getBoundingClientRect();
+  return [(e.clientX - r.left)*W/r.width, (e.clientY - r.top)*H/r.height];
+}
+var drag = null;
+cv.addEventListener("pointerdown", function(e){
+  if(S.mode !== "one" || !HANDLE) return;
+  var p = logical(cv, e, CW, CH);
+  if(Math.hypot(p[0] - HANDLE.x, p[1] - HANDLE.y) < 22){ drag = "h"; cv.setPointerCapture(e.pointerId); }
+});
+cv.addEventListener("pointermove", function(e){
+  var p = logical(cv, e, CW, CH);
+  if(drag === "h"){
+    // keep the scale fixed while dragging so the handle tracks the pointer;
+    // the view is refitted to the new b when the drag ends
+    var b = (OY - p[1])/sc();
+    S.b = Math.min(Math.max(b, BMIN), Math.min(BMAX, (OY - 14)/sc()));
+    S.playing = false; S.t = 0; S.revealed = false; bs.value = bToS(S.b);
+    var V = S.view; S.path = trace(S.b, Math.max(launchR(), 2.2*S.b)); S.defl = deflection(S.b); S.view = V;
+    draw();
+  } else if(S.mode === "one" && HANDLE){
+    cv.style.cursor = Math.hypot(p[0] - HANDLE.x, p[1] - HANDLE.y) < 22 ? "grab" : "default";
+  }
+});
+function endDrag(){ if(drag){ drag = null; setB(S.b, false); } }
+cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+cw.addEventListener("pointerdown", function(e){
+  if(S.mode !== "one" || LEVEL === null) return;
+  var p = logical(cw, e, WW, WH);
+  if(Math.abs(p[1] - LEVEL) < 12){ drag = "w"; cw.setPointerCapture(e.pointerId); }
+});
+cw.addEventListener("pointermove", function(e){
+  var p = logical(cw, e, WW, WH);
+  if(drag === "w"){
+    var v = YMIN + (p[1] - WY0)/(WY1 - WY0)*(YMAX - YMIN);
+    v = Math.min(Math.max(v, 1/(BMAX*BMAX)), 1/(BMIN*BMIN));
+    setB(1/Math.sqrt(Math.max(v, 1e-6)), false);
+  } else if(S.mode === "one" && LEVEL !== null){
+    cw.style.cursor = Math.abs(p[1] - LEVEL) < 12 ? "grab" : "default";
+  }
+});
+cw.addEventListener("pointerup", function(){ drag = null; });
+cw.addEventListener("pointercancel", function(){ drag = null; });
+
+// ---- start: most informative state (a strongly bent, escaping photon, already run) ----
+bs.value = bToS(S.b);
+recompute();
+S.t = S.path.tEnd; S.revealed = true;
+draw();
+
+// test hook (used by the build's headless checks; harmless in the page)
+window.__L14 = { S: S, setB: setB, setMode: setMode, draw: draw, trace: trace, deflection: deflection,
+                 labels: function(){ return LABELS.slice(); }, pathPts: function(){ return PATHPTS.slice(); },
+                 play: play, frame: frame, tEnd: tEnd };
+})();
+</script>
+</body>
+</html>

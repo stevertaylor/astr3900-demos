@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 19: Flat or Curved? — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tab{padding:7px 14px;font:600 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab:hover{border-color:var(--blued)}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.tab.small{padding:5px 11px;font-size:12.5px}
+.tabsep{font-size:12.5px;color:var(--grey);margin-left:auto}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses the LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/520;cursor:grab}
+#p{aspect-ratio:1100/250}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:8px 13px;font-size:12px;line-height:1.5;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model sup,.model sub,table.read sup,table.read sub{line-height:0}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 7px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12.5px;color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.fine{font-size:11.5px;color:var(--grey);margin:2px 0 0}
+
+.btns{display:flex;gap:8px;margin-top:8px}
+.btn{flex:1;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn.pick{flex:1;padding:6px 6px;font-size:12.5px}
+.btn.pick.on{background:var(--brown);border-color:var(--brown);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.45;margin:0 0 6px}
+.verdict{font-size:12.5px;line-height:1.5;margin:8px 0 0;padding-top:8px;
+         border-top:1px solid var(--dim);color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.hidden{display:none}
+.key{display:inline-block;width:18px;height:0;border-top:3px solid;margin-right:6px;vertical-align:3px}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 19</div>
+    <h1>Flat or Curved?</h1>
+    <div class="sub">Launch two walkers side by side and parallel: &Gamma; at the launch point depends on the coordinates; whether they drift together does not.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-s="plane" role="tab">Plane</button>
+        <button class="tab" data-s="cyl" role="tab">Cylinder</button>
+        <button class="tab" data-s="sphere" role="tab">Sphere</button>
+        <button class="tab" data-s="saddle" role="tab">Saddle</button>
+        <span class="tabsep" id="coordWrap">coordinates&ensp;
+          <button class="tab small active" id="cCart">Cartesian</button>
+          <button class="tab small" id="cPol">polar</button>
+        </span>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="canvasWrap"><canvas id="p"></canvas></div>
+      <div class="model">
+        <b>Model:</b> geodesics of the surface, integrated in 3D (RK4, step 0.004<i>a</i>) as curves whose acceleration is
+        normal to the surface. B starts <i>&chi;</i><sub>0</sub> to A&rsquo;s left, its heading parallel-transported from A&rsquo;s.
+        <i>&chi;</i>(<i>s</i>): straight-line distance between the walkers at equal arc length <i>s</i>. Dashed: the deviation
+        equation on a surface, <i>&chi;</i>&Prime; = &minus;<i>K&chi;</i>, <i>K</i> = Gaussian curvature along A&rsquo;s path.
+        Drag to rotate; drag the dot or arrow tip to move the launch. 1&nbsp;s of animation = 0.4<i>a</i> of path.
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Launch</h2>
+        <div class="row"><label><span id="l1">&ndash;</span> <span class="v" id="v1">&ndash;</span></label>
+          <input type="range" id="s1" min="0" max="1000" value="500"></div>
+        <div class="row"><label><span id="l2">&ndash;</span> <span class="v" id="v2">&ndash;</span></label>
+          <input type="range" id="s2" min="0" max="1000" value="500"></div>
+        <div class="row"><label>heading <span class="gloss" id="lh"></span> <span class="v" id="vh">&ndash;</span></label>
+          <input type="range" id="sh" min="0" max="360" value="0"></div>
+        <div class="row"><label>separation <i>&chi;</i><sub>0</sub> <span class="v" id="vx">&ndash;</span></label>
+          <input type="range" id="sx" min="5" max="30" value="15"></div>
+        <div class="btns">
+          <button class="btn primary" id="run">Run</button>
+          <button class="btn" id="pause">Pause</button>
+          <button class="btn" id="reset">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>At the launch point</h2>
+        <table class="read">
+          <tr><td>coordinates</td><td class="n" id="rc">&ndash;</td></tr>
+          <tr><td>launch point</td><td class="n" id="rp">&ndash;</td></tr>
+        </table>
+        <div id="gam" style="margin-top:4px"></div>
+        <table class="read" style="margin-top:6px">
+          <tr><td>Gaussian curvature <i>K</i></td><td class="n" id="rk">?</td></tr>
+          <tr><td><i>&chi;</i>&Prime;/<i>&chi;</i> at launch, measured</td><td class="n" id="rm">?</td></tr>
+          <tr><td><i>&chi;</i>/<i>&chi;</i><sub>0</sub> now</td><td class="n" id="rn">&ndash;</td></tr>
+          <tr><td>check <span class="gloss">(|<i>v</i>| &minus; 1, off-surface)</span></td><td class="n" id="rchk">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <p class="ask">Predict first: do the walkers drift together, stay parallel, or drift apart?</p>
+        <div class="btns" style="margin-top:0">
+          <button class="btn pick" data-p="together">together</button>
+          <button class="btn pick" data-p="parallel">parallel</button>
+          <button class="btn pick" data-p="apart">apart</button>
+        </div>
+        <div class="verdict" id="verdict">Press <b>Run</b>. The verdict, <i>K</i> and the deviation-equation curve appear when the walk ends.</div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 19</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+// ---------------------------------------------------------------- palette
+const C = {bg:'#FBFBF8', ink:'#15243C', blue:'#0F6E93', blued:'#2E6DA4', brown:'#8A5A18',
+           grey:'#5A6B7B', dim:'#C4CBD8', panel:'#EDF1F6', faint:'#D9DEE7'};
+const DEG = Math.PI/180;
+
+// ---------------------------------------------------------------- vectors
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]], sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const mul=(a,k)=>[a[0]*k,a[1]*k,a[2]*k], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const norm=a=>Math.hypot(a[0],a[1],a[2]), unit=a=>mul(a,1/norm(a));
+
+// ---------------------------------------------------------------- surfaces (a = 1)
+// Each: grad F, quadratic form V.H.V of the implicit F, projection onto the
+// surface, unit normal, launch parametrization, chart, Christoffels, K.
+const S = {};
+S.plane = {
+  name:'plane', smax:3.4, box:2.0,
+  gradF:X=>[0,0,1], q:V=>0,
+  proj:X=>[X[0],X[1],0], normal:X=>[0,0,1],
+  inside:X=>Math.abs(X[0])<=2.0 && Math.abs(X[1])<=2.0,
+  p1:{label:'launch x', min:-1.6, max:1.6, def:-1.45, fmt:v=>v.toFixed(2)},
+  p2:{label:'launch y', min:-1.6, max:1.6, def:-0.85, fmt:v=>v.toFixed(2)},
+  hdef:28, hlabel:'(from +x)',
+  point:(p1,p2)=>[p1,p2,0],
+  basis:X=>[[1,0,0],[0,1,0]],
+  K:X=>0,
+  view:{yaw:-18, pitch:52, scale:118, cx:550, cy:300}
+};
+S.cyl = {
+  name:'cylinder', smax:6.0, zmax:1.65,
+  gradF:X=>[2*X[0],2*X[1],0], q:V=>2*(V[0]*V[0]+V[1]*V[1]),
+  proj:X=>{const r=Math.hypot(X[0],X[1]);return [X[0]/r,X[1]/r,X[2]];},
+  normal:X=>{const r=Math.hypot(X[0],X[1]);return [X[0]/r,X[1]/r,0];},
+  inside:X=>Math.abs(X[2])<=1.65,
+  p1:{label:'launch z', min:-1.4, max:1.4, def:-1.35, fmt:v=>v.toFixed(2)},
+  p2:{label:'launch φ', min:-180, max:180, def:-10, fmt:v=>v.toFixed(0)+'°'},
+  hdef:55, hlabel:'(from the axis)',
+  point:(p1,p2)=>[Math.cos(p2*DEG),Math.sin(p2*DEG),p1],
+  basis:X=>{const n=S.cyl.normal(X);return [[0,0,1],[-n[1],n[0],0]];},
+  K:X=>0,
+  view:{yaw:-28, pitch:16, scale:150, cx:550, cy:285}
+};
+S.sphere = {
+  name:'sphere', smax:Math.PI/2,
+  gradF:X=>mul(X,2), q:V=>2*dot(V,V),
+  proj:X=>unit(X), normal:X=>unit(X),
+  inside:X=>true,
+  p1:{label:'launch latitude', min:-70, max:70, def:0, fmt:v=>v.toFixed(0)+'°'},
+  p2:{label:'launch longitude', min:-180, max:180, def:0, fmt:v=>v.toFixed(0)+'°'},
+  hdef:0, hlabel:'(0 = north)',
+  point:(lat,lon)=>[Math.cos(lat*DEG)*Math.cos(lon*DEG),Math.cos(lat*DEG)*Math.sin(lon*DEG),Math.sin(lat*DEG)],
+  basis:X=>{ // north, east
+    const th=Math.acos(Math.max(-1,Math.min(1,X[2]))), ph=Math.atan2(X[1],X[0]);
+    return [[-Math.cos(th)*Math.cos(ph),-Math.cos(th)*Math.sin(ph),Math.sin(th)],[-Math.sin(ph),Math.cos(ph),0]];},
+  K:X=>1,
+  view:{yaw:62, pitch:22, scale:205, cx:550, cy:282}
+};
+S.saddle = {
+  name:'saddle', smax:3.2, box:1.7,
+  gradF:X=>[-X[0],X[1],1], q:V=>-V[0]*V[0]+V[1]*V[1],
+  proj:X=>[X[0],X[1],(X[0]*X[0]-X[1]*X[1])/2],
+  normal:X=>unit([-X[0],X[1],1]),
+  inside:X=>Math.abs(X[0])<=1.7 && Math.abs(X[1])<=1.7,
+  p1:{label:'launch x', min:-1.2, max:1.2, def:0.0, fmt:v=>v.toFixed(2)},
+  p2:{label:'launch y', min:-1.2, max:1.2, def:-1.2, fmt:v=>v.toFixed(2)},
+  hdef:90, hlabel:'(from the x line)',
+  point:(x,y)=>[x,y,(x*x-y*y)/2],
+  basis:X=>{const e1=unit([1,0,X[0]]);let e2=[0,1,-X[1]];e2=unit(sub(e2,mul(e1,dot(e2,e1))));return [e1,e2];},
+  K:X=>{const W=1+X[0]*X[0]+X[1]*X[1];return -1/(W*W);},
+  view:{yaw:28, pitch:30, scale:150, cx:550, cy:300}
+};
+
+// coordinates and Christoffel symbols at a point, in the surface's chart
+function chart(sname, X, polar){
+  if(sname==='plane' && !polar) return {name:'Cartesian (x, y)', pt:`(${X[0].toFixed(2)}, ${X[1].toFixed(2)})`, G:[]};
+  if(sname==='plane'){
+    const r=Math.hypot(X[0],X[1]), ph=Math.atan2(X[1],X[0]);
+    if(r<1e-3) return {name:'polar (r, φ)', pt:'origin', G:[], sing:true};
+    return {name:'polar (r, φ)', pt:`(${r.toFixed(2)}, ${(ph/DEG).toFixed(0)}°)`,
+            G:[['r','φφ',-r],['φ','rφ',1/r]]};
+  }
+  if(sname==='cyl'){
+    const ph=Math.atan2(X[1],X[0]);
+    return {name:'(z, φ)', pt:`(${X[2].toFixed(2)}, ${(ph/DEG).toFixed(0)}°)`, G:[]};
+  }
+  if(sname==='sphere'){
+    const th=Math.acos(Math.max(-1,Math.min(1,X[2]))), ph=Math.atan2(X[1],X[0]);
+    return {name:'(θ, φ)', pt:`(${(th/DEG).toFixed(0)}°, ${(ph/DEG).toFixed(0)}°)`,
+            G:[['θ','φφ',-Math.sin(th)*Math.cos(th)],['φ','θφ',Math.cos(th)/Math.sin(th)]]};
+  }
+  // saddle, graph coordinates: Gamma^k_ij = z_k z_ij / (1 + |grad z|^2)
+  const x=X[0], y=X[1], W=1+x*x+y*y;
+  return {name:'(x, y)', pt:`(${x.toFixed(2)}, ${y.toFixed(2)})`,
+          G:[['x','xx',x/W],['x','yy',-x/W],['y','xx',-y/W],['y','yy',y/W]]};
+}
+
+// ---------------------------------------------------------------- geodesics
+const H = 0.004;
+function accel(s, X, V){
+  const g = s.gradF(X); return mul(g, -s.q(V)/dot(g,g));
+}
+function step(s, X, V, h){
+  const H_=h||H;
+  const k1x=V, k1v=accel(s,X,V);
+  const X2=add(X,mul(k1x,H_/2)), V2=add(V,mul(k1v,H_/2)), k2x=V2, k2v=accel(s,X2,V2);
+  const X3=add(X,mul(k2x,H_/2)), V3=add(V,mul(k2v,H_/2)), k3x=V3, k3v=accel(s,X3,V3);
+  const X4=add(X,mul(k3x,H_)), V4=add(V,mul(k3v,H_)), k4x=V4, k4v=accel(s,X4,V4);
+  let Xn = add(X, mul(add(add(k1x,mul(k2x,2)),add(mul(k3x,2),k4x)), H_/6));
+  let Vn = add(V, mul(add(add(k1v,mul(k2v,2)),add(mul(k3v,2),k4v)), H_/6));
+  return [Xn, Vn];
+}
+function settle(s, X, V){            // keep on the surface, tangent, unit speed
+  const Xp = s.proj(X), N = s.normal(Xp);
+  const Vt = sub(V, mul(N, dot(V,N)));
+  return [Xp, unit(Vt)];
+}
+function launchState(st){
+  const s=S[st.surf], P=s.point(st.p1, st.p2);
+  const [e1,e2]=s.basis(P), N=s.normal(P);
+  const T = unit(add(mul(e1,Math.cos(st.h*DEG)), mul(e2,Math.sin(st.h*DEG))));
+  const L = unit(cross(N,T));               // A's left
+  return {P,T,L,N,e1,e2};
+}
+function walk(st){
+  const s=S[st.surf], L0=launchState(st);
+  const chi0 = st.x0;
+  // B: walk chi0 along the geodesic leaving P towards A's left, parallel-transporting T
+  let X=L0.P, V=L0.L, Wv=L0.T;
+  const nB=Math.round(chi0/H)*8;
+  for(let i=0;i<nB;i++){ [X,V]=step(s,X,V,H/8); [X,V]=settle(s,X,V); const N=s.normal(X);
+    Wv=unit(sub(Wv,mul(N,dot(Wv,N)))); }
+  const PB=X, TB=Wv;
+  let XA=L0.P, VA=L0.T, XB=PB, VB=TB;
+  const out={sA:[0], A:[XA], B:[XB], chi:[norm(sub(XA,XB))], j:[norm(sub(XA,XB))], chk:0, PB, TB};
+  let j=out.chi[0], jd=0, sNow=0;
+  const nmax=Math.floor(s.smax/H+1e-9);
+  for(let i=0;i<nmax;i++){
+    // deviation equation j'' = -K(A) j: exact step for K frozen at its mean over the step
+    const K1=s.K(XA);
+    [XA,VA]=step(s,XA,VA);
+    // integration check, taken BEFORE re-projection (after it, both are zero by construction)
+    out.chk=Math.max(out.chk, Math.abs(norm(VA)-1), norm(sub(s.proj(XA),XA)));
+    [XA,VA]=settle(s,XA,VA);
+    [XB,VB]=step(s,XB,VB); [XB,VB]=settle(s,XB,VB);
+    const K2=s.K(XA), Km=0.5*(K1+K2);
+    // exact step for constant Km
+    if(Math.abs(Km)<1e-12){ j=j+jd*H; }
+    else if(Km>0){ const w=Math.sqrt(Km), c=Math.cos(w*H), sn=Math.sin(w*H); const jn=j*c+jd*sn/w; jd=-j*w*sn+jd*c; j=jn; }
+    else { const w=Math.sqrt(-Km), c=Math.cosh(w*H), sn=Math.sinh(w*H); const jn=j*c+jd*sn/w; jd=j*w*sn+jd*c; j=jn; }
+    sNow+=H;
+    if(!s.inside(XA)||!s.inside(XB)) break;
+    out.sA.push(sNow); out.A.push(XA); out.B.push(XB); out.chi.push(norm(sub(XA,XB))); out.j.push(j);
+  }
+  // least squares chi ~ c0 + c2 s^2 + c3 s^3 over the first 0.15a (c1 = 0: parallel launch)
+  const M=[[0,0,0],[0,0,0],[0,0,0]], rhs=[0,0,0];
+  for(let i=0;i<out.sA.length && out.sA[i]<=0.15+1e-9;i++){const b=[1,out.sA[i]**2,out.sA[i]**3], v=out.chi[i];
+    for(let p=0;p<3;p++){rhs[p]+=b[p]*v; for(let q=0;q<3;q++) M[p][q]+=b[p]*b[q];}}
+  const det3=m=>m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+  const D=det3(M), col=(k)=>M.map((row,i)=>row.map((v,j)=>j===k?rhs[i]:v));
+  const c0=det3(col(0))/D, c2=det3(col(1))/D;
+  out.meas = 2*c2/c0;
+  out.K0 = s.K(L0.P);
+  out.end = out.chi[out.chi.length-1]/out.chi[0];
+  out.verdict = out.end<0.97?'together':(out.end>1.03?'apart':'parallel');
+  return out;
+}
+
+// ---------------------------------------------------------------- state
+const st = {surf:'plane', polar:false, p1:0, p2:0, h:0, x0:0.15,
+            yaw:0, pitch:0, run:null, sShow:0, playing:false, done:false, pick:null};
+const views = {};
+for(const k in S) views[k]=Object.assign({},S[k].view);
+
+// ---------------------------------------------------------------- canvases (logical size x dpr)
+function setup(cv, W, Hh){
+  const dpr=Math.min(window.devicePixelRatio||1,3);
+  cv.width=Math.round(W*dpr); cv.height=Math.round(Hh*dpr);
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {cv, ctx, W, H:Hh};
+}
+const cvA = setup(document.getElementById('c'), 1100, 520);
+const cvP = setup(document.getElementById('p'), 1100, 250);
+
+// projection
+function camera(){
+  const v=views[st.surf], y=v.yaw*DEG, p=v.pitch*DEG;
+  const d=[Math.cos(p)*Math.sin(y), -Math.cos(p)*Math.cos(y), Math.sin(p)];
+  const r=[Math.cos(y), Math.sin(y), 0];
+  const u=[-Math.sin(p)*Math.sin(y), Math.sin(p)*Math.cos(y), Math.cos(p)];
+  return {d,r,u,s:v.scale,cx:v.cx,cy:v.cy};
+}
+function scr(cam, X){ return [cam.cx+cam.s*dot(X,cam.r), cam.cy-cam.s*dot(X,cam.u)]; }
+function front(cam, X){
+  const s=S[st.surf];
+  if(st.surf==='sphere'||st.surf==='cyl') return dot(s.normal(X),cam.d) >= 0;
+  return true;
+}
+
+// ---------------------------------------------------------------- text helpers (no Unicode sub/superscripts)
+function label(ctx, x, y, parts, opt={}){
+  // parts: [{t, it, sub}] drawn left to right; italic Georgia for variables, sans for the rest
+  const fs=opt.fs||18; let w=0;
+  const meas=parts.map(p=>{ctx.font=(p.it?'italic ':'')+(p.sub?Math.round(fs*0.72):fs)+'px '+(p.it?'Georgia,serif':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif');
+    const m=ctx.measureText(p.t).width; w+=m; return m;});
+  let x0 = opt.align==='center'? x-w/2 : (opt.align==='right'? x-w : x);
+  const box=[x0-4, y-fs*0.85, w+8, fs*1.25];
+  if(window.__labelBoxes) window.__labelBoxes.push({cv:ctx===cvP.ctx?'P':'A', box});
+  if(window.__demoNoLabels) return box;
+  if(opt.bg){ ctx.fillStyle=opt.bg; ctx.fillRect(x0-4, y-fs*0.85, w+8, fs*1.25); }
+  ctx.fillStyle=opt.color||C.ink; ctx.textBaseline='alphabetic';
+  parts.forEach((p,i)=>{ctx.font=(p.it?'italic ':'')+(p.sub?Math.round(fs*0.72):fs)+'px '+(p.it?'Georgia,serif':'-apple-system,Segoe UI,Helvetica,Arial,sans-serif');
+    ctx.fillText(p.t, x0, y+(p.sub?fs*0.28:0)); x0+=meas[i];});
+  return [x0-w, y-fs*0.85, w, fs*1.25];
+}
+
+// ---------------------------------------------------------------- surface drawing
+function polyline(ctx, cam, pts, color, lw, dashBack){
+  // draws a 3D polyline; segments on the far side faint and dashed
+  for(let pass=0; pass<2; pass++){
+    ctx.beginPath(); let pen=false;
+    for(let i=0;i<pts.length;i++){
+      const vis=front(cam,pts[i]);
+      if(vis!==(pass===1)){ pen=false; continue; }
+      const q=scr(cam,pts[i]);
+      if(!pen){ctx.moveTo(q[0],q[1]); pen=true;} else ctx.lineTo(q[0],q[1]);
+    }
+    if(pass===0){ ctx.strokeStyle=color; ctx.globalAlpha=dashBack?0.28:1; ctx.setLineDash(dashBack?[4,5]:[]); }
+    else { ctx.strokeStyle=color; ctx.globalAlpha=1; ctx.setLineDash([]); }
+    ctx.lineWidth=lw; ctx.stroke(); ctx.globalAlpha=1; ctx.setLineDash([]);
+  }
+}
+function gridLines(){
+  const L=[], k=st.surf;
+  if(k==='plane'){
+    const b=2.0;
+    if(!st.polar){
+      for(let v=-b; v<=b+1e-9; v+=0.5){ L.push([[v,-b,0],[v,b,0]]); L.push([[-b,v,0],[b,v,0]]); }
+    } else {
+      L.push([[-b,-b,0],[b,-b,0],[b,b,0],[-b,b,0],[-b,-b,0]]);
+      for(let r=0.5;r<=2.0+1e-9;r+=0.5){const c=[];for(let t=0;t<=360;t+=4)c.push([r*Math.cos(t*DEG),r*Math.sin(t*DEG),0]);L.push(c);}
+      for(let t=0;t<360;t+=30){ // rays, clipped to the square
+        const ct=Math.cos(t*DEG), sn=Math.sin(t*DEG); const R=b/Math.max(Math.abs(ct),Math.abs(sn));
+        L.push([[0,0,0],[R*ct,R*sn,0]]);}
+    }
+  } else if(k==='cyl'){
+    for(let z=-1.6;z<=1.6+1e-9;z+=0.4){const c=[];for(let t=0;t<=360;t+=4)c.push([Math.cos(t*DEG),Math.sin(t*DEG),z]);L.push(c);}
+    for(let t=0;t<360;t+=30) L.push([[Math.cos(t*DEG),Math.sin(t*DEG),-1.6],[Math.cos(t*DEG),Math.sin(t*DEG),1.6]]);
+  } else if(k==='sphere'){
+    for(let lat=-75;lat<=75;lat+=15){const c=[];for(let t=0;t<=360;t+=4)c.push(S.sphere.point(lat,t));L.push(c);}
+    for(let t=0;t<180;t+=30){const c=[];for(let a=0;a<=360;a+=3)c.push([Math.cos(a*DEG)*Math.cos(t*DEG),Math.cos(a*DEG)*Math.sin(t*DEG),Math.sin(a*DEG)]);L.push(c);}
+  } else {
+    const b=1.6;
+    for(let v=-b; v<=b+1e-9; v+=0.4){ const c1=[],c2=[];
+      for(let w=-b; w<=b+1e-9; w+=0.05){ c1.push(S.saddle.point(v,w)); c2.push(S.saddle.point(w,v)); }
+      L.push(c1); L.push(c2); }
+  }
+  return L;
+}
+function drawScene(){
+  const {ctx,W,H:CH}=cvA, cam=camera(), s=S[st.surf];
+  ctx.clearRect(0,0,W,CH); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,CH);
+  if(st.surf==='sphere'){ ctx.beginPath(); ctx.arc(cam.cx,cam.cy,cam.s,0,2*Math.PI); ctx.fillStyle='#F6F8FB'; ctx.fill();
+    ctx.strokeStyle=C.grey; ctx.lineWidth=1.4; ctx.stroke(); }
+  for(const l of gridLines()) polyline(ctx, cam, l, '#B8C2D1', 1.1, true);
+  const L0=launchState(st);
+  // trails
+  if(st.run){
+    const n=Math.max(1,Math.min(st.run.sA.length, 1+Math.floor(st.sShow/H)));
+    polyline(ctx, cam, st.run.A.slice(0,n), C.brown, 3, true);
+    polyline(ctx, cam, st.run.B.slice(0,n), C.blue, 3, true);
+    const XA=st.run.A[n-1], XB=st.run.B[n-1], qa=scr(cam,XA), qb=scr(cam,XB);
+    ctx.strokeStyle=C.ink; ctx.lineWidth=1.3; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(qa[0],qa[1]); ctx.lineTo(qb[0],qb[1]); ctx.stroke(); ctx.setLineDash([]);
+    dotAt(ctx, qa, C.brown, 6.5, front(cam,XA)); dotAt(ctx, qb, C.blue, 6.5, front(cam,XB));
+  }
+  // launch arrow and handles
+  const P=L0.P, tip=add(P, mul(L0.T, 0.42)), qP=scr(cam,P), qT=scr(cam,tip);
+  const PB=st.run?st.run.PB:null;
+  drawArrow(ctx, qP, qT, C.ink, 2.4, front(cam,P));
+  if(PB){ const qB=scr(cam,PB), qBT=scr(cam, add(PB, mul(st.run.TB,0.42)));
+    drawArrow(ctx, qB, qBT, C.blue, 1.6, front(cam,PB)); }
+  dotAt(ctx, qP, C.ink, 7, front(cam,P));
+  ctx.beginPath(); ctx.arc(qT[0],qT[1],7,0,2*Math.PI); ctx.strokeStyle=C.ink; ctx.lineWidth=1.4; ctx.stroke();
+  hit.P=qP; hit.T=qT;
+  // corner key
+  label(ctx, 18, 34, [{t:'walker A'}], {fs:18, color:C.brown, bg:'#fff'});
+  label(ctx, 18, 60, [{t:'walker B'}], {fs:18, color:C.blue, bg:'#fff'});
+  const nm={plane:'flat plane',cyl:'cylinder of radius a',sphere:'sphere of radius a',saddle:'saddle surface'}[st.surf];
+  label(ctx, W-18, 34, [{t:nm}], {fs:18, color:C.grey, align:'right', bg:'#fff'});
+  if(st.surf==='plane') label(ctx, W-18, 60, [{t:st.polar?'grid: polar coordinate lines':'grid: Cartesian coordinate lines'}], {fs:17, color:C.grey, align:'right', bg:'#fff'});
+}
+const hit={P:null,T:null};
+function dotAt(ctx,q,col,r,vis){ ctx.beginPath(); ctx.arc(q[0],q[1],r,0,2*Math.PI); ctx.globalAlpha=vis?1:0.35; ctx.fillStyle=col; ctx.fill(); ctx.globalAlpha=1; }
+function drawArrow(ctx,a,b,col,lw,vis){
+  ctx.globalAlpha=vis?1:0.35; ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), hl=13;
+  ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(b[0]-hl*Math.cos(ang-0.38),b[1]-hl*Math.sin(ang-0.38));
+  ctx.lineTo(b[0]-hl*Math.cos(ang+0.38),b[1]-hl*Math.sin(ang+0.38)); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+}
+
+// ---------------------------------------------------------------- separation plot
+const PL = {x0:96, x1:1030, y0:204, y1:28, ymax:2.5};
+function drawPlot(){
+  const {ctx,W,H:CH}=cvP, s=S[st.surf];
+  ctx.clearRect(0,0,W,CH); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,CH);
+  const smax=s.smax, X=v=>PL.x0+(PL.x1-PL.x0)*v/smax, Y=v=>PL.y0+(PL.y1-PL.y0)*v/PL.ymax;
+  // axes and gridlines
+  ctx.strokeStyle='#E3E7EE'; ctx.lineWidth=1;
+  for(let g=0.5; g<=PL.ymax+1e-9; g+=0.5){ ctx.beginPath(); ctx.moveTo(PL.x0,Y(g)); ctx.lineTo(PL.x1,Y(g)); ctx.stroke(); }
+  ctx.strokeStyle=C.ink; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(PL.x0,PL.y1-6); ctx.lineTo(PL.x0,PL.y0); ctx.lineTo(PL.x1,PL.y0); ctx.stroke();
+  ctx.font='17px -apple-system,Segoe UI,Helvetica,Arial,sans-serif'; ctx.fillStyle=C.grey; ctx.textAlign='right';
+  for(let g=0; g<=PL.ymax+1e-9; g+=0.5) ctx.fillText(g.toFixed(1), PL.x0-10, Y(g)+5);
+  ctx.textAlign='center';
+  const tick = smax>4?1:0.5;
+  for(let g=0; g<=smax+1e-9; g+=tick) ctx.fillText(g.toFixed(1), X(g), PL.y0+22);
+  ctx.textAlign='left';
+  label(ctx, PL.x1+20, PL.y0+22, [{t:'s',it:true},{t:' / '},{t:'a',it:true}], {fs:18, color:C.grey});
+  label(ctx, 14, 22, [{t:'χ',it:true},{t:' / '},{t:'χ',it:true},{t:'0',sub:true}], {fs:18, color:C.grey});
+  // reference line chi = chi0
+  ctx.strokeStyle=C.dim; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(PL.x0,Y(1)); ctx.lineTo(PL.x1,Y(1)); ctx.stroke(); ctx.setLineDash([]);
+  if(!st.run) return;
+  const r=st.run, n=Math.max(1,Math.min(r.sA.length, 1+Math.floor(st.sShow/H)));
+  const curve=(arr,col,lw,dash)=>{ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.setLineDash(dash||[]); ctx.beginPath();
+    for(let i=0;i<n;i++){const y=Math.min(arr[i]/arr[0], PL.ymax); const px=X(r.sA[i]), py=Y(y); if(i)ctx.lineTo(px,py); else ctx.moveTo(px,py);} ctx.stroke(); ctx.setLineDash([]);};
+  curve(r.chi, C.ink, 2.6);
+  if(st.done) curve(r.j, C.blue, 2.4, [9,6]);
+  if(r.chi[n-1]/r.chi[0] > PL.ymax){ label(ctx, Math.min(X(r.sA[n-1]), PL.x1)-8, Y(PL.ymax)-9, [{t:'off scale \u2191'}], {fs:17, color:C.grey, align:'right', bg:'#fff'}); }
+  // legend (top right, on white)
+  const lx=PL.x0+26, ly=46;
+  ctx.strokeStyle=C.ink; ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(lx,ly-6); ctx.lineTo(lx+30,ly-6); ctx.stroke();
+  label(ctx, lx+38, ly, [{t:'measured: distance between walkers'}], {fs:17, color:C.ink, bg:'#fff'});
+  if(st.done){
+    ctx.strokeStyle=C.blue; ctx.lineWidth=2.4; ctx.setLineDash([9,6]); ctx.beginPath(); ctx.moveTo(lx,ly+21); ctx.lineTo(lx+30,ly+21); ctx.stroke(); ctx.setLineDash([]);
+    label(ctx, lx+38, ly+27, [{t:'deviation equation: '},{t:'χ',it:true},{t:'″ = −'},{t:'Kχ',it:true}], {fs:17, color:C.blue, bg:'#fff'});
+  }
+}
+
+// ---------------------------------------------------------------- readouts
+const $=id=>document.getElementById(id);
+function fmt(v){ return (v<0?'−':'')+Math.abs(v).toFixed(3); }
+function readouts(){
+  const L0=launchState(st), ch=chart(st.surf, L0.P, st.polar);
+  $('rc').textContent=ch.name; $('rp').textContent=ch.pt;
+  let html='<table class="read">';
+  if(ch.sing) html+='<tr><td>&Gamma; at the launch point</td><td class="n">undefined</td></tr><tr><td colspan="2" class="gloss">the polar chart is singular at <i>r</i> = 0 (&Gamma;<sup><i>&phi;</i></sup><sub><i>r&phi;</i></sub> = 1/<i>r</i>)</td></tr>';
+  else if(ch.G.length===0) html+='<tr><td>&Gamma; at the launch point</td><td class="n">all zero</td></tr>';
+  else { const nz=ch.G.filter(g=>Math.abs(g[2])>5e-4);
+    if(nz.length===0) html+='<tr><td>&Gamma; at the launch point</td><td class="n">all zero</td></tr>';
+    else { html+='<tr><td colspan="2" class="gloss">non-zero &Gamma; at the launch point (symmetric in the lower indices; all others zero)</td></tr>';
+      for(const g of nz) html+=`<tr><td>&Gamma;<sup><i>${g[0]}</i></sup><sub><i>${g[1]}</i></sub></td><td class="n">${fmt(g[2])}</td></tr>`; } }
+  $('gam').innerHTML=html+'</table>';
+  const r=st.run;
+  if(r && st.done){
+    $('rk').innerHTML=(r.K0===0?'0':fmt(r.K0))+' /<i>a</i><sup>2</sup>';
+    $('rm').innerHTML=fmt(r.meas)+' /<i>a</i><sup>2</sup>';
+  } else { $('rk').textContent='?'; $('rm').textContent='?'; }
+  if(r){ const n=Math.max(1,Math.min(r.sA.length, 1+Math.floor(st.sShow/H))); $('rn').textContent=(r.chi[n-1]/r.chi[0]).toFixed(3);
+         $('rchk').textContent=r.chk.toExponential(0); }
+  else { $('rn').textContent='–'; $('rchk').textContent='–'; }
+  // verdict
+  const v=$('verdict');
+  if(r && st.done){
+    const word={together:'drifted together',parallel:'stayed parallel',apart:'drifted apart'}[r.verdict];
+    let t=`<b>The walkers ${word}</b> (&chi;/&chi;<sub>0</sub> = ${r.end.toFixed(2)} after <i>s</i> = ${r.sA[r.sA.length-1].toFixed(2)}<i>a</i>). `;
+    t+= r.K0===0 && st.surf!=='saddle' ? 'K = 0: the surface is intrinsically flat' : (r.K0>0?'K &gt; 0: curved like a sphere':'K &lt; 0: curved like a saddle');
+    if(st.surf==='cyl') t+=', even though it looks curved from outside';
+    t+='. ';
+    const chL = chart(st.surf, launchState(st).P, st.polar), gz = !chL.sing && chL.G.every(g=>Math.abs(g[2])<=5e-4);
+    t+= chL.sing ? 'The polar chart is singular at the launch point, yet nothing physical happens there.' : gz ? 'Every &Gamma; is zero at the launch point here.' : 'The &Gamma; at the launch point are not zero here.';
+    if(st.pick) t+= `<br>You predicted <b>${st.pick}</b>.`;
+    v.innerHTML=t;
+  } else v.innerHTML='Press <b>Run</b>. The verdict, <i>K</i> and the deviation-equation curve appear when the walk ends.';
+}
+
+// ---------------------------------------------------------------- controls
+const sl={s1:$('s1'),s2:$('s2'),sh:$('sh'),sx:$('sx')};
+function toSlider(def,v){ return Math.round(1000*(v-def.min)/(def.max-def.min)); }
+function fromSlider(def,k){ return def.min+(def.max-def.min)*k/1000; }
+function syncLabels(){
+  const s=S[st.surf];
+  $('l1').textContent=s.p1.label; $('l2').textContent=s.p2.label; $('lh').textContent=s.hlabel;
+  $('v1').textContent=s.p1.fmt(st.p1); $('v2').textContent=s.p2.fmt(st.p2);
+  $('vh').textContent=Math.round(st.h)+'°'; $('vx').textContent=st.x0.toFixed(2)+'a';
+  sl.s1.value=toSlider(s.p1,st.p1); sl.s2.value=toSlider(s.p2,st.p2); sl.sh.value=Math.round(((st.h%360)+360)%360); sl.sx.value=Math.round(st.x0*100);
+  $('coordWrap').style.visibility = st.surf==='plane'?'visible':'hidden';
+  $('cCart').classList.toggle('active',!st.polar); $('cPol').classList.toggle('active',st.polar);
+  document.querySelectorAll('.tab[data-s]').forEach(b=>b.classList.toggle('active',b.dataset.s===st.surf));
+  document.querySelectorAll('.pick').forEach(b=>b.classList.toggle('on',b.dataset.p===st.pick));
+}
+function clearRun(){ st.run=null; st.sShow=0; st.done=false; stop(); }
+function redraw(){ drawScene(); drawPlot(); readouts(); syncLabels(); }
+function setSurface(k){
+  st.surf=k; const s=S[k]; st.p1=s.p1.def; st.p2=s.p2.def; st.h=s.hdef; st.pick=null; clearRun(); redraw();
+}
+document.querySelectorAll('.tab[data-s]').forEach(b=>b.addEventListener('click',()=>setSurface(b.dataset.s)));
+$('cCart').addEventListener('click',()=>{st.polar=false; redraw();});   // coordinates only: the run is kept
+$('cPol').addEventListener('click',()=>{st.polar=true; redraw();});
+sl.s1.addEventListener('input',()=>{st.p1=fromSlider(S[st.surf].p1,+sl.s1.value); clearRun(); redraw();});
+sl.s2.addEventListener('input',()=>{st.p2=fromSlider(S[st.surf].p2,+sl.s2.value); clearRun(); redraw();});
+sl.sh.addEventListener('input',()=>{st.h=+sl.sh.value; clearRun(); redraw();});
+sl.sx.addEventListener('input',()=>{st.x0=+sl.sx.value/100; clearRun(); redraw();});
+document.querySelectorAll('.pick').forEach(b=>b.addEventListener('click',()=>{st.pick=b.dataset.p; redraw();}));
+
+// animation: one rAF loop, running only while playing
+const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SPEED=0.4; let raf=null, last=0;
+function frame(t){
+  const dt=Math.max(0,Math.min(0.05,(t-last)/1000)); last=t;
+  st.sShow+=SPEED*dt;
+  const smax=st.run.sA[st.run.sA.length-1];
+  if(st.sShow>=smax){ st.sShow=smax; st.done=true; st.playing=false; raf=null; setPauseLabel(); redraw(); return; }
+  drawScene(); drawPlot(); readouts();
+  raf=requestAnimationFrame(frame);
+}
+function setPauseLabel(){ $('pause').textContent = st.playing ? 'Pause' : 'Play'; }
+function play(){ if(!st.run||st.done) return; st.playing=true; setPauseLabel(); last=performance.now(); if(!raf) raf=requestAnimationFrame(frame); }
+function stop(){ st.playing=false; if(raf){cancelAnimationFrame(raf); raf=null;} setPauseLabel(); }
+$('run').addEventListener('click',()=>{ st.run=walk(st); st.sShow=0; st.done=false;
+  if(reduce){ st.sShow=st.run.sA[st.run.sA.length-1]; st.done=true; redraw(); } else { redraw(); play(); } });
+$('pause').addEventListener('click',()=>{ if(st.playing) stop(); else play(); });
+$('reset').addEventListener('click',()=>{ const k=st.surf; views[k]=Object.assign({},S[k].view); setSurface(k); });
+
+// direct manipulation on the 3D view
+const cv=cvA.cv; let drag=null;
+function mpos(e){ const b=cv.getBoundingClientRect(); return [(e.clientX-b.left)*cvA.W/b.width,(e.clientY-b.top)*cvA.H/b.height]; }
+cv.addEventListener('pointerdown',e=>{
+  const m=mpos(e);
+  if(hit.T && Math.hypot(m[0]-hit.T[0],m[1]-hit.T[1])<16) drag={k:'T'};
+  else if(hit.P && Math.hypot(m[0]-hit.P[0],m[1]-hit.P[1])<16) drag={k:'P'};
+  else drag={k:'V', m, yaw:views[st.surf].yaw, pitch:views[st.surf].pitch};
+  cv.setPointerCapture(e.pointerId); cv.style.cursor='grabbing';
+});
+cv.addEventListener('pointermove',e=>{
+  if(!drag) return; const m=mpos(e), cam=camera(), s=S[st.surf];
+  if(drag.k==='V'){ const v=views[st.surf]; v.yaw=drag.yaw+(m[0]-drag.m[0])*0.35; v.pitch=Math.max(-10,Math.min(85,drag.pitch+(m[1]-drag.m[1])*0.35)); drawScene(); return; }
+  if(drag.k==='T'){
+    const L0=launchState(st), qP=scr(cam,L0.P), mv=[m[0]-qP[0], m[1]-qP[1]]; let best=st.h, bd=-1e9;
+    for(let a=0;a<360;a+=1){ const T=add(mul(L0.e1,Math.cos(a*DEG)),mul(L0.e2,Math.sin(a*DEG)));
+      const q=scr(cam,add(L0.P,mul(T,0.4))), pv=[q[0]-qP[0],q[1]-qP[1]];
+      const c=(pv[0]*mv[0]+pv[1]*mv[1])/(Math.hypot(pv[0],pv[1])*Math.hypot(mv[0],mv[1])+1e-9);
+      if(c>bd){bd=c;best=a;} }
+    st.h=best; clearRun(); redraw(); return;
+  }
+  // move the launch point: nearest visible sample of the launch parameters
+  let best=null, bd=1e9;
+  for(let i=0;i<=40;i++) for(let j=0;j<=40;j++){
+    const p1=s.p1.min+(s.p1.max-s.p1.min)*i/40, p2=s.p2.min+(s.p2.max-s.p2.min)*j/40, X=s.point(p1,p2);
+    if(!front(cam,X)) continue; const q=scr(cam,X), d=Math.hypot(q[0]-m[0],q[1]-m[1]);
+    if(d<bd){bd=d;best=[p1,p2];} }
+  if(best){ st.p1=best[0]; st.p2=best[1]; clearRun(); redraw(); }
+});
+const endDrag=e=>{ if(drag){ drag=null; cv.style.cursor='grab'; redraw(); } };
+cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
+
+// ---------------------------------------------------------------- start: plane, run already finished
+setSurface('plane');
+st.run=walk(st); st.sShow=st.run.sA[st.run.sA.length-1]; st.done=true; redraw();
+
+// test hook (harmless in normal use)
+window.__demo = {st, S, walk, chart, launchState, redraw, setSurface, views,
+  runNow(){ st.run=walk(st); st.sShow=st.run.sA[st.run.sA.length-1]; st.done=true; redraw(); }};
+})();
+</script>
+</body>
+</html>

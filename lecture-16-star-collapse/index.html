@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 16: Watching a Star Collapse — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px}
+.tab{padding:7px 14px;font:600 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/960}
+
+aside{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:11px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 8px}
+.panel h2 select{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.row{margin:0 0 7px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 2px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0}
+select{font-size:12.5px;padding:2px 4px;border:1px solid var(--dim);border-radius:5px;color:var(--ink);background:#fff}
+
+.btns{display:flex;gap:8px;margin-top:6px}
+.btn{flex:1;padding:7px 10px;font-size:13.5px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn.primary{background:var(--blued);color:#fff}
+
+table.read{width:100%;border-collapse:collapse;font-size:12.8px}
+table.read td{padding:1.5px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.3px;white-space:nowrap}
+table.read sub,table.read sup,.model sub,.model sup,.ask sub,.ask sup{line-height:0}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:12.8px;line-height:1.45;margin:0 0 6px}
+.model{font-size:11.8px;line-height:1.5;color:var(--mute2)}
+.model b{color:var(--ink)}
+.hidden{display:none}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 16</div>
+    <h1>Watching a Star Collapse</h1>
+    <div class="sub">Ride the surface of a collapsing star through the horizon, or watch from far away as its light slows, reddens and fades.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tabOut" role="tab" aria-selected="true">Outside story: &#9313; watches</button>
+        <button class="tab" id="tabIn" role="tab" aria-selected="false">Inside story: &#9312; rides the surface</button>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Controls
+          <select id="mass" style="float:right;margin-top:-1px" aria-label="mass, for real units">
+            <option value="1">M = 1 M&#8857;</option>
+            <option value="10" selected>M = 10 M&#8857;</option>
+            <option value="4.3e6">Sgr A*, 4.3 million M&#8857;</option>
+          </select></h2>
+        <div class="row">
+          <label id="clkLab">&#9313;&rsquo;s clock <i>t</i><sub>R</sub> <span class="v" id="vclk">&ndash;</span></label>
+          <input type="range" id="clk" min="0" max="1000" step="1" value="0">
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="go">Play</button>
+          <button class="btn" id="rs">Reset</button>
+        </div>
+        <div class="row" style="margin-top:9px">
+          <label>pulse spacing on &#9312;&rsquo;s clock, &Delta;<i>&tau;</i> <span class="v" id="vdt">&ndash;</span></label>
+          <input type="range" id="dt" min="10" max="100" step="1" value="40">
+        </div>
+        <div class="row" style="margin:0">
+          <label>surface starts at <i>r</i><sub>0</sub> <span class="v" id="vr0">&ndash;</span></label>
+          <input type="range" id="r0" min="30" max="50" step="1" value="40">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 id="readH">What &#9313; receives now</h2>
+        <table class="read" id="tabReadOut">
+          <tr><td>light left the surface at <i>r</i><sub>E</sub></td><td class="n" id="vrE">&ndash;</td></tr>
+          <tr><td><i>r</i><sub>E</sub> &minus; 2<i>M</i></td><td class="n" id="vrE2">&ndash;</td></tr>
+          <tr><td>frequency <i>&nu;</i>/<i>&nu;</i><sub>*</sub> = 1 &minus; (2<i>M</i>/<i>r</i><sub>E</sub>)<sup>1/2</sup></td><td class="n" id="vnu">&ndash;</td></tr>
+          <tr><td>brightness, relative <span class="gloss">(&prop; <i>&nu;</i><sup>4</sup>)</span></td><td class="n" id="vbri">&ndash;</td></tr>
+          <tr><td>pulses received</td><td class="n" id="vrec">&ndash;</td></tr>
+          <tr><td>pulses that will ever arrive</td><td class="n" id="vtot">?</td></tr>
+          <tr><td>time per factor <i>e</i> in <i>&nu;</i>, now</td><td class="n" id="vefold">?</td></tr>
+        </table>
+        <table class="read hidden" id="tabReadIn">
+          <tr><td>&#9312;&rsquo;s radius <i>r</i></td><td class="n" id="viR">&ndash;</td></tr>
+          <tr><td>where &#9312; is</td><td class="n" id="viW">&ndash;</td></tr>
+          <tr><td>proper time left until <i>r</i> = 0</td><td class="n" id="viL">&ndash;</td></tr>
+          <tr><td>horizon to <i>r</i> = 0 on &#9312;&rsquo;s clock</td><td class="n" id="viH">&ndash;</td></tr>
+          <tr><td>pulses sent / able to escape</td><td class="n" id="viP">&ndash;</td></tr>
+        </table>
+        <table class="read" style="margin-top:5px;border-top:1px solid var(--dim)">
+          <tr><td>check on the surface <span class="gloss">(<i>U</i>&middot;<i>U</i>, should be &minus;1)</span></td><td class="n" id="vchk">&ndash;</td></tr>
+        </table>
+        <div id="panAskIn" class="hidden" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim)">
+          <p class="ask" style="margin:0"><b>Ask:</b> the brown pulses are sent outward from inside <i>r</i> = 2<i>M</i>. Why do they still
+          move to smaller <i>r</i>, and where do they end?</p>
+        </div>
+        <div id="panAsk" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--dim)">
+          <p class="ask"><b>Predict:</b> late on, how much of &#9313;&rsquo;s time does each further factor of <i>e</i> in redshift take? How many pulses will &#9313; ever receive?</p>
+          <div class="btns" style="margin-top:0"><button class="btn" id="rev">Reveal</button></div>
+        </div>
+      </div>
+
+      <div class="panel model">
+        <b>Model:</b> exact radial plunge of the surface (<i>e</i> = 1, <i>&ell;</i> = 0) and exact outgoing radial light rays,
+        Eddington&ndash;Finkelstein coordinates, equal <i>r</i> and <i>t&#771;</i> scales, <i>G</i> = <i>c</i> = 1, units of <i>M</i>.
+        &#9313; is drawn at <i>r</i> = 8<i>M</i>; <i>t</i><sub>R</sub> and <i>&nu;</i>/<i>&nu;</i><sub>*</sub> are for a distant static
+        observer (<i>t</i><sub>R</sub> = 0 at the first pulse). Star image: centre of the disk only, a 10&thinsp;000&nbsp;K blackbody
+        shifted by <i>&nu;</i>/<i>&nu;</i><sub>*</sub>, brightness &prop; (<i>&nu;</i>/<i>&nu;</i><sub>*</sub>)<sup>4</sup> shown on a
+        log scale (black at 10<sup>&minus;8</sup>); size not modelled. Playback: <span id="rate">&ndash;</span>.
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 16</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+// =====================================================================================
+// Physics, G = c = M = 1.  Surface: radial plunge with e = 1, l = 0.
+//   x = (r/2)^{1/2};  tau* - tau = (4/3) x^3;  v(r) = 2[x^2 - (2/3)x^3 - 2x + 2 ln(1+x)];  t~ = v - r
+// Outgoing radial light: v - 2 r*(r) = const,  r* = r + 2 ln|r/2 - 1|  (both sides of r = 2)
+// Retarded time of a ray leaving the surface at r > 2:  u = v - 2 r*;  far away t_R = u + const.
+// Frequency received far away from the surface at r_E:  nu/nu* = 1 - (2/r_E)^{1/2}  (exact, e = 1).
+// =====================================================================================
+function xr(r){ return Math.sqrt(r/2); }
+function vS(r){ var x = xr(r); return 2*(x*x - 2/3*x*x*x - 2*x + 2*Math.log(1 + x)); }
+function ttS(r){ return vS(r) - r; }
+function tauLeft(r){ var x = xr(r); return 4/3*x*x*x; }
+function rOfTauLeft(T){ return T <= 0 ? 0 : 2*Math.pow(3*T/4, 2/3); }
+function rstar(r){ return r + 2*Math.log(Math.abs(r/2 - 1)); }
+function Kray(rE){ return vS(rE) - 2*rstar(rE); }               // ray constant (= u outside)
+function ttRay(r, K){ return K + 2*rstar(r) - r; }               // t~ along that ray
+function qOf(rE){ return 1 - Math.sqrt(2/rE); }
+// same, written without cancellation for r_E -> 2: q = (r - 2)/(r + (2r)^{1/2}), from delta = r - 2
+function qOfDelta(d){ var r = 2 + d; return d/(r + Math.sqrt(2*r)); }
+// invert u(r) = vS(r) - 2 r*(r) on (2, r0]: u decreases monotonically with r
+function rOfU(u, r0){
+  var lo = 2, hi = r0, i;
+  if(u <= Kray(r0)) return r0;
+  // bracket from below: r - 2 ~ exp(-u/4) can be tiny; work in s = ln(r - 2)
+  var slo = Math.log(1e-300), shi = Math.log(r0 - 2);
+  for(i = 0; i < 200; i++){
+    var sm = 0.5*(slo + shi), rm = 2 + Math.exp(sm);
+    if(Kray(rm) > u) slo = sm; else shi = sm;
+  }
+  return 2 + Math.exp(0.5*(slo + shi));
+}
+// r_E - 2 itself (accurate even when r_E - 2 underflows relative to 2)
+function deltaOfU(u, r0){
+  if(u <= Kray(r0)) return r0 - 2;
+  var slo = Math.log(1e-300), shi = Math.log(r0 - 2), i;
+  for(i = 0; i < 200; i++){
+    var sm = 0.5*(slo + shi), d = Math.exp(sm), v = vS(2 + d) - 2*(2 + d + 2*Math.log(d/2));
+    if(v > u) slo = sm; else shi = sm;
+  }
+  return Math.exp(0.5*(slo + shi));
+}
+function qOfU(u, r0){ return qOfDelta(deltaOfU(u, r0)); }
+
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var TSUN_US = 4.925490947;               // GM_sun / c^3 in microseconds
+var R_OBS = 8;                           // where observer 2 is drawn
+var TRMAX = 48;                          // outside story runs to t_R = 48 M
+var S = { mode: "out", r0: 4, dtau: 0.40, mass: 10, tR: 0, tau: 0, playing: false, revealed: false };
+
+function fmtTime(m){                      // m in units of M -> physical string
+  var us = m*S.mass*TSUN_US;
+  if(Math.abs(us) < 1000) return us.toPrecision(3) + " μs";
+  if(Math.abs(us) < 1e6) return (us/1e3).toPrecision(3) + " ms";
+  if(Math.abs(us) < 6e7) return (us/1e6).toPrecision(3) + " s";
+  return (us/6e7).toPrecision(3) + " min";
+}
+function fmtM(m, d){ return m.toFixed(d === undefined ? 2 : d) + " M"; }
+
+// ---- derived quantities for the current set-up ----
+var D = {};
+function recompute(){
+  D.T0 = tauLeft(S.r0);                          // proper time from start to r = 0
+  D.tauH = D.T0 - tauLeft(2);                    // proper time at which r = 2M is crossed
+  D.u0 = Kray(S.r0);                             // retarded time of the first pulse
+  D.pulses = [];
+  var k;
+  for(k = 0; ; k++){
+    var tau = k*S.dtau;
+    if(tau >= D.T0 - 1e-9) break;
+    var rE = rOfTauLeft(D.T0 - tau);
+    var out = rE > 2;
+    var K = out ? Kray(rE) : vS(rE) - 2*(rE + 2*Math.log(1 - rE/2));
+    D.pulses.push({ tau: tau, rE: rE, ttE: ttS(rE), K: K, out: out,
+                    tR: out ? K - D.u0 : Infinity });
+  }
+  D.nOut = D.pulses.filter(function(p){ return p.out; }).length;
+  // late-time asymptote of ln(nu/nu*) = A - t_R/4
+  D.A = Math.log(qOfU(D.u0 + 200, S.r0)) + 200/4;
+}
+
+// =====================================================================================
+// Canvas (DPR-aware, logical 1100 x 960)
+// =====================================================================================
+var cv = document.getElementById("c");
+var CW = 1100, CH = 960;
+var ctx = cv.getContext("2d");
+(function(){
+  var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  cv.width = Math.round(CW*dpr); cv.height = Math.round(CH*dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+})();
+var COL = { ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B",
+            dim:"#C4CBD8", panel:"#EDF1F6", mute2:"#33465C", white:"#ffffff" };
+var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+var LABELS = [], PATHPTS = [];
+
+function mathLabel(segs, px, py, size, color, align, bg, region){
+  var i, w = 0, parts = [];
+  for(i = 0; i < segs.length; i++){
+    var s = segs[i][0], k = segs[i][1], small = /sub|sup/.test(k), fs = small ? 0.76*size : size;
+    var ital = (k === "i" || k === "sub" || k === "sup");
+    var font = (ital ? "italic " : "") + fs + "px " + (ital ? "Georgia,serif" : SANS);
+    ctx.font = font;
+    var mw = ctx.measureText(s).width;
+    var dy = k.indexOf("sub") >= 0 ? 0.28*size : (k.indexOf("sup") >= 0 ? -0.42*size : 0);
+    parts.push([s, font, mw, dy, k]);
+    w += mw + (ital && !small ? 0.04*size : 0);
+  }
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, r: region || "d" };
+  if(bg){ ctx.fillStyle = bg; ctx.fillRect(box.x, box.y, box.w, box.h); }
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic";
+  var cx = x0;
+  for(i = 0; i < parts.length; i++){
+    ctx.font = parts[i][1]; ctx.fillText(parts[i][0], cx, py + parts[i][3]);
+    cx += parts[i][2] + (/italic/.test(parts[i][1]) && !/sub|sup/.test(parts[i][4]) ? 0.04*size : 0);
+  }
+  LABELS.push(box);
+  return box;
+}
+function textLabel(s, px, py, size, color, align, bg, weight, region){
+  ctx.font = (weight || "") + " " + size + "px " + SANS;
+  var w = ctx.measureText(s).width;
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, r: region || "d" };
+  if(bg){ ctx.fillStyle = bg; ctx.fillRect(box.x, box.y, box.w, box.h); }
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.fillText(s, x0, py);
+  LABELS.push(box);
+  return box;
+}
+// italic t with a tilde drawn above it (no combining characters on canvas)
+function tTildeLabel(px, py, size, color){
+  ctx.font = "italic " + size + "px Georgia,serif";
+  var w = ctx.measureText("t").width;
+  ctx.fillStyle = color; ctx.fillText("t", px, py);
+  ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.beginPath();
+  var y0 = py - 0.86*size, x0 = px + 0.02*size, ww = w + 0.06*size, i;
+  for(i = 0; i <= 12; i++){
+    var xx = x0 + ww*i/12, yy = y0 - 0.06*size*Math.sin(2*Math.PI*i/12);
+    if(i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+  }
+  ctx.stroke();
+  var box = { x: px - 3, y: py - 1.0*size, w: w + 8, h: 1.2*size, r: "d" };
+  LABELS.push(box);
+  return box;
+}
+function circledNum(n, px, py, size, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath();
+  ctx.arc(px, py - 0.34*size, 0.62*size, 0, 2*Math.PI); ctx.stroke();
+  ctx.font = size + "px " + SANS; ctx.fillStyle = color; ctx.textAlign = "center";
+  ctx.fillText(String(n), px, py); ctx.textAlign = "left";
+  var box = { x: px - 0.7*size, y: py - 0.98*size, w: 1.4*size, h: 1.3*size, r: "d" };
+  LABELS.push(box);
+  return box;
+}
+function arrowHead(px, py, ang, color, size){
+  size = size || 11;
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(px - size*Math.cos(ang - 0.38), py - size*Math.sin(ang - 0.38));
+  ctx.lineTo(px - size*Math.cos(ang + 0.38), py - size*Math.sin(ang + 0.38));
+  ctx.closePath(); ctx.fill();
+}
+
+// ---- spacetime diagram frame (equal scales: SC px per M on both axes) ----
+var SC = 58, DX0 = 78, DY0 = 905, DTOP = 46;          // r = 0 at DX0; bottom t~ at DY0
+var RMAXD = 8.9;
+function TB(){ return ttS(S.r0) - 0.7; }               // t~ at the bottom of the frame
+function TTOP(){ return TB() + (DY0 - DTOP)/SC; }
+function PX(r){ return DX0 + r*SC; }
+function PY(tt){ return DY0 - (tt - TB())*SC; }
+
+function polyline(rs, ts, color, lw, dash, record){
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash || []);
+  ctx.beginPath();
+  var i, started = false;
+  for(i = 0; i < rs.length; i++){
+    var X = PX(rs[i]), Y = PY(ts[i]);
+    if(!started){ ctx.moveTo(X, Y); started = true; } else ctx.lineTo(X, Y);
+    if(record && i % 3 === 0) PATHPTS.push([X, Y]);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+}
+
+// a ray (outgoing family) from (rE, t~E) up to t~ = ttEnd (and at most to r_obs, or r = 0 inside)
+function rayPoints(p, ttEnd){
+  var rs = [], ts = [], n = 260, i;
+  if(p.out){
+    // sample in s = ln(r - 2) so the near-horizon climb is resolved
+    var s0 = Math.log(p.rE - 2), s1 = Math.log(R_OBS - 2);
+    for(i = 0; i <= n; i++){
+      var r = 2 + Math.exp(s0 + (s1 - s0)*i/n), t = ttRay(r, p.K);
+      if(t > ttEnd){
+        // bisect for the crossing point
+        var a = i === 0 ? s0 : s0 + (s1 - s0)*(i - 1)/n, b = s0 + (s1 - s0)*i/n, j;
+        for(j = 0; j < 40; j++){ var m = 0.5*(a + b); if(ttRay(2 + Math.exp(m), p.K) > ttEnd) b = m; else a = m; }
+        rs.push(2 + Math.exp(a)); ts.push(ttEnd);
+        return { rs: rs, ts: ts, done: false };
+      }
+      rs.push(r); ts.push(t);
+    }
+    return { rs: rs, ts: ts, done: true };
+  } else {
+    for(i = 0; i <= n; i++){
+      var rr = p.rE*(1 - i/n), tq = p.K + 2*(rr + 2*Math.log(1 - rr/2)) - rr;
+      if(tq > ttEnd){ rs.push(rr); ts.push(ttEnd); return { rs: rs, ts: ts, done: false }; }
+      rs.push(rr); ts.push(tq);
+    }
+    return { rs: rs, ts: ts, done: true };
+  }
+}
+
+function drawDiagram(){
+  var tb = TB(), tt = TTOP();
+  // panel background regions
+  // black-hole interior (shaded), star interior (hatched)
+  var i, n = 200;
+  ctx.fillStyle = COL.panel; ctx.beginPath();
+  ctx.moveTo(PX(0), PY(0));
+  for(i = 0; i <= n; i++){ var r = 2*i/n; ctx.lineTo(PX(r), PY(ttS(r))); }
+  ctx.lineTo(PX(2), PY(tt)); ctx.lineTo(PX(0), PY(tt)); ctx.closePath(); ctx.fill();
+  // star interior: hatch clipped to the region under the surface
+  ctx.save(); ctx.beginPath();
+  ctx.moveTo(PX(0), PY(tb));
+  var rStart = S.r0 + 0.0;
+  // surface below the start point: continue the plunge backwards to the frame bottom
+  var rb = rStart; while(ttS(rb) > tb && rb < 30) rb += 0.01;
+  ctx.lineTo(PX(rb), PY(tb));
+  for(i = 0; i <= n; i++){ var r2 = rb*(1 - i/n); ctx.lineTo(PX(r2), PY(ttS(r2))); }
+  ctx.closePath(); ctx.clip();
+  ctx.strokeStyle = COL.dim; ctx.lineWidth = 1;
+  for(i = -40; i < 60; i++){ ctx.beginPath(); ctx.moveTo(DX0 + i*16, DY0 + 10); ctx.lineTo(DX0 + i*16 + 900, DY0 - 890); ctx.stroke(); }
+  ctx.restore();
+  // axes
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(PX(0), PY(tb)); ctx.lineTo(PX(RMAXD + 0.25), PY(tb)); ctx.stroke();
+  arrowHead(PX(RMAXD + 0.35), PY(tb), 0, COL.ink, 13);
+  ctx.beginPath(); ctx.moveTo(PX(0), PY(tb)); ctx.lineTo(PX(0), DTOP - 10); ctx.stroke();
+  arrowHead(PX(0), DTOP - 18, -Math.PI/2, COL.ink, 13);
+  mathLabel([["r", "i"]], PX(RMAXD + 0.35) - 4, PY(tb) + 32, 21, COL.ink, "center");
+  tTildeLabel(PX(0) - 36, DTOP + 4, 22, COL.ink);
+  // r ticks
+  for(i = 2; i <= 8; i += 2){
+    ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(PX(i), PY(tb)); ctx.lineTo(PX(i), PY(tb) + 7); ctx.stroke();
+    mathLabel([[String(i), "n"], ["M", "i"]], PX(i), PY(tb) + 28, 17, COL.grey, "center");
+  }
+  // singularity (wavy) from t~ = 0 up
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath();
+  var y0 = PY(0), y1 = DTOP, k;
+  for(k = 0; k <= 200; k++){
+    var yy = y0 + (y1 - y0)*k/200, xx = PX(0) + 5*Math.sin(2*Math.PI*k/200*((y0 - y1)/26));
+    if(k === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+  }
+  ctx.stroke();
+  // horizon
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(PX(2), PY(ttS(2))); ctx.lineTo(PX(2), DTOP); ctx.stroke();
+  // observer 2
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(PX(R_OBS), PY(tb)); ctx.lineTo(PX(R_OBS), DTOP); ctx.stroke();
+  // surface world line
+  var rs = [], ts = [];
+  for(i = 0; i <= 300; i++){ var r3 = rb*(1 - i/300); rs.push(r3); ts.push(ttS(r3)); }
+  polyline(rs, ts, COL.ink, 3.2, null, true);
+  // fixed labels
+  textLabel("singularity", PX(0) + 12, DTOP + 22, 17, COL.mute2);
+  ctx.save(); ctx.translate(PX(2) - 9, PY(0.5*(ttS(2) + tt)) + 34); ctx.rotate(-Math.PI/2);
+  ctx.font = "17px " + SANS; ctx.fillStyle = COL.mute2; ctx.fillText("horizon", 0, 0); ctx.restore();
+  LABELS.push({ x: PX(2) - 24, y: PY(0.5*(ttS(2) + tt)) - 34, w: 18, h: 70, r: "d" });
+  textLabel("star", PX(0) + 12, PY(tb) - 12, 17, COL.grey, "left", "#ffffff");
+  circledNum(2, PX(R_OBS) + 22, PY(tb + 1.6), 17, COL.blue);
+  textLabel("far away", PX(R_OBS) + 8, DTOP + 22, 17, COL.mute2);
+}
+
+function drawOutside(){
+  var tt = TTOP(), i;
+  var uNow = D.u0 + S.tR;
+  // received pulses: complete rays
+  for(i = 0; i < D.pulses.length; i++){
+    var p = D.pulses[i];
+    if(!p.out || p.tR > S.tR) continue;
+    var R = rayPoints(p, tt);
+    polyline(R.rs, R.ts, COL.blue, 1.6, [6, 5], true);
+    ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(PX(p.rE), PY(p.ttE), 3.6, 0, 2*Math.PI); ctx.fill();
+    if(R.done){ ctx.beginPath(); ctx.arc(PX(R_OBS), PY(R.ts[R.ts.length - 1]), 3.6, 0, 2*Math.PI); ctx.fill(); }
+  }
+  // the light 2 receives now: the past light cone of 2's current event (an outgoing ray)
+  var rE = rOfU(uNow, S.r0);
+  var P = { out: true, rE: rE, ttE: ttS(rE), K: uNow };
+  var R2 = rayPoints(P, tt);
+  polyline(R2.rs, R2.ts, COL.brown, 2.6, null, true);
+  var j = R2.rs.length - 1;
+  if(R2.done){
+    ctx.fillStyle = COL.brown; ctx.beginPath(); ctx.arc(PX(R_OBS), PY(R2.ts[j]), 6, 0, 2*Math.PI); ctx.fill();
+  } else {
+    var a = Math.atan2(PY(R2.ts[j]) - PY(R2.ts[j - 1]), PX(R2.rs[j]) - PX(R2.rs[j - 1]));
+    arrowHead(PX(R2.rs[j]), PY(R2.ts[j]), a, COL.brown, 14);
+    // where 2 is now: off the top of the frame
+    arrowHead(PX(R_OBS), DTOP - 2, -Math.PI/2, COL.brown, 14);
+  }
+  ctx.strokeStyle = COL.brown; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.arc(PX(rE), PY(ttS(rE)), 8, 0, 2*Math.PI); ctx.stroke();
+  // label for the brown ray, placed in the clear band right of the horizon, low down
+
+}
+
+function drawInside(){
+  var T = Math.max(D.T0 - S.tau, 0), r = rOfTauLeft(T), ttNow = ttS(r), i;
+  if(S.tau >= D.T0) ttNow = 0;
+  var sent = 0;
+  for(i = 0; i < D.pulses.length; i++){
+    var p = D.pulses[i];
+    if(p.tau > S.tau + 1e-9) break;
+    sent++;
+    var R = rayPoints(p, ttNow);
+    polyline(R.rs, R.ts, p.out ? COL.blue : COL.brown, p.out ? 1.6 : 2.0, [6, 5], true);
+    ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(PX(p.rE), PY(p.ttE), 3.4, 0, 2*Math.PI); ctx.fill();
+    var k = R.rs.length - 1;
+    if(!R.done){                                   // photon in flight: draw its head
+      ctx.fillStyle = p.out ? COL.blue : COL.brown;
+      ctx.beginPath(); ctx.arc(PX(R.rs[k]), PY(R.ts[k]), 5, 0, 2*Math.PI); ctx.fill();
+    }
+  }
+  // observer 1 on the surface
+  ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(PX(r), PY(ttNow), 7, 0, 2*Math.PI); ctx.fill();
+  // label on the star side of the surface, perpendicular to it on the canvas
+  var h = 1e-3, rr = Math.max(r, 2e-3), dtt = (ttS(rr + h) - ttS(Math.max(rr - h, 1e-6)))/(rr + h - Math.max(rr - h, 1e-6));
+  var tx = 1, ty = -dtt, tn = Math.hypot(tx, ty), nx = -ty/tn, ny = tx/tn;
+  if(ny < 0){ nx = -nx; ny = -ny; }
+  circledNum(1, PX(r) + 30*nx, PY(ttNow) + 30*ny + 6, 17, COL.blue);
+  // the slice t~ = now (spacelike in these coordinates)
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
+  ctx.beginPath(); ctx.moveTo(PX(0), PY(ttNow)); ctx.lineTo(PX(R_OBS), PY(ttNow)); ctx.stroke(); ctx.setLineDash([]);
+}
+
+// ---- right-hand panel: the star as 2 sees it, and ln(nu/nu*) against t_R ----
+var GX0 = 690, GX1 = 1070, GY0 = 462, GY1 = 860, LMIN = -12;
+function gx(t){ return GX0 + t/TRMAX*(GX1 - GX0); }
+function gy(l){ return GY0 + (0 - l)/(0 - LMIN)*(GY1 - GY0); }
+
+// blackbody colour (approximation of the CIE colour of a Planck spectrum, 1000-40000 K)
+function bbRGB(T){
+  T = Math.max(1000, Math.min(40000, T))/100;
+  var r, g, b;
+  if(T <= 66){ r = 255; g = 99.4708025861*Math.log(T) - 161.1195681661;
+    b = T <= 19 ? 0 : 138.5177312231*Math.log(T - 10) - 305.0447927307; }
+  else { r = 329.698727446*Math.pow(T - 60, -0.1332047592); g = 288.1221695283*Math.pow(T - 60, -0.0755148492); b = 255; }
+  function cl(v){ return Math.max(0, Math.min(255, v)); }
+  return [cl(r), cl(g), cl(b)];
+}
+
+function drawObserverPanel(){
+  // frame
+  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = COL.dim; ctx.lineWidth = 1;
+  textLabel(S.mode === "out" ? "What ② sees" : "①’s own clock", 880, 64, 21, COL.ink, "center", null, "600", "p");
+  if(S.mode === "in"){ drawInsidePanel(); return; }
+  var q, tr;
+  if(S.mode === "out"){ tr = S.tR; q = qOfU(D.u0 + tr, S.r0); }
+  else { tr = null; q = null; }
+  // star disk
+  var cx = 880, cy = 205, R = 105;
+  ctx.fillStyle = "#0b0f1a"; ctx.fillRect(cx - 170, cy - 125, 340, 250);
+  if(q !== null && q > 0){
+    var c = bbRGB(10000*q), B = Math.pow(Math.max(q, 0), 4);
+    var gam = Math.max(0, Math.min(1, 1 + Math.log(B)/Math.LN10/8));     // log scale: black at 1e-8
+    var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, R*1.25);
+    var cc = "rgba(" + Math.round(c[0]*gam) + "," + Math.round(c[1]*gam) + "," + Math.round(c[2]*gam) + ",";
+    grd.addColorStop(0, cc + "1)"); grd.addColorStop(0.78, cc + "1)"); grd.addColorStop(1, cc + "0)");
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(cx, cy, R*1.25, 0, 2*Math.PI); ctx.fill();
+  }
+  // legend for the diagram
+  ctx.strokeStyle = COL.brown; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(712, 362); ctx.lineTo(752, 362); ctx.stroke();
+  textLabel("light ② receives now", 762, 368, 17, COL.brown, "left", null, "600", "p");
+  ctx.strokeStyle = COL.blue; ctx.lineWidth = 1.8; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(712, 392); ctx.lineTo(752, 392); ctx.stroke(); ctx.setLineDash([]);
+  textLabel("pulses already received", 762, 398, 17, COL.blue, "left", null, null, "p");
+  // plot
+  ctx.fillStyle = "#ffffff";
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(GX0, GY0 - 6); ctx.lineTo(GX0, GY1); ctx.lineTo(GX1 + 6, GY1); ctx.stroke();
+  var i;
+  for(i = 0; i >= LMIN; i -= 4){
+    ctx.strokeStyle = "#e3e8ef"; ctx.beginPath(); ctx.moveTo(GX0, gy(i)); ctx.lineTo(GX1, gy(i)); ctx.stroke();
+    ctx.strokeStyle = COL.grey; ctx.beginPath(); ctx.moveTo(GX0 - 6, gy(i)); ctx.lineTo(GX0, gy(i)); ctx.stroke();
+    textLabel(String(i).replace("-", "−"), GX0 - 10, gy(i) + 6, 17, COL.grey, "right", null, null, "p");
+  }
+  for(i = 0; i <= TRMAX; i += 12){
+    ctx.strokeStyle = COL.grey; ctx.beginPath(); ctx.moveTo(gx(i), GY1); ctx.lineTo(gx(i), GY1 + 6); ctx.stroke();
+    textLabel(String(i), gx(i), GY1 + 29, 17, COL.grey, "center", null, null, "p");
+  }
+  mathLabel([["t", "i"], ["R", "sub"], [" / ", "n"], ["M", "i"]], (GX0 + GX1)/2, GY1 + 60, 22, COL.ink, "center", null, "p");
+  mathLabel([["ln(", "n"], ["ν", "i"], ["/", "n"], ["ν", "i"], ["*", "sub"], [")", "n"]], GX0 + 8, GY0 - 18, 22, COL.ink, "left", null, "p");
+  // curve up to now (outside story) or the whole curve faintly (inside story)
+  var tEnd = S.mode === "out" ? S.tR : TRMAX, N = 300, first = true;
+  ctx.strokeStyle = S.mode === "out" ? COL.brown : "#d9c7ae"; ctx.lineWidth = 2.6; ctx.beginPath();
+  for(i = 0; i <= N; i++){
+    var t = tEnd*i/N, l = Math.log(qOfU(D.u0 + t, S.r0));
+    if(l < LMIN) break;
+    if(first){ ctx.moveTo(gx(t), gy(l)); first = false; } else ctx.lineTo(gx(t), gy(l));
+  }
+  ctx.stroke();
+  // received pulses as dots on the curve
+  for(i = 0; i < D.pulses.length; i++){
+    var p = D.pulses[i];
+    if(!p.out || (S.mode === "out" && p.tR > S.tR) || p.tR > TRMAX) continue;
+    var lp = Math.log(qOfDelta(p.rE - 2));
+    if(lp < LMIN) continue;
+    ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(gx(p.tR), gy(lp), 4, 0, 2*Math.PI); ctx.fill();
+  }
+  // revealed: the late-time asymptote, slope -1/4M
+  if(S.revealed){
+    ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.4; ctx.setLineDash([7, 6]); ctx.beginPath();
+    var ta = Math.max(0, (D.A - 0)*4), tb2 = Math.min(TRMAX, (D.A - LMIN)*4);
+    ctx.moveTo(gx(ta), gy(D.A - ta/4)); ctx.lineTo(gx(tb2), gy(D.A - tb2/4)); ctx.stroke(); ctx.setLineDash([]);
+    mathLabel([["slope −1/4", "n"], ["M", "i"]], gx(0.30*TRMAX), gy(LMIN*0.80), 18, COL.ink, "left", "#ffffff", "p");
+  }
+  if(S.mode === "out"){
+    ctx.fillStyle = COL.brown; ctx.beginPath();
+    var lq = Math.log(q);
+    if(lq >= LMIN){ ctx.arc(gx(S.tR), gy(lq), 5.5, 0, 2*Math.PI); ctx.fill(); }
+  }
+}
+
+
+function drawInsidePanel(){
+  var T = Math.max(D.T0 - S.tau, 0), r = rOfTauLeft(T);
+  textLabel("proper time left until r = 0", 880, 120, 17, COL.mute2, "center", null, null, "p");
+  textLabel(T.toFixed(3) + " M", 880, 172, 40, r > 2 ? COL.ink : COL.brown, "center", null, "600", "p");
+  textLabel("= " + fmtTime(T) + " for this mass", 880, 210, 17, COL.grey, "center", null, null, "p");
+  textLabel(r > 2 ? "outside the horizon" : (r > 0 ? "inside: no way out" : "reached the singularity"), 880, 262, 18,
+            r > 2 ? COL.blue : COL.brown, "center", null, "600", "p");
+  var X0 = 690, X1 = 1070, Y0 = 462, Y1 = 860, RM = Math.max(S.r0, 4) + 0.3;
+  function px(t){ return X0 + t/D.T0*(X1 - X0); }
+  function py(rr){ return Y1 - rr/RM*(Y1 - Y0); }
+  ctx.fillStyle = "rgba(138,90,24,0.12)"; ctx.fillRect(px(D.tauH), Y0, px(D.T0) - px(D.tauH), Y1 - Y0);
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(X0, Y0 - 6); ctx.lineTo(X0, Y1); ctx.lineTo(X1 + 6, Y1); ctx.stroke();
+  var i;
+  for(i = 0; i <= RM; i += 1){
+    ctx.strokeStyle = COL.grey; ctx.beginPath(); ctx.moveTo(X0 - 6, py(i)); ctx.lineTo(X0, py(i)); ctx.stroke();
+    textLabel(String(i), X0 - 10, py(i) + 6, 17, COL.grey, "right", null, null, "p");
+  }
+  for(i = 0; i <= D.T0 + 1e-9; i += 1){
+    ctx.strokeStyle = COL.grey; ctx.beginPath(); ctx.moveTo(px(i), Y1); ctx.lineTo(px(i), Y1 + 6); ctx.stroke();
+    textLabel(String(i), px(i), Y1 + 29, 17, COL.grey, "center", null, null, "p");
+  }
+  ctx.strokeStyle = COL.grey; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(X0, py(2)); ctx.lineTo(X1, py(2)); ctx.stroke();
+  ctx.setLineDash([]);
+  textLabel("horizon", X0 + 8, py(2) - 8, 17, COL.grey, "left", null, null, "p");
+  mathLabel([["4", "n"], ["M", "i"], ["/3", "n"]], 0.5*(px(D.tauH) + px(D.T0)), Y0 + 26, 18, COL.brown, "center", null, "p");
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2.6; ctx.beginPath();
+  for(i = 0; i <= 300; i++){ var t = D.T0*i/300, rr = rOfTauLeft(D.T0 - t); if(i === 0) ctx.moveTo(px(t), py(rr)); else ctx.lineTo(px(t), py(rr)); }
+  ctx.stroke();
+  ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(px(Math.min(S.tau, D.T0)), py(r), 7, 0, 2*Math.PI); ctx.fill();
+  mathLabel([["τ", "i"], [" / ", "n"], ["M", "i"]], (X0 + X1)/2, Y1 + 58, 18, COL.ink, "center", null, "p");
+  mathLabel([["r", "i"], [" / ", "n"], ["M", "i"]], X0 + 8, Y0 - 18, 18, COL.ink, "left", null, "p");
+}
+
+function draw(){
+  LABELS = []; PATHPTS = [];
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, CW, CH);
+  drawDiagram();
+  if(S.mode === "out") drawOutside(); else drawInside();
+  drawObserverPanel();
+  readouts();
+}
+
+// =====================================================================================
+// Readouts
+// =====================================================================================
+function setHTML(id, s){ document.getElementById(id).innerHTML = s; }
+function surfaceCheck(r){
+  // U.U from finite differences of the plotted t~(tau), r(tau): EF metric
+  // ds^2 = -(1 - 2/r) dv^2 + 2 dv dr,  v = t~ + r
+  var h = 1e-4, T = tauLeft(r);
+  if(T < 2*h) T = 2*h;
+  var ra = rOfTauLeft(T + h), rb = rOfTauLeft(T - h);
+  var va = vS(ra), vb = vS(rb);
+  var dv = (vb - va)/(2*h), dr = (rb - ra)/(2*h), rm = rOfTauLeft(T);
+  return -(1 - 2/rm)*dv*dv + 2*dv*dr;
+}
+function readouts(){
+  var clk = document.getElementById("clk");
+  if(S.mode === "out"){
+    setHTML("vclk", fmtM(S.tR, 1) + " = " + fmtTime(S.tR));
+    var rE = rOfU(D.u0 + S.tR, S.r0), q = qOfU(D.u0 + S.tR, S.r0);
+    setHTML("vrE", rE.toFixed(rE - 2 > 1e-3 ? 4 : 6) + " M");
+    var d = deltaOfU(D.u0 + S.tR, S.r0);
+    setHTML("vrE2", d > 1e-3 ? d.toFixed(4) + " M" : d.toExponential(2).replace("e", "×10<sup>") + "</sup> M");
+    setHTML("vnu", q > 1e-3 ? q.toFixed(4) : q.toExponential(2).replace("e", "×10<sup>") + "</sup>");
+    var B = Math.pow(q, 4);
+    setHTML("vbri", B > 1e-3 ? B.toFixed(4) : B.toExponential(1).replace("e", "×10<sup>") + "</sup>");
+    var rec = D.pulses.filter(function(p){ return p.out && p.tR <= S.tR; }).length;
+    setHTML("vrec", rec + "");
+    setHTML("vtot", S.revealed ? D.nOut + "" : "?");
+    if(S.revealed){
+      var h = 0.05, l1 = Math.log(qOfU(D.u0 + S.tR + h, S.r0)), l0 = Math.log(qOfU(D.u0 + Math.max(S.tR - h, 0), S.r0));
+      var ef = -(S.tR + h - Math.max(S.tR - h, 0))/(l1 - l0);
+      setHTML("vefold", fmtM(ef, 2) + " = " + fmtTime(ef));
+    } else setHTML("vefold", "?");
+    setHTML("vchk", surfaceCheck(rE).toFixed(6));
+  } else {
+    setHTML("vclk", fmtM(S.tau, 2) + " = " + fmtTime(S.tau));
+    var T = Math.max(D.T0 - S.tau, 0), r = rOfTauLeft(T);
+    setHTML("viR", r.toFixed(3) + " M");
+    setHTML("viW", r > 2 ? "outside r = 2M" : (r > 0 ? "inside r = 2M" : "at r = 0"));
+    setHTML("viL", fmtM(T, 3) + " = " + fmtTime(T));
+    setHTML("viH", fmtM(4/3, 3) + " = " + fmtTime(4/3));
+    var sent = D.pulses.filter(function(p){ return p.tau <= S.tau + 1e-9; });
+    setHTML("viP", sent.length + " / " + sent.filter(function(p){ return p.out; }).length);
+    setHTML("vchk", r > 0.02 ? surfaceCheck(r).toFixed(6) : "–");
+  }
+  setHTML("vdt", fmtM(S.dtau, 2));
+  setHTML("vr0", fmtM(S.r0, 1));
+  setHTML("rate", S.mode === "out" ? "1 s of animation = 6 M of ②’s clock" : "1 s of animation = 0.6 M of ①’s clock");
+  clk.value = Math.round(1000*(S.mode === "out" ? S.tR/TRMAX : S.tau/D.T0));
+  document.getElementById("go").textContent = S.playing ? "Pause" : (clkAtEnd() ? "Replay" : "Play");
+}
+function clkAtEnd(){ return S.mode === "out" ? S.tR >= TRMAX : S.tau >= D.T0; }
+
+// =====================================================================================
+// Animation: one rAF loop, real elapsed time, capped steps
+// =====================================================================================
+var last = null, raf = null;
+function rate(){ return S.mode === "out" ? 6 : 0.6; }
+function frame(ts){
+  if(!S.playing){ raf = null; last = null; return; }
+  if(last === null) last = ts;
+  var dt = Math.min((ts - last)/1000, 0.05); last = ts;
+  if(S.mode === "out"){ S.tR = Math.min(S.tR + dt*rate(), TRMAX); if(S.tR >= TRMAX){ S.playing = false; S.revealed = true; } }
+  else { S.tau = Math.min(S.tau + dt*rate(), D.T0); if(S.tau >= D.T0) S.playing = false; }
+  draw();
+  if(S.playing) raf = requestAnimationFrame(frame); else { raf = null; last = null; }
+}
+function play(){
+  if(clkAtEnd()){ if(S.mode === "out") S.tR = 0; else S.tau = 0; }
+  if(reduced){
+    if(S.mode === "out"){ S.tR = TRMAX; S.revealed = true; } else S.tau = D.T0;
+    S.playing = false; draw(); return;
+  }
+  S.playing = true;
+  if(!raf){ last = null; raf = requestAnimationFrame(frame); }
+  draw();
+}
+function pause(){ S.playing = false; draw(); }
+
+// =====================================================================================
+// Controls
+// =====================================================================================
+document.getElementById("go").addEventListener("click", function(){ if(S.playing) pause(); else play(); });
+document.getElementById("rs").addEventListener("click", function(){
+  S.playing = false; if(S.mode === "out"){ S.tR = 0; S.revealed = false; } else S.tau = 0; draw();
+});
+document.getElementById("rev").addEventListener("click", function(){ S.revealed = true; draw(); });
+document.getElementById("clk").addEventListener("input", function(e){
+  S.playing = false;
+  var f = +e.target.value/1000;
+  if(S.mode === "out") S.tR = f*TRMAX; else S.tau = f*D.T0;
+  draw();
+});
+document.getElementById("dt").addEventListener("input", function(e){ S.dtau = +e.target.value/100; recompute(); draw(); });
+document.getElementById("r0").addEventListener("input", function(e){
+  S.r0 = +e.target.value/10; recompute();
+  S.tau = Math.min(S.tau, D.T0); draw();
+});
+document.getElementById("mass").addEventListener("change", function(e){ S.mass = +e.target.value; draw(); });
+function setMode(m){
+  S.mode = m; S.playing = false;
+  document.getElementById("tabOut").classList.toggle("active", m === "out");
+  document.getElementById("tabIn").classList.toggle("active", m === "in");
+  document.getElementById("tabOut").setAttribute("aria-selected", m === "out");
+  document.getElementById("tabIn").setAttribute("aria-selected", m === "in");
+  document.getElementById("tabReadOut").classList.toggle("hidden", m !== "out");
+  document.getElementById("tabReadIn").classList.toggle("hidden", m !== "in");
+  document.getElementById("panAsk").style.display = m === "out" ? "" : "none";
+  document.getElementById("panAskIn").classList.toggle("hidden", m !== "in");
+  setHTML("readH", m === "out" ? "What ② receives now" : "Riding the surface with ①");
+  setHTML("clkLab", (m === "out" ? "②’s clock <i>t</i><sub>R</sub>" : "①’s clock <i>τ</i> (from the start)") +
+          ' <span class="v" id="vclk">&ndash;</span>');
+  if(m === "in" && S.tau === 0) S.tau = D.tauH + 0.5*(4/3);      // load mid-way between horizon and r = 0
+  draw();
+}
+document.getElementById("tabOut").addEventListener("click", function(){ setMode("out"); });
+document.getElementById("tabIn").addEventListener("click", function(){ setMode("in"); });
+
+// direct manipulation: drag along the time axis of the plot (outside) or along the surface (inside)
+function logical(e){
+  var r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left)*CW/r.width, (e.clientY - r.top)*CH/r.height];
+}
+var drag = false;
+function handleAt(p){
+  if(S.mode === "out"){
+    var lq = Math.log(qOfU(D.u0 + S.tR, S.r0));
+    return Math.hypot(p[0] - gx(S.tR), p[1] - gy(Math.max(lq, LMIN))) < 22 || (p[0] > GX0 && p[0] < GX1 && p[1] > GY1 - 10 && p[1] < GY1 + 30);
+  }
+  var r = rOfTauLeft(Math.max(D.T0 - S.tau, 0));
+  return Math.hypot(p[0] - PX(r), p[1] - PY(S.tau >= D.T0 ? 0 : ttS(r))) < 24;
+}
+function dragTo(p){
+  if(S.mode === "out"){ S.tR = Math.min(Math.max((p[0] - GX0)/(GX1 - GX0)*TRMAX, 0), TRMAX); }
+  else {
+    // nearest point on the surface world line, by r
+    var r = Math.min(Math.max((p[0] - DX0)/SC, 0), S.r0);
+    S.tau = Math.min(Math.max(D.T0 - tauLeft(r), 0), D.T0);
+  }
+  draw();
+}
+cv.addEventListener("pointerdown", function(e){
+  var p = logical(e);
+  if(handleAt(p)){ drag = true; S.playing = false; cv.setPointerCapture(e.pointerId); dragTo(p); }
+});
+cv.addEventListener("pointermove", function(e){
+  var p = logical(e);
+  if(drag) dragTo(p); else cv.style.cursor = handleAt(p) ? "grab" : "default";
+});
+cv.addEventListener("pointerup", function(){ drag = false; });
+cv.addEventListener("pointercancel", function(){ drag = false; });
+
+// ---- start in the most informative state: well into the outside story ----
+recompute();
+S.tR = 10;
+draw();
+
+window.__L16 = { S: S, D: D, recompute: recompute, draw: draw, setMode: setMode, play: play,
+                 labels: function(){ return LABELS.slice(); }, pathPts: function(){ return PATHPTS.slice(); },
+                 rOfU: rOfU, qOf: qOf, qOfU: qOfU, deltaOfU: deltaOfU, Kray: Kray, vS: vS, ttS: ttS, tauLeft: tauLeft, rOfTauLeft: rOfTauLeft,
+                 surfaceCheck: surfaceCheck, frame: frame, TRMAX: TRMAX };
+})();
+</script>
+</body>
+</html>

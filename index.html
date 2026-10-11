@@ -35,8 +35,13 @@
   #pills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1;margin-left:4px}
   #pills::-webkit-scrollbar{display:none}
   .pill{flex:0 0 auto;background:var(--fill);border:1px solid var(--hair);color:var(--dim);
-    border-radius:999px;padding:7px 13px;font-size:11.5px;font-weight:500;cursor:pointer;white-space:nowrap;
-    letter-spacing:-.1px;transition:.2s var(--ease);display:flex;align-items:center;gap:7px}
+    border-radius:999px;padding:7px 0;min-width:36px;justify-content:center;font-size:12px;font-weight:500;
+    cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums;
+    letter-spacing:-.1px;transition:.2s var(--ease);display:flex;align-items:center;position:relative}
+  .pill .pdot{position:absolute;left:50%;bottom:3px;width:12px!important;height:2px!important;margin-left:-6px;
+    border-radius:1px!important}
+  .brand .ctx{display:inline-block;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    vertical-align:bottom}
   .pill:hover{background:var(--fill-hi);color:var(--txt)}
   .pill .pdot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
   .pill.active{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600;
@@ -250,6 +255,62 @@ const DEMOS = [
     blurb:'Drag the perihelion and aphelion of an exact Schwarzschild orbit and watch it precess, then test the '
         + 'lecture’s 6π(M/ℓ)² from the last stable orbit out to S2, the Hulse–Taylor pulsar and Mercury.'
   },
+  {
+    id:'l14-photon-orbits',
+    title:'Photon Orbits and Light Bending',
+    tag:'Lecture 14',
+    accent:'#93c5fd',
+    path:'lecture-14-photon-orbits/index.html',
+    blurb:'Drag a photon’s impact parameter, predict capture or escape from the 1/b² line against the 1/27M² barrier, then launch it on the exact geodesic, compare its deflection with 4M/b, and watch a beam wrap round the photon sphere.'
+  },
+  {
+    id:'l15-two-charts',
+    title:'One Spacetime, Two Charts',
+    tag:'Lecture 15',
+    accent:'#c4b5fd',
+    path:'lecture-15-two-charts/index.html',
+    blurb:'Send a flash and drop a probe near a black hole, then slide between Schwarzschild and Eddington–Finkelstein coordinates: the light cones tip over, and the infinite Schwarzschild time at the horizon turns out to be the chart’s fault.'
+  },
+  {
+    id:'l16-star-collapse',
+    title:'Watching a Star Collapse',
+    tag:'Lecture 16',
+    accent:'#fda4af',
+    path:'lecture-16-star-collapse/index.html',
+    blurb:'Watch a collapsing star from far away as its light reddens and fades with ln ν falling at slope −1/4M, or ride the surface through the horizon and watch its outgoing pulses fall in with it.'
+  },
+  {
+    id:'l17-kruskal-diagram',
+    title:'Kruskal Diagram Explorer',
+    tag:'Lecture 17',
+    accent:'#2dd4bf',
+    path:'lecture-17-kruskal-diagram/index.html',
+    blurb:'Send light pulses from a falling observer to a static one on the exact Kruskal diagram — gaps and redshift grow until none arrive from inside the horizon — then slice the Einstein–Rosen bridge and see that even light can’t cross it.'
+  },
+  {
+    id:'l18-gyroscopes-ergosphere',
+    title:'Gyroscopes and the Ergosphere',
+    tag:'Lecture 18',
+    accent:'#a78bfa',
+    path:'lecture-18-gyroscopes-ergosphere/index.html',
+    blurb:'Carry a gyroscope round a circular Schwarzschild orbit and compare its geodetic turn with 3πM/R, then drop a zero-angular-momentum particle into a Kerr hole, watch it dragged to Ω<sub>H</sub>, and test why nothing can hover in the ergosphere.'
+  },
+  {
+    id:'l19-flat-or-curved',
+    title:'Flat or Curved?',
+    tag:'Lecture 19',
+    accent:'#bef264',
+    path:'lecture-19-flat-or-curved/index.html',
+    blurb:'Launch two parallel walkers on a plane, cylinder, sphere or saddle and see whether they converge, stay parallel or diverge — the Christoffel symbols change with the chart, but the drift is set by the Gaussian curvature alone.'
+  },
+  {
+    id:'l20-tidal-forces',
+    title:'Tidal Stretch and Squeeze',
+    tag:'Lecture 20',
+    accent:'#fdba74',
+    path:'lecture-20-tidal-forces/index.html',
+    blurb:'Drop a dust ball or rubble pile onto the Earth, the Sun, a white dwarf or a neutron star, predict how tides will deform it, and watch the stretch along the fall line and squeeze across it, with the tidal tensor read out live.'
+  },
 ];
 
 const $=id=>document.getElementById(id);
@@ -267,7 +328,7 @@ $('grid').innerHTML = DEMOS.map(d=>`
 
 /* build bar pills */
 pills.innerHTML = DEMOS.map(d=>`
-  <button class="pill" data-id="${d.id}" title="${d.tag}: ${d.title}"><span class="pdot" style="background:${d.accent}"></span>${d.tag.replace('Lecture ','L')}</button>`).join('');
+  <button class="pill" data-id="${d.id}" title="${d.tag}: ${d.title}"><span class="pdot" style="background:${d.accent}"></span>${d.tag.replace('Lecture ','')}</button>`).join('');
 
 document.querySelectorAll('.card,.pill').forEach(el=>
   el.addEventListener('click',()=>{ location.hash = el.dataset.id; }));

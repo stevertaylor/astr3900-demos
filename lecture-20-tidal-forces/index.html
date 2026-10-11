@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 20: Tidal Stretch and Squeeze — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+.sub sup,.sub sub{line-height:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{padding:9px 14px;font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab:hover{border-color:var(--blued)}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/480}
+#w{aspect-ratio:1100/240}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.5;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model sup,.model sub,table.read sup,table.read sub,.verdict sup,.verdict sub,.ask sup,.ask sub,label sup,label sub,.fine sup,.fine sub{line-height:0}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 8px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12.5px;color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.fine{font-size:12px;color:var(--grey);margin:2px 0 0}
+.balltabs{margin:0 0 10px}
+.balltabs .tab{padding:5px 12px;font-size:13px}
+
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:8px 14px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+table.read tr.sep td{border-top:1px solid var(--dim);padding-top:4px}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.5;margin:0}
+.verdict{font-size:12.5px;line-height:1.5;margin:0;color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.hidden{display:none}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 20</div>
+    <h1>Tidal Stretch and Squeeze</h1>
+    <div class="sub">Drop a small ball onto a planet or star and watch the tidal tensor <i>R</i><sup><i>i</i></sup><sub><i>tjt</i></sub> = &part;<sub><i>i</i></sub>&part;<sub><i>j</i></sub>&Phi; stretch, squeeze, focus or tear it apart.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist" id="tabs">
+        <button class="tab active" data-body="earth" role="tab" aria-selected="true">Earth</button>
+        <button class="tab" data-body="sun" role="tab" aria-selected="false">Sun</button>
+        <button class="tab" data-body="wd" role="tab" aria-selected="false">White dwarf</button>
+        <button class="tab" data-body="ns" role="tab" aria-selected="false">Neutron star</button>
+        <span style="flex:1"></span>
+        <button class="tab active" data-ball="dust" role="tab" aria-selected="true">Free dust</button>
+        <button class="tab" data-ball="rubble" role="tab" aria-selected="false">Rubble pile</button>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="canvasWrap"><canvas id="w"></canvas></div>
+      <div class="model" id="model">&ndash;</div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>Release the ball</h2>
+        <div class="row">
+          <label>release point <i>r</i><sub>0</sub>/<i>R</i> (at rest) <span class="v" id="vr0">&ndash;</span></label>
+          <input type="range" id="r0s" min="20" max="300" step="1" value="200">
+        </div>
+        <div class="row">
+          <label>time, position <span class="v" id="vt">&ndash;</span></label>
+          <input type="range" id="ts" min="0" max="1000" step="1" value="0" disabled>
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="go">Run</button>
+          <button class="btn" id="rs">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Tidal tensor at the ball</h2>
+        <table class="read">
+          <tr><td>along the fall line, &part;<sup>2</sup>&Phi;/&part;<i>x</i><sup>2</sup></td><td class="n" id="vtx">?</td></tr>
+          <tr><td>across it, &part;<sup>2</sup>&Phi;/&part;<i>y</i><sup>2</sup> = &part;<sup>2</sup>&Phi;/&part;<i>z</i><sup>2</sup></td><td class="n" id="vty">?</td></tr>
+          <tr><td>trace, &nabla;<sup>2</sup>&Phi; <span class="gloss">(= <i>R</i><sub><i>tt</i></sub>)</span></td><td class="n" id="vtr">?</td></tr>
+          <tr><td id="l4p">4&pi;<i>G</i>&rho; at the ball</td><td class="n" id="v4p">?</td></tr>
+          <tr class="sep"><td>largest |<i>R</i><sup><i>i</i></sup><sub><i>tjt</i></sub>| <span class="gloss">(SI, &divide; <i>c</i><sup>2</sup>)</span></td><td class="n" id="vR">?</td></tr>
+          <tr><td>curvature scale 𝓛 = |<i>R</i>|<sup>&minus;1/2</sup></td><td class="n" id="vL">?</td></tr>
+        </table>
+        <p class="fine" id="vunit">&ndash;</p>
+      </div>
+
+      <div class="panel">
+        <h2>The ball</h2>
+        <table class="read">
+          <tr><td>stretch along the fall line, <i>a</i></td><td class="n" id="va">?</td></tr>
+          <tr><td>size across it, <i>b</i></td><td class="n" id="vb">?</td></tr>
+          <tr><td>volume <i>V</i>/<i>V</i><sub>0</sub> = <i>ab</i><sup>2</sup></td><td class="n" id="vV">?</td></tr>
+          <tr class="sep"><td id="lchk">check: at release, <i>V&#776;</i>/<i>V</i> vs &minus;&nabla;<sup>2</sup>&Phi;</td><td class="n" id="vchk1">?</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Predict, then run</h2>
+        <p class="ask" id="ask">&ndash;</p>
+        <p class="verdict hidden" id="verdict"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 20</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// =====================================================================================
+// Physics. Units G = M = R = 1, so the time unit is T = (R^3/GM)^(1/2) and tidal
+// components are in units of GM/R^3 = (4 pi/3) G rho_body. The fall line is the x axis.
+// Uniform sphere:  Phi = -1/r (r > 1),  Phi = -(3 - r^2)/2 (r < 1).
+// Tidal tensor d_i d_j Phi on the x axis, diagonal in (x, y, z):
+//   outside: (-2/r^3, 1/r^3, 1/r^3)   trace 0
+//   inside : (1, 1, 1)                trace 3 = 4 pi G rho  (rho = 3/(4 pi))
+// Centre:  x'' = -x/|x|^3 outside, -x inside.  Small-ball shape (deviation equation):
+//   a'' = -Txx(x) a,  b'' = -Tyy(x) b.
+// FREE DUST: a = b = 1, a' = b' = 0 at release; falls through the tunnel to the far side.
+//   Everything depends only on r0/R and t/T: all bodies give the same picture.
+// RUBBLE PILE (rock, density rho_rock): rigid (a = b = 1) while its own gravity at its
+//   surface, (4 pi/3) G rho_rock, exceeds the tidal stretch -Txx = 2GM/r^3; i.e. while
+//   2/r^3 < q with q = rho_rock/rho_body. It breaks at r_b = (2/q)^(1/3) R (the rigid-body
+//   Roche criterion), then evolves as free dust (its self-gravity neglected from then on).
+//   Runs stop at the surface. Here the body matters: q differs by 14 orders of magnitude.
+// =====================================================================================
+var BODIES = {
+  earth: { name: "the Earth",       M: 5.972e24,        R: 6.371e6 },
+  sun:   { name: "the Sun",         M: 1.989e30,        R: 6.957e8 },
+  wd:    { name: "a white dwarf",   M: 0.6*1.989e30,    R: 7.0e6 },
+  ns:    { name: "a neutron star",  M: 1.4*1.989e30,    R: 1.2e4 }
+};
+var GN = 6.674e-11, CL = 2.998e8, AU = 1.496e11, RHO_ROCK = 3000;   // kg/m^3
+var RATE = 0.6;      // free dust: T of simulated time per second of animation
+var KDYN = 0.8;      // rubble: local free-fall times (r^3/GM)^(1/2) per second of animation
+var LOGR_MIN = 0.2, LOGR_MAX = 5.5;           // rubble release range, log10(r0/R)
+
+function tid(x){ var r = Math.abs(x); return r > 1 ? [-2/(r*r*r), 1/(r*r*r)] : [1, 1]; }
+function grav(x){ var r = Math.abs(x); return r > 1 ? -x/(r*r*r) : -x; }
+function rhs(s){ var T = tid(s[0]); return [s[1], grav(s[0]), s[3], -T[0]*s[2], s[5], -T[1]*s[4]]; }
+function rhsRigid(s){ return [s[1], grav(s[0]), 0, 0, 0, 0]; }
+function rk4(s, h, f){
+  f = f || rhs;
+  var k1 = f(s), i, a = [], b = [], c = [], o = [];
+  for(i = 0; i < 6; i++) a.push(s[i] + 0.5*h*k1[i]);
+  var k2 = f(a); for(i = 0; i < 6; i++) b.push(s[i] + 0.5*h*k2[i]);
+  var k3 = f(b); for(i = 0; i < 6; i++) c.push(s[i] + h*k3[i]);
+  var k4 = f(c); for(i = 0; i < 6; i++) o.push(s[i] + h/6*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i]));
+  return o;
+}
+// V''/V at the start of a free-dust phase, from the integrator's first two steps
+function vddFrom(s, h){ var s1 = rk4(s, h), s2 = rk4(s1, h);
+  var V0 = s[2]*s[4]*s[4], V1 = s1[2]*s1[4]*s1[4], V2 = s2[2]*s2[4]*s2[4]; return (V2 - 2*V1 + V0)/(h*h)/V0; }
+
+// ---- free dust: from rest at x = r0 to the far turning point (x = -r0) ----
+function integrateDust(r0){
+  var H = 2e-4, s = [r0, 0, 1, 0, 1, 0], t = 0, n = 0;
+  var T = [0], X = [r0], A = [1], B = [1], tEnter = null, tExit = null, tCentre = null;
+  while(t < 200){
+    var h = H, sn = rk4(s, h);
+    var side0 = Math.abs(s[0]) > 1, side1 = Math.abs(sn[0]) > 1;
+    if(side0 !== side1){                       // land on the surface, then continue
+      var lo = 0, hi = h, k;
+      for(k = 0; k < 40; k++){ var m = 0.5*(lo + hi), sm = rk4(s, m);
+        if((Math.abs(sm[0]) > 1) === side0) lo = m; else hi = m; }
+      h = hi; sn = rk4(s, h);
+      if(side0) tEnter = t + h; else tExit = t + h;
+    }
+    if(s[0] > 0 && sn[0] <= 0) tCentre = t + h*s[0]/(s[0] - sn[0]);
+    if(t > 1e-3 && s[1] < 0 && sn[1] >= 0){    // far turning point: v = 0
+      var f = -s[1]/(sn[1] - s[1]), i, e = [];
+      for(i = 0; i < 6; i++) e.push(s[i] + f*(sn[i] - s[i]));
+      t += f*h; s = e; T.push(t); X.push(s[0]); A.push(s[2]); B.push(s[4]); break;
+    }
+    s = sn; t += h; n++;
+    if(n % 8 === 0 || h !== H){ T.push(t); X.push(s[0]); A.push(s[2]); B.push(s[4]); }
+  }
+  var PL = T.map(function(v){ return v/RATE; });
+  return { mode: "dust", r0: r0, T: T, X: X, A: A, B: B, PL: PL, tEnd: t, tEnter: tEnter, tExit: tExit,
+           tCentre: tCentre, vdd: vddFrom([r0, 0, 1, 0, 1, 0], 2e-4) };
+}
+
+// ---- rubble pile: from rest at x = r0 > 1, rigid until r_b, free dust after, stop at r = R ----
+function integrateRubble(r0, q){
+  var rb = Math.pow(2/q, 1/3), broke = r0 <= rb, s = [r0, 0, 1, 0, 1, 0], t = 0, pl = 0, n = 0;
+  var T = [0], X = [r0], A = [1], B = [1], PL = [0], tBreak = broke ? 0 : null, vdd = null;
+  if(broke) vdd = vddFrom(s, 1e-4*Math.pow(r0, 1.5));
+  function push(){ T.push(t); X.push(s[0]); A.push(s[2]); B.push(s[4]); PL.push(pl); }
+  while(true){
+    var h = 4e-4*Math.pow(Math.max(s[0], 1), 1.5), f = broke ? rhs : rhsRigid, sn = rk4(s, h, f);
+    var lo, hi, k, m, sm;
+    if(!broke && rb > 1 && sn[0] <= rb){       // land on the break-up radius (only if above the surface)
+      lo = 0; hi = h;
+      for(k = 0; k < 50; k++){ m = 0.5*(lo + hi); sm = rk4(s, m, f); if(sm[0] > rb) lo = m; else hi = m; }
+      h = hi; sn = rk4(s, h, f); sn[0] = rb;
+      pl += h/(KDYN*Math.pow(s[0], 1.5)); t += h; s = sn; broke = true; tBreak = t;
+      vdd = vddFrom(s, 1e-4*Math.pow(rb, 1.5)); push(); continue;
+    }
+    if(sn[0] <= 1){                            // land on the surface and stop
+      lo = 0; hi = h;
+      for(k = 0; k < 50; k++){ m = 0.5*(lo + hi); sm = rk4(s, m, f); if(sm[0] > 1) lo = m; else hi = m; }
+      h = hi; sn = rk4(s, h, f); sn[0] = 1 + 1e-12;
+      pl += h/(KDYN*Math.pow(s[0], 1.5)); t += h; s = sn; push(); break;
+    }
+    pl += h/(KDYN*Math.pow(s[0], 1.5)); t += h; s = sn; n++;
+    if(n % 6 === 0) push();
+  }
+  return { mode: "rubble", r0: r0, q: q, rb: rb, rAt: (tBreak === 0 ? r0 : rb), T: T, X: X, A: A, B: B, PL: PL, tEnd: t,
+           tBreak: tBreak, vdd: vdd, broke: tBreak !== null };
+}
+
+function at(P, t){
+  var T = P.T, lo = 0, hi = T.length - 1;
+  if(t <= 0) return { x: P.X[0], a: P.A[0], b: P.B[0], i: 0 };
+  if(t >= T[hi]) return { x: P.X[hi], a: P.A[hi], b: P.B[hi], i: hi };
+  while(hi - lo > 1){ var m = (lo + hi) >> 1; if(T[m] <= t) lo = m; else hi = m; }
+  var f = (t - T[lo])/(T[hi] - T[lo]);
+  return { x: P.X[lo] + f*(P.X[hi] - P.X[lo]), a: P.A[lo] + f*(P.A[hi] - P.A[lo]),
+           b: P.B[lo] + f*(P.B[hi] - P.B[lo]), i: lo };
+}
+// simulated time at a given playback time (linear between samples)
+function tAtPlay(P, pl){
+  var Q = P.PL, lo = 0, hi = Q.length - 1;
+  if(pl <= 0) return 0;
+  if(pl >= Q[hi]) return P.T[hi];
+  while(hi - lo > 1){ var m = (lo + hi) >> 1; if(Q[m] <= pl) lo = m; else hi = m; }
+  return P.T[lo] + (pl - Q[lo])/(Q[hi] - Q[lo])*(P.T[hi] - P.T[lo]);
+}
+function plEnd(P){ return P.PL[P.PL.length - 1]; }
+
+// =====================================================================================
+// State
+// =====================================================================================
+var S = { body: "earth", ball: "dust", r0d: 2.0, r0r: 1e5, t: 0, pl: 0, playing: false, revealed: false, P: null };
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function body(){ return BODIES[S.body]; }
+function rhoBody(){ var B = body(); return B.M/(4/3*Math.PI*B.R*B.R*B.R); }
+function qRock(){ return RHO_ROCK/rhoBody(); }
+function r0(){ return S.ball === "dust" ? S.r0d : S.r0r; }
+function recompute(){ S.P = S.ball === "dust" ? integrateDust(S.r0d) : integrateRubble(S.r0r, qRock()); }
+function Tunit(){ var B = body(); return Math.sqrt(B.R*B.R*B.R/(GN*B.M)); }
+function tidUnit(){ var B = body(); return GN*B.M/(B.R*B.R*B.R); }   // s^-2
+
+// formatting
+function fmt(v, d){ return (Math.abs(v) < 0.5*Math.pow(10, -d) ? 0 : v).toFixed(d).replace("-", "−"); }
+function sci(v, d){
+  if(v === 0) return "0";
+  var e = Math.floor(Math.log10(Math.abs(v))), m = v/Math.pow(10, e);
+  if(Math.abs(m) >= 9.995){ m /= 10; e += 1; }
+  return m.toFixed(d).replace("-", "−") + "×10" + "<sup>" + (e < 0 ? "−" + (-e) : e) + "</sup>";
+}
+function num(v, d){                       // small values in sci, large ones with fewer decimals
+  if(v !== 0 && Math.abs(v) < 0.01) return sci(v, 2);
+  if(Math.abs(v) >= 1e4) return sci(v, 2);
+  return fmt(v, Math.abs(v) >= 100 ? 1 : d);
+}
+function fmtTime(sec, ref){
+  var a = Math.abs(ref === undefined ? sec : ref);
+  if(a >= 2*3.156e7) return (sec/3.156e7).toFixed(1) + " yr";
+  if(a >= 2*86400) return (sec/86400).toFixed(1) + " d";
+  if(a >= 3600) return (sec/3600).toFixed(2) + " h";
+  if(a >= 120) return (sec/60).toFixed(1) + " min";
+  if(a >= 1) return sec.toFixed(2) + " s";
+  if(a >= 1e-3) return (sec*1e3).toFixed(2) + " ms";
+  return (sec*1e6).toFixed(1) + " μs";
+}
+function fmtLen(m){
+  if(m >= 0.1*AU) return (m/AU).toFixed(2) + " AU";
+  if(m >= 1e6) return sci(m/1e3, 2) + " km";
+  return (m/1e3).toFixed(1) + " km";
+}
+function fmtR(r){ return r >= 1000 ? sci(r, 1) : (r >= 100 ? r.toFixed(0) : r.toFixed(2)); }
+
+// =====================================================================================
+// Canvases (DPR-aware, logical coordinates)
+// =====================================================================================
+var cv = document.getElementById("c"), cw = document.getElementById("w");
+var CW = 1100, CH = 480, WW = 1100, WH = 240;
+var ctx = cv.getContext("2d"), wtx = cw.getContext("2d");
+function setupCanvas(c, x, W, H){
+  var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  c.width = Math.round(W*dpr); c.height = Math.round(H*dpr);
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+setupCanvas(cv, ctx, CW, CH);
+setupCanvas(cw, wtx, WW, WH);
+
+var COL = { ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B",
+            dim:"#C4CBD8", panel:"#EDF1F6", mute2:"#33465C", white:"#ffffff",
+            planet:"#E7E1D5", planetEdge:"#B9AE98" };
+var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+var LABELS = [];      // label boxes drawn this frame, with canvas tag: for collision tests
+var CURVES = [];      // sampled curve points drawn this frame (logical px), with canvas tag
+
+// Math label: segments [text, kind]; kind "i" italic Georgia, "n" upright sans,
+// "sub"/"sup" small italic lowered/raised, "nsub"/"nsup" small upright.
+function mathLabel(x, c, segs, px, py, size, color, align, bg){
+  var i, w = 0, parts = [];
+  for(i = 0; i < segs.length; i++){
+    var s = segs[i][0], k = segs[i][1], small = /sub|sup/.test(k), fs = small ? 0.68*size : size;
+    var ital = (k === "i" || k === "sub" || k === "sup");
+    var font = (ital ? "italic " : "") + fs + "px " + (ital ? "Georgia,serif" : SANS);
+    x.font = font;
+    var mw = x.measureText(s).width;
+    var dy = k.indexOf("sub") >= 0 ? 0.28*size : (k.indexOf("sup") >= 0 ? -0.42*size : 0);
+    var extra = (ital && !small ? 0.04*size : 0);
+    parts.push([s, font, mw, dy, extra]);
+    w += mw + extra;
+  }
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, c: c };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.textBaseline = "alphabetic";
+  var cx = x0;
+  for(i = 0; i < parts.length; i++){
+    x.font = parts[i][1]; x.fillText(parts[i][0], cx, py + parts[i][3]);
+    cx += parts[i][2] + parts[i][4];
+  }
+  LABELS.push(box);
+  return box;
+}
+function textLabel(x, c, s, px, py, size, color, align, bg, weight){
+  x.font = (weight ? weight + " " : "") + size + "px " + SANS;
+  var w = x.measureText(s).width;
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, c: c };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.textBaseline = "alphabetic"; x.fillText(s, x0, py);
+  LABELS.push(box);
+  return box;
+}
+function serifTitle(x, c, s, px, py){
+  x.font = "20px Georgia,serif"; var w = x.measureText(s).width;
+  x.fillStyle = COL.ink; x.textBaseline = "alphabetic"; x.fillText(s, px, py);
+  var box = { x: px - 3, y: py - 17, w: w + 6, h: 25, c: c }; LABELS.push(box); return box;
+}
+function arrow(x, x0, y0, x1, y1, color, lw, head){
+  var dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if(L < 1) return;
+  var ux = dx/L, uy = dy/L, hh = Math.min(head || 10, 0.6*L);
+  x.strokeStyle = color; x.fillStyle = color; x.lineWidth = lw;
+  x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1 - ux*hh*0.8, y1 - uy*hh*0.8); x.stroke();
+  x.beginPath(); x.moveTo(x1, y1);
+  x.lineTo(x1 - ux*hh - uy*hh*0.45, y1 - uy*hh + ux*hh*0.45);
+  x.lineTo(x1 - ux*hh + uy*hh*0.45, y1 - uy*hh - ux*hh*0.45);
+  x.closePath(); x.fill();
+}
+// "10^k R" tick label segments
+function decadeSegs(k){
+  if(k === 0) return [["R", "i"]];
+  if(k === 1) return [["10", "n"], ["R", "i"]];
+  return [["10", "n"], [String(k), "nsup"], ["R", "i"]];
+}
+function r0Segs(r){
+  var head = [["r", "i"], ["0", "nsub"], [" = ", "n"]];
+  if(r < 1000) return head.concat([[fmtR(r) + " ", "n"], ["R", "i"]]);
+  var e = Math.floor(Math.log10(r)), m = r/Math.pow(10, e);
+  return head.concat([[m.toFixed(1) + "×10", "n"], [String(e), "nsup"], [" ", "n"], ["R", "i"]]);
+}
+
+// ---- left panel geometry ----
+var PX = 270, PY = 262, PS = 76;              // free dust: planet centre, px per R
+var FX0 = 40, FX1 = 452, LMAX = 5.6;          // rubble: log axis, far end at FX0, surface at FX1
+function lpx(r){ return FX1 - Math.log10(Math.max(r, 1))/LMAX*(FX1 - FX0); }
+function rFromPx(px){ return Math.pow(10, (FX1 - px)/(FX1 - FX0)*LMAX); }
+// ---- right panel: the magnified ball, centre (BX, BY), initial radius RHO px ----
+var BX = 830, BY = 272, RHO = 56, AMAX = 3.7;    // long axis + arrow (52 px) stays inside the panel
+var HANDLE = null;
+
+// dust grains: a sunflower disc in the plane through the axis (unit radius)
+var DUST = [];
+(function(){ var N = 130, g = Math.PI*(3 - Math.sqrt(5)), i;
+  for(i = 0; i < N; i++){ var r = Math.sqrt((i + 0.5)/N), th = i*g; DUST.push([r*Math.cos(th), r*Math.sin(th)]); } })();
+
+function broken(st){ return S.P.mode === "rubble" && S.P.broke && S.t >= S.P.tBreak; }
+
+function drawFallDust(st){
+  var P = S.P;
+  serifTitle(ctx, "c", "The fall", 22, 34);
+  textLabel(ctx, "c", "uniform-density body, tunnel along the x axis", 22, 60, 17, COL.grey, "left");
+  ctx.setLineDash([6, 6]); ctx.strokeStyle = COL.dim; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(18, PY); ctx.lineTo(530, PY); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = COL.planet; ctx.strokeStyle = COL.planetEdge; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(PX, PY, PS, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.fillRect(PX - PS, PY - 7, 2*PS, 14);
+  ctx.strokeStyle = COL.planetEdge; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PX - PS + 1, PY - 7); ctx.lineTo(PX + PS - 1, PY - 7);
+  ctx.moveTo(PX - PS + 1, PY + 7); ctx.lineTo(PX + PS - 1, PY + 7); ctx.stroke();
+  var k;
+  for(k = -3; k <= 3; k++){
+    if(k === 0) continue;
+    var xt = PX + k*PS;
+    ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(xt, PY + 74); ctx.lineTo(xt, PY + 84); ctx.stroke();
+    var lab = Math.abs(k) === 1 ? [["R", "i"]] : [[String(Math.abs(k)), "n"], ["R", "i"]];
+    if(k < 0) lab = [["−", "n"]].concat(lab);
+    mathLabel(ctx, "c", lab, xt, PY + 106, 17, COL.grey, "center");
+  }
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PX - 3*PS, PY + 79); ctx.lineTo(PX + 3*PS, PY + 79); ctx.stroke();
+  mathLabel(ctx, "c", [["x", "i"]], PX + 3*PS + 22, PY + 85, 18, COL.grey, "left");
+  var xr = PX + P.r0*PS;
+  ctx.strokeStyle = COL.brown; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.arc(xr, PY, 13, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = COL.brown; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(xr, PY - 50); ctx.lineTo(xr, PY - 17); ctx.stroke();
+  mathLabel(ctx, "c", r0Segs(P.r0), Math.min(Math.max(xr, 90), 470), PY - 58, 18, COL.brown, "center", "#fff");
+  var xb = PX + st.x*PS;
+  ctx.fillStyle = "rgba(15,110,147,0.20)"; ctx.beginPath(); ctx.arc(xb, PY, 12, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(xb, PY, 6.5, 0, 2*Math.PI); ctx.fill();
+  HANDLE = (S.t === 0 && !S.playing) ? { x: xb, y: PY } : null;
+}
+
+function drawFallRubble(st){
+  var P = S.P;
+  serifTitle(ctx, "c", "The fall", 22, 34);
+  textLabel(ctx, "c", "distance on a log scale; body not to scale", 22, 60, 17, COL.grey, "left");
+  // body: an arc at the surface end, clipped to the panel
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, 546, CH); ctx.clip();
+  ctx.fillStyle = COL.planet; ctx.strokeStyle = COL.planetEdge; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(FX1 + 120, PY, 120, 0, 2*Math.PI); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  textLabel(ctx, "c", "surface", FX1 + 8, PY - 132, 17, COL.mute2, "left");
+  ctx.setLineDash([6, 6]); ctx.strokeStyle = COL.dim; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(18, PY); ctx.lineTo(FX1, PY); ctx.stroke(); ctx.setLineDash([]);
+  // decade ticks
+  var k;
+  ctx.strokeStyle = COL.grey; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(lpx(Math.pow(10, 5)), PY + 79); ctx.lineTo(FX1, PY + 79); ctx.stroke();
+  for(k = 0; k <= 5; k++){
+    var xt = lpx(Math.pow(10, k));
+    ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(xt, PY + 74); ctx.lineTo(xt, PY + 84); ctx.stroke();
+    mathLabel(ctx, "c", decadeSegs(k), xt, PY + 106, 17, COL.grey, "center");
+  }
+  textLabel(ctx, "c", "distance from the centre, r", lpx(Math.pow(10, 2.5)), PY + 134, 17, COL.grey, "center");
+  // break-up radius, once passed
+  if(S.revealed && P.broke && S.t >= P.tBreak){
+    var xb0 = lpx(P.rb);
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = COL.brown; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(xb0, PY - 30); ctx.lineTo(xb0, PY + 38); ctx.stroke(); ctx.setLineDash([]);
+    textLabel(ctx, "c", "torn apart here", Math.min(Math.max(xb0, 80), 420), PY + 58, 17, COL.brown, "center", "#fff");
+  }
+  var xr = lpx(P.r0);
+  ctx.strokeStyle = COL.brown; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.arc(xr, PY, 13, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = COL.brown; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(xr, PY - 50); ctx.lineTo(xr, PY - 17); ctx.stroke();
+  mathLabel(ctx, "c", r0Segs(P.r0), Math.min(Math.max(xr, 100), 400), PY - 58, 18, COL.brown, "center", "#fff");
+  var xb = lpx(st.x);
+  ctx.fillStyle = "rgba(15,110,147,0.20)"; ctx.beginPath(); ctx.arc(xb, PY, 12, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(xb, PY, 6.5, 0, 2*Math.PI); ctx.fill();
+  HANDLE = (S.t === 0 && !S.playing) ? { x: xb, y: PY } : null;
+}
+
+function drawMain(){
+  LABELS = []; CURVES = [];
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, CW, CH);
+  var P = S.P, st = at(P, S.t), rub = P.mode === "rubble";
+  ctx.strokeStyle = COL.dim; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(548, 18); ctx.lineTo(548, CH - 18); ctx.stroke();
+
+  if(rub) drawFallRubble(st); else drawFallDust(st);
+  textLabel(ctx, "c", "ball (marker not to scale)", 22, CH - 22, 17, COL.grey, "left");
+  if(HANDLE) textLabel(ctx, "c", "drag the ball to move the release point", 22, CH - 46, 17, COL.blue, "left");
+
+  // ===== right: the magnified ball =====
+  serifTitle(ctx, "c", "The ball, magnified", 572, 34);
+  textLabel(ctx, "c", "shape to scale; brown = the half that started", 572, 60, 17, COL.grey, "left");
+  textLabel(ctx, "c", "nearer the centre", 572, 82, 17, COL.grey, "left");
+  var a = st.a, b = st.b, big = Math.max(Math.abs(a), Math.abs(b)), Z = big > AMAX ? AMAX/big : 1, R0 = RHO*Z;
+  ctx.setLineDash([6, 6]); ctx.strokeStyle = COL.dim; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(566, BY); ctx.lineTo(1092, BY); ctx.stroke(); ctx.setLineDash([]);
+  ctx.setLineDash([5, 5]); ctx.strokeStyle = COL.grey; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.arc(BX, BY, Math.max(R0, 0.8), 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(BX, BY, Math.max(Math.abs(a)*R0, 0.6), Math.max(Math.abs(b)*R0, 0.6), 0, 0, 2*Math.PI); ctx.stroke();
+  var j, k;
+  for(j = 0; j <= 72; j++){ var th = 2*Math.PI*j/72; CURVES.push({ c: "c", x: BX + a*R0*Math.cos(th), y: BY - b*R0*Math.sin(th) }); }
+  for(j = 0; j <= 72; j++){ var th2 = 2*Math.PI*j/72; CURVES.push({ c: "c", x: BX + R0*Math.cos(th2), y: BY - R0*Math.sin(th2) }); }
+  // centre direction: left for the tunnel fall (released at +x), right in the log-scale fall
+  var toLeft = rub ? false : st.x > 0;
+  for(j = 0; j < DUST.length; j++){
+    var d = DUST[j], px = BX + a*d[0]*R0, py = BY - b*d[1]*R0;
+    ctx.fillStyle = ((d[0] < 0) === (rub ? false : true)) ? COL.brown : COL.blue;
+    ctx.beginPath(); ctx.arc(px, py, 2.7, 0, 2*Math.PI); ctx.fill();
+  }
+  if(rub || Math.abs(st.x) > 1e-3){
+    var ay = 112;
+    if(toLeft){ arrow(ctx, 1080, ay, 1010, ay, COL.grey, 1.6, 10); textLabel(ctx, "c", "to the body’s centre", 1000, ay + 6, 17, COL.grey, "right"); }
+    else { arrow(ctx, 590, ay, 660, ay, COL.grey, 1.6, 10); textLabel(ctx, "c", "to the body’s centre", 670, ay + 6, 17, COL.grey, "left"); }
+  }
+  if(Z < 1) textLabel(ctx, "c", "zoom × 1/" + (1/Z < 10 ? (1/Z).toFixed(1) : Math.round(1/Z)), 1088, 152, 17, COL.blue, "right");
+  if(rub && S.revealed){
+    var intact = !broken(st);
+    textLabel(ctx, "c", intact ? "intact: its own gravity beats the stretch" : "torn apart: now free dust",
+              572, 148, 17, intact ? COL.blue : COL.brown, "left");
+  }
+  if(S.revealed){
+    var T = tid(st.x), ex = -T[0]*a, ey = -T[1]*b;
+    var mx = Math.max(Math.abs(ex), Math.abs(ey), 1e-300), Lmax = 52;
+    var pts = [[a*R0, 0, ex, 0], [-a*R0, 0, -ex, 0], [0, b*R0, 0, ey], [0, -b*R0, 0, -ey]];
+    var ext = [Math.abs(a), Math.abs(a), Math.abs(b), Math.abs(b)];
+    for(j = 0; j < 4; j++){
+      if(big*Z < 0.03 || ext[j]*Z < 0.03) continue;           // collapsed: nothing to show
+      var q = pts[j], len = Lmax/mx, px0 = BX + q[0], py0 = BY - q[1];
+      var vx = q[2]*len, vy = -q[3]*len;
+      var ox = Math.sign(q[0]), oy = -Math.sign(q[1]);
+      var sx, sy, exx, eyy;
+      if(vx*ox + vy*oy < 0){ sx = px0 - vx; sy = py0 - vy; exx = px0; eyy = py0; }
+      else { sx = px0; sy = py0; exx = px0 + vx; eyy = py0 + vy; }
+      if(Math.hypot(vx, vy) > 4){ arrow(ctx, sx, sy, exx, eyy, COL.brown, 2.4, 11);
+        for(k = 0; k <= 10; k++) CURVES.push({ c: "c", x: sx + (exx - sx)*k/10, y: sy + (eyy - sy)*k/10 }); }
+    }
+    textLabel(ctx, "c", "arrows: tidal acceleration (pattern only;", 572, CH - 46, 17, COL.brown, "left");
+    textLabel(ctx, "c", "longest arrow always the same length)", 572, CH - 22, 17, COL.brown, "left");
+  } else {
+    textLabel(ctx, "c", rub ? "Predict where it breaks up, then press Run" : "Predict the shape, then press Run",
+              572, CH - 22, 17, COL.blue, "left");
+  }
+}
+
+// ---- bottom strip ----
+var GX0 = 92, GX1 = 1072, GY0 = 64, GY1 = 200;
+function drawW(){
+  var x = wtx, P = S.P, rub = P.mode === "rubble";
+  x.clearRect(0, 0, WW, WH); x.fillStyle = "#fff"; x.fillRect(0, 0, WW, WH);
+  serifTitle(x, "w", rub ? "Shape against distance (log scales)" : "Shape against time", 22, 26);
+  var gx, gy, v, k;
+  if(rub){
+    var L0 = Math.log10(P.r0);
+    gx = function(r){ return GX0 + (L0 - Math.log10(Math.max(r, 1)))/Math.max(L0, 1e-9)*(GX1 - GX0); };
+    gy = function(val){ var l = Math.log10(Math.max(Math.abs(val), 1e-3)); return GY1 - (Math.min(l, 3) + 3)/6*(GY1 - GY0); };
+    for(v = -3; v <= 3; v++){
+      x.strokeStyle = v === 0 ? COL.dim : "#E6EAF0"; x.lineWidth = 1; if(v === 0) x.setLineDash([5, 5]);
+      x.beginPath(); x.moveTo(GX0, gy(Math.pow(10, v))); x.lineTo(GX1, gy(Math.pow(10, v))); x.stroke(); x.setLineDash([]);
+      var seg = v === 0 ? [["1", "n"]] : (v === 1 ? [["10", "n"]] : [["10", "n"], [v < 0 ? "−" + (-v) : String(v), "nsup"]]);
+      mathLabel(x, "w", seg, GX0 - 10, gy(Math.pow(10, v)) + 6, 17, COL.grey, "right");
+    }
+    x.strokeStyle = COL.grey; x.beginPath(); x.moveTo(GX0, GY0); x.lineTo(GX0, GY1); x.lineTo(GX1, GY1); x.stroke();
+    var last = -1e9;
+    for(k = Math.floor(L0); k >= 0; k--){
+      var X = gx(Math.pow(10, k));
+      if(X < GX0 - 1) continue;
+      x.strokeStyle = COL.grey; x.beginPath(); x.moveTo(X, GY1); x.lineTo(X, GY1 + 6); x.stroke();
+      if(X - last > 56 && X > GX0 + 28){ mathLabel(x, "w", decadeSegs(k), X, GY1 + 26, 17, COL.grey, "center"); last = X; }
+    }
+  } else {
+    var tEnd = P.tEnd;
+    gx = function(t){ return GX0 + t/tEnd*(GX1 - GX0); };
+    var YMIN = -1.2, YMAX = 4.6;
+    gy = function(val){ return GY1 - (val - YMIN)/(YMAX - YMIN)*(GY1 - GY0); };
+    for(v = -1; v <= 4; v++){
+      x.strokeStyle = v === 0 ? COL.grey : (v === 1 ? COL.dim : "#E6EAF0"); x.lineWidth = 1;
+      if(v === 1) x.setLineDash([5, 5]);
+      x.beginPath(); x.moveTo(GX0, gy(v)); x.lineTo(GX1, gy(v)); x.stroke(); x.setLineDash([]);
+      mathLabel(x, "w", [[v < 0 ? "−" + (-v) : String(v), "n"]], GX0 - 10, gy(v) + 6, 17, COL.grey, "right");
+    }
+    x.strokeStyle = COL.grey; x.beginPath(); x.moveTo(GX0, GY0); x.lineTo(GX0, GY1); x.lineTo(GX1, GY1); x.stroke();
+    var step = tEnd > 8 ? 2 : (tEnd > 3.5 ? 1 : 0.5), tt;
+    for(tt = 0; tt <= tEnd + 1e-9; tt += step){
+      x.strokeStyle = COL.grey; x.beginPath(); x.moveTo(gx(tt), GY1); x.lineTo(gx(tt), GY1 + 6); x.stroke();
+      if(gx(tt) < GX1 - 70) mathLabel(x, "w", [[String(Math.round(tt*10)/10), "n"]], gx(tt), GY1 + 26, 17, COL.grey, "center");
+    }
+    mathLabel(x, "w", [["t", "i"], [" / ", "n"], ["T", "i"]], GX1, GY1 + 26, 17, COL.grey, "right");
+  }
+  var lastRight = -1e9;
+  function vmark(X, txt){
+    x.setLineDash([3, 4]); x.strokeStyle = COL.grey; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(X, GY0 - 6); x.lineTo(X, GY1); x.stroke(); x.setLineDash([]);
+    x.font = "17px " + SANS; var w = x.measureText(txt).width;
+    var lx = Math.max(X - w/2, lastRight + 14, GX0);
+    if(lx + w > GX1) lx = GX1 - w;
+    var bx = textLabel(x, "w", txt, lx, GY0 - 12, 17, COL.grey, "left");
+    lastRight = bx.x + bx.w;
+  }
+  if(!S.revealed){
+    textLabel(x, "w", rub ? "Run to plot the shape against distance" : "Run to plot the shape against time",
+              (GX0 + GX1)/2, (GY0 + GY1)/2 + 6, 18, COL.blue, "center", "#fff");
+    return;
+  }
+  if(rub){ if(P.broke && S.t >= P.tBreak && P.tBreak > 0) vmark(gx(P.rb), "torn apart"); }
+  else { if(P.tEnter !== null) vmark(gx(P.tEnter), "enters"); vmark(gx(P.tCentre), "centre"); if(P.tExit !== null) vmark(gx(P.tExit), "leaves"); }
+  var st = at(P, S.t), n = st.i, i;
+  var hx = rub ? function(i){ return gx(i < 0 ? st.x : P.X[i]); } : function(i){ return gx(i < 0 ? S.t : P.T[i]); };
+  function curve(get, color, lw, dash){
+    x.strokeStyle = color; x.lineWidth = lw; x.setLineDash(dash || []); x.beginPath();
+    for(i = 0; i <= n; i++){ var X = hx(i), Y = gy(get(i)); if(i === 0) x.moveTo(X, Y); else x.lineTo(X, Y);
+      if(i % 6 === 0) CURVES.push({ c: "w", x: X, y: Y }); }
+    x.lineTo(hx(-1), gy(get(-1))); x.stroke(); x.setLineDash([]);
+  }
+  var cur = { a: st.a, b: st.b };
+  curve(function(i){ return i < 0 ? cur.a : P.A[i]; }, COL.blue, 2.4);
+  curve(function(i){ return i < 0 ? cur.b : P.B[i]; }, COL.brown, 2.4);
+  curve(function(i){ return i < 0 ? cur.a*cur.b*cur.b : P.A[i]*P.B[i]*P.B[i]; }, COL.ink, 1.8, [6, 4]);
+  x.strokeStyle = COL.blued; x.lineWidth = 1.5;
+  x.beginPath(); x.moveTo(hx(-1), GY0); x.lineTo(hx(-1), GY1); x.stroke();
+  var lx = GX1 - 360, ly = 8;
+  function key(xx, color, dash, segs){
+    x.strokeStyle = color; x.lineWidth = 2.4; x.setLineDash(dash || []);
+    x.beginPath(); x.moveTo(xx, ly + 9); x.lineTo(xx + 24, ly + 9); x.stroke(); x.setLineDash([]);
+    return mathLabel(x, "w", segs, xx + 30, ly + 15, 17, COL.ink, "left");
+  }
+  var b1 = key(lx, COL.blue, null, [["a", "i"], [" along", "n"]]);
+  var b2 = key(b1.x + b1.w + 16, COL.brown, null, [["b", "i"], [" across", "n"]]);
+  key(b2.x + b2.w + 16, COL.ink, [6, 4], [["V", "i"], ["/", "n"], ["V", "i"], ["0", "nsub"]]);
+}
+
+// =====================================================================================
+// Model text, readouts, prompt, verdict
+// =====================================================================================
+function el(id){ return document.getElementById(id); }
+function setH(id, h){ el(id).innerHTML = h; }
+function modelText(){
+  var Tu = fmtTime(Tunit()).replace(" ", "\u00a0");
+  var common = "<b>Model:</b> Newtonian gravity (the static weak field) of a uniform-density body. The ball&rsquo;s shape obeys " +
+    "d<sup>2</sup>&chi;<sup><i>i</i></sup>/d<i>t</i><sup>2</sup> = &minus;(&part;<sub><i>i</i></sub>&part;<sub><i>j</i></sub>&Phi;)&chi;<sup><i>j</i></sup> " +
+    "along its centre&rsquo;s exact fall; it is drawn magnified, its shape to scale. ";
+  var ns = S.body === "ns" ? " For a neutron star <i>GM</i>/<i>c</i><sup>2</sup><i>R</i> &asymp; 0.17: indicative only." : "";
+  if(S.ball === "dust")
+    return common + "<b>Free dust</b> (no self-gravity or pressure) through a narrow tunnel: the shape depends only on <i>r</i><sub>0</sub>/<i>R</i> and " +
+      "<i>t</i>/<i>T</i>, <i>T</i> = (<i>R</i><sup>3</sup>/<i>GM</i>)<sup>1/2</sup> = " + Tu + ", so <b>every body gives the same picture</b>. " +
+      "1&nbsp;s on screen = 0.6<i>T</i>." + ns;
+  return common + "<b>Rubble pile</b> of 3&nbsp;g/cm<sup>3</sup> rock: rigid while its own gravity, (4&pi;/3)<i>G</i>&rho;<sub>rock</sub>, beats the stretch " +
+    "2<i>GM</i>/<i>r</i><sup>3</sup>; free dust after (self-gravity then neglected); stops at the surface. 1&nbsp;s on screen = 0.8 local free-fall " +
+    "times (<i>r</i><sup>3</sup>/<i>GM</i>)<sup>1/2</sup>." + ns;
+}
+function readouts(){
+  var P = S.P, st = at(P, S.t), B = body(), Tu = Tunit(), U = tidUnit(), rub = P.mode === "rubble";
+  setH("model", modelText());
+  setH("vr0", rub ? fmtR(S.r0r) : S.r0d.toFixed(2));
+  setH("vunit", "Rows 1&ndash;4 in <i>GM</i>/<i>R</i><sup>3</sup> = " + sci(U, 2) + " s<sup>\u22122</sup> (" + B.name.replace(/^(the|a) /, "") + ").");
+  setH("vt", (rub ? "" : S.t.toFixed(2) + "<i>T</i> = ") + fmtTime(S.t*Tu, rub ? undefined : Tu) + " &middot; <i>r</i> = " + fmtR(Math.abs(st.x)) + "<i>R</i>");
+  setH("l4p", rub ? "rock&rsquo;s own gravity, (4&pi;/3)<i>G</i>&rho;<sub>rock</sub>" : "4&pi;<i>G</i>&rho; at the ball");
+  setH("lchk", rub ? "check: at break-up, <i>V&#776;</i>/<i>V</i> vs &minus;&nabla;<sup>2</sup>&Phi;"
+                   : "check: at release, <i>V&#776;</i>/<i>V</i> vs &minus;&nabla;<sup>2</sup>&Phi;");
+  if(!S.revealed){
+    ["vtx","vty","vtr","v4p","vR","vL","va","vb","vV","vchk1"].forEach(function(id){ el(id).textContent = "?"; });
+    return;
+  }
+  var T = tid(st.x), tr = T[0] + 2*T[1], inside = Math.abs(st.x) < 1;
+  setH("vtx", num(T[0], 3)); setH("vty", num(T[1], 3)); setH("vtr", fmt(tr, 3));
+  setH("v4p", rub ? num(P.q, 3) : (inside ? "3.000" : "0.000"));
+  var bigR = Math.max(Math.abs(T[0]), Math.abs(T[1]))*U/(CL*CL);
+  setH("vR", sci(bigR, 2) + " m<sup>−2</sup>");
+  setH("vL", fmtLen(1/Math.sqrt(bigR)));
+  setH("va", num(st.a, 3)); setH("vb", num(st.b, 3)); setH("vV", num(st.a*st.b*st.b, 3));
+  if(rub){
+    if(!P.broke) setH("vchk1", "never breaks");
+    else if(S.t < P.tBreak) setH("vchk1", "not yet");
+    else { var Tb = tid(P.rAt); setH("vchk1", fmt(P.vdd/(-Tb[0]), 3) + " vs " + fmt(-(Tb[0] + 2*Tb[1]), 3)); }
+  } else {
+    var T0 = tid(P.r0); setH("vchk1", fmt(P.vdd, 3) + " vs " + fmt(-(T0[0] + 2*T0[1]), 3));
+  }
+}
+
+function askText(){
+  if(S.ball === "rubble")
+    return "A ball of loose rock, held together only by its own gravity, falls from rest at " +
+      (S.r0r >= 1000 ? sci(S.r0r, 1) : fmtR(S.r0r)) + "<i>R</i>. Before you run it: where is it torn apart, or does it land in one piece? Then try the other bodies.";
+  if(S.r0d > 1) return "The ball starts at rest outside, at <i>r</i><sub>0</sub> = " + S.r0d.toFixed(2) +
+    "<i>R</i>. Before you run it: which way will it deform? Will its volume start to change? And what will it look like as it passes the centre?";
+  return "The ball starts at rest inside the tunnel, at <i>r</i><sub>0</sub> = " + S.r0d.toFixed(2) +
+    "<i>R</i>. Before you run it: what shape will it have when it reaches the centre?";
+}
+function verdictText(){
+  var P = S.P, Tu = Tunit(), B = body();
+  if(P.mode === "rubble"){
+    var rhoB = rhoBody()/1000, e = at(P, P.tEnd), ab = e.a/e.b;
+    var crit = "(2&rho;/&rho;<sub>rock</sub>)<sup>1/3</sup><i>R</i> = " + fmtR(P.rb) + "<i>R</i>";
+    var tail = " It lands " + fmtTime((P.tEnd - P.tBreak)*Tu) + " later as a strand, <i>a</i>/<i>b</i> = " +
+      (ab >= 1000 ? sci(ab, 1) : ab.toFixed(1)) + ".";
+    if(!P.broke)
+      return "<b>It reaches the surface in one piece.</b> The break-up radius " + crit + " is inside " + B.name +
+        ": its mean density, " + rhoB.toFixed(2) + "&nbsp;g/cm<sup>3</sup>, is under half the rock&rsquo;s.";
+    if(P.tBreak === 0)
+      return "<b>Torn apart at once</b>: it was released inside the break-up radius " + crit + ", the rigid-body Roche limit." + tail;
+    return "<b>Torn apart at <i>r</i> = " + fmtR(P.rb) + "<i>R</i></b> (" + sci(P.rb*B.R/1e3, 1) + "&nbsp;km), the rigid-body Roche limit " +
+      crit.replace(" = " + fmtR(P.rb) + "<i>R</i>", "") + ", where the stretch 2<i>GM</i>/<i>r</i><sup>3</sup> beats the rock&rsquo;s own gravity." + tail +
+      " In km this radius depends only on <i>M</i>: ~10<sup>6</sup>&nbsp;km for any solar-mass body.";
+  }
+  if(P.r0 > 1){
+    var e2 = at(P, P.tEnter);
+    return "<b>Stretched along the fall line, squeezed across it.</b> The trace is zero in vacuum, so at release " +
+      "<i>V&#776;</i>/<i>V</i> = " + fmt(P.vdd, 3) + ": the volume does not start to change (the shear shrinks it later, at second order: " +
+      "<i>V</i>/<i>V</i><sub>0</sub> = " + fmt(e2.a*e2.b*e2.b, 2) + " at the surface). <b>At the centre it is a line</b>, " +
+      fmtTime(P.tCentre*Tu) + " after release for " + B.name + "; it comes out inverted.";
+  }
+  return "<b>It stays round and shrinks to a point.</b> Inside, &part;<sub><i>i</i></sub>&part;<sub><i>j</i></sub>&Phi; = (<i>GM</i>/<i>R</i><sup>3</sup>)&delta;<sub><i>ij</i></sub>, " +
+    "trace 4&pi;<i>G</i>&rho;. Every particle arrives together at <i>t</i> = " + fmt(P.tCentre, 4) + "<i>T</i> (&pi;/2 = 1.5708), " +
+    fmtTime(P.tCentre*Tu) + " for " + B.name + "; then it re-expands, inverted.";
+}
+function verdict(){
+  setH("ask", askText());
+  var P = S.P;
+  var show = S.revealed && (P.mode === "rubble" ? S.t >= P.tEnd : (P.tCentre !== null && S.t >= P.tCentre));
+  if(show) setH("verdict", verdictText());
+  el("verdict").classList.toggle("hidden", !show);
+  el("ask").classList.toggle("hidden", show);
+}
+
+// =====================================================================================
+// Animation: one rAF loop, runs only while playing, stepped by real elapsed time.
+// The master clock is playback time S.pl; simulated time S.t follows from it.
+// =====================================================================================
+var last = null, raf = null;
+function setPlay(pl){ S.pl = Math.min(Math.max(pl, 0), plEnd(S.P)); S.t = tAtPlay(S.P, S.pl); }
+function frame(now){
+  if(!S.playing){ raf = null; return; }
+  if(last === null) last = now;
+  var dt = Math.min((now - last)/1000, 0.05); last = now;
+  setPlay(S.pl + dt);
+  if(S.pl >= plEnd(S.P)) S.playing = false;
+  draw();
+  if(S.playing) raf = requestAnimationFrame(frame); else raf = null;
+}
+function play(){
+  if(S.pl >= plEnd(S.P)) setPlay(0);
+  S.revealed = true;
+  if(reduced){ setPlay(plEnd(S.P)); S.playing = false; draw(); return; }
+  S.playing = true; last = null;
+  if(!raf) raf = requestAnimationFrame(frame);
+  draw();
+}
+function pause(){ S.playing = false; draw(); }
+var dragT = false;
+function draw(){
+  drawMain(); drawW(); readouts(); verdict();
+  el("go").textContent = S.playing ? "Pause" : (S.pl > 0 && S.pl < plEnd(S.P) ? "Resume" : "Run");
+  var ts = el("ts"); ts.disabled = !S.revealed;
+  if(!dragT) ts.value = Math.round(1000*S.pl/plEnd(S.P));
+}
+
+// =====================================================================================
+// Controls
+// =====================================================================================
+var r0s = el("r0s");
+function sliderFor(){
+  if(S.ball === "dust"){ r0s.min = 20; r0s.max = 300; r0s.value = Math.round(S.r0d*100); }
+  else { r0s.min = 0; r0s.max = 1000; r0s.value = Math.round((Math.log10(S.r0r) - LOGR_MIN)/(LOGR_MAX - LOGR_MIN)*1000); }
+}
+function resetRun(){ S.playing = false; S.revealed = false; recompute(); setPlay(0); }
+function setR0(r, fromSlider){
+  if(S.ball === "dust"){ r = Math.min(Math.max(r, 0.2), 3.0); S.r0d = Math.round(r*100)/100; }
+  else { var l = Math.min(Math.max(Math.log10(r), LOGR_MIN), LOGR_MAX); S.r0r = Math.pow(10, Math.round(l*200)/200); }
+  if(!fromSlider) sliderFor();
+  resetRun(); draw();
+}
+r0s.addEventListener("input", function(){
+  if(S.ball === "dust") setR0(+r0s.value/100, true);
+  else setR0(Math.pow(10, LOGR_MIN + (+r0s.value/1000)*(LOGR_MAX - LOGR_MIN)), true);
+});
+el("go").addEventListener("click", function(){ if(S.playing) pause(); else play(); });
+el("rs").addEventListener("click", function(){ S.playing = false; S.revealed = false; setPlay(0); draw(); });
+var ts = el("ts");
+ts.addEventListener("input", function(){ dragT = true; S.playing = false; setPlay((+ts.value/1000)*plEnd(S.P)); draw(); dragT = false; });
+function setTabs(sel, attr, k){
+  var tabs = document.querySelectorAll(sel), i;
+  for(i = 0; i < tabs.length; i++){ var on = tabs[i].getAttribute(attr) === k;
+    tabs[i].classList.toggle("active", on); tabs[i].setAttribute("aria-selected", on); }
+}
+function setBody(k){ S.body = k; setTabs("[data-body]", "data-body", k); resetRun(); draw(); }
+function setBall(k){ S.ball = k; setTabs("[data-ball]", "data-ball", k); sliderFor(); resetRun(); draw(); }
+(function(){
+  var t = document.querySelectorAll("[data-body]"), u = document.querySelectorAll("[data-ball]"), i;
+  for(i = 0; i < t.length; i++) t[i].addEventListener("click", function(){ setBody(this.getAttribute("data-body")); });
+  for(i = 0; i < u.length; i++) u[i].addEventListener("click", function(){ setBall(this.getAttribute("data-ball")); });
+})();
+
+// ---- direct manipulation: drag the ball (at release) along the axis ----
+function logical(c, e, W, H){
+  var r = c.getBoundingClientRect();
+  return [(e.clientX - r.left)*W/r.width, (e.clientY - r.top)*H/r.height];
+}
+var drag = false;
+cv.addEventListener("pointerdown", function(e){
+  if(!HANDLE) return;
+  var p = logical(cv, e, CW, CH);
+  if(Math.hypot(p[0] - HANDLE.x, p[1] - HANDLE.y) < 24){ drag = true; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; }
+});
+cv.addEventListener("pointermove", function(e){
+  var p = logical(cv, e, CW, CH);
+  if(drag){ setR0(S.ball === "dust" ? (p[0] - PX)/PS : rFromPx(p[0]), false); }
+  else cv.style.cursor = (HANDLE && Math.hypot(p[0] - HANDLE.x, p[1] - HANDLE.y) < 24) ? "grab" : "default";
+});
+function endDrag(){ if(drag){ drag = false; cv.style.cursor = "grab"; } }
+cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+
+// ---- start: free dust at rest at r0 = 2R above the Earth, ready to run, result hidden ----
+sliderFor();
+resetRun();
+draw();
+
+// test hook (used by the build's headless checks; harmless in the page)
+window.__L20 = { S: S, setR0: setR0, setBody: setBody, setBall: setBall, draw: draw, setPlay: setPlay, plEnd: plEnd,
+                 integrateDust: integrateDust, integrateRubble: integrateRubble, at: at, play: play, qRock: qRock,
+                 labels: function(){ return LABELS.slice(); }, curves: function(){ return CURVES.slice(); } };
+})();
+</script>
+</body>
+</html>

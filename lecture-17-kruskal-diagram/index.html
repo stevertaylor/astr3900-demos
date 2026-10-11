@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 17: Kruskal Diagram Explorer — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px}
+.tab{padding:7px 14px;font:600 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/600}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.55;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model sup,.model sub,table.read sup,table.read sub,.ask sub,.verdict sub,.ask sup,.verdict sup{line-height:0}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 8px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=checkbox]{accent-color:var(--blue);margin:0 6px 0 0;vertical-align:-2px}
+.check{font-size:12.5px;color:var(--mute2);margin-top:4px;display:block}
+
+.btns{display:flex;gap:8px;margin-top:8px}
+.btn{flex:1;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn.primary{background:var(--blued);color:#fff}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.5;margin:0}
+.verdict{font-size:12.5px;line-height:1.55;margin:8px 0 0;padding-top:8px;
+         border-top:1px solid var(--dim);color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.hidden{display:none}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 17</div>
+    <h1>Kruskal Diagram Explorer</h1>
+    <div class="sub">Signals from a falling observer, and slices through the Einstein&ndash;Rosen bridge, on the exact Kruskal&ndash;Szekeres diagram.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tabSig" role="tab" aria-selected="true">Signals</button>
+        <button class="tab" id="tabWh" role="tab" aria-selected="false">Wormhole</button>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="model" id="modelSig">
+        <b>Model:</b> the exact Schwarzschild geometry in Kruskal&ndash;Szekeres coordinates, <i>G</i> = <i>c</i> = 1,
+        lengths and times in units of <i>M</i>, radial motion only; <i>U</i> and <i>V</i> share one scale, so radial
+        light moves at 45&deg;. The falling observer is an exact radial geodesic with energy <i>e</i>; pulses leave at equal
+        intervals of its proper time <i>&tau;</i>, starting as it passes the static observer at <i>r</i> = <i>R</i>.
+        Animation clock: Kruskal <i>V</i> advances steadily (<span id="vps">&ndash;</span>), then, above the diagram,
+        fast-forwards so that <i>t</i> at <i>R</i> advances steadily; every clock reading is computed from the geometry. <b>Key:</b> dashed ink, the falling observer; brown, the static observer at <i>r</i> = <i>R</i>;
+        dashed blue, light pulses; &#9675;, a probe event you can drag anywhere. 1&nbsp;<i>M</i> = 4.93&nbsp;&mu;s for one solar mass.
+      </div>
+      <div class="model hidden" id="modelWh">
+        <b>Model:</b> the slice <i>V</i> = <i>V</i><sub>0</sub>, <i>&theta;</i> = &pi;/2 is spacelike for every <i>V</i><sub>0</sub>; the
+        right panel is its exact embedding as a surface of revolution in flat space (radius <i>r</i>, height <i>z</i>, same scale),
+        with <i>dz</i>/<i>dU</i> = (8<i>M</i><sup>2</sup>e<sup>&minus;<i>r</i>/4<i>M</i></sup>/<i>r</i>)(1 &minus; <i>V</i><sub>0</sub><sup>2</sup>e<sup>&minus;<i>r</i>/2<i>M</i></sup>)<sup>1/2</sup>.
+        Upper sheet: <i>U</i> &gt; 0 (region I side); lower sheet: <i>U</i> &lt; 0 (region III side); brown: <i>r</i> &lt; 2<i>M</i>.
+        The light ray leaves <i>r</i><sub>L</sub> inward at <i>V</i> = 0 and follows <i>U</i> + <i>V</i> = const. Drag the blue slice line, or press Play.
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel" id="ctlSig">
+        <h2>Set up</h2>
+        <div class="row">
+          <label>static observer at <i>R</i> <span class="v" id="vR">&ndash;</span></label>
+          <input type="range" id="sR" min="2.6" max="8" step="0.05" value="3.6">
+        </div>
+        <div class="row">
+          <label>pulse spacing &Delta;<i>&tau;</i> (falling observer&rsquo;s clock) <span class="v" id="vdt">&ndash;</span></label>
+          <input type="range" id="sdt" min="0.1" max="0.8" step="0.01" value="0.2">
+        </div>
+        <div class="row">
+          <label>falling observer&rsquo;s energy <i>e</i> <span class="v" id="ve">&ndash;</span></label>
+          <input type="range" id="se" min="1" max="2" step="0.01" value="1">
+        </div>
+        <div class="row">
+          <label>speed <span class="v" id="vsp">&ndash;</span></label>
+          <input type="range" id="ssp" min="0" max="100" step="1" value="45">
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="run">Run</button>
+          <button class="btn" id="rst">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel" id="readSig">
+        <h2>Readouts</h2>
+        <table class="read">
+          <tr><td>falling observer: <i>r</i>, <i>&tau;</i></td><td class="n" id="rf">&ndash;</td></tr>
+          <tr><td>pulses sent / received</td><td class="n" id="rn">&ndash;</td></tr>
+          <tr><td>latest arrival: <i>t</i>, 1 + <i>z</i></td><td class="n" id="rlast">&ndash;</td></tr>
+          <tr><td>probe: region, <i>r</i>, <i>t</i></td><td class="n" id="rp">&ndash;</td></tr>
+          <tr><td>probe&rsquo;s light reaches <i>R</i> at <i>t</i></td><td class="n" id="rpt">&ndash;</td></tr>
+          <tr><td>check <span class="gloss">(&minus;<i>u</i>&middot;<i>u</i> &minus; 1 on the worldline)</span></td><td class="n" id="rchk">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel" id="askSig">
+        <h2>Predict, then run</h2>
+        <p class="ask">Before pressing Run: of the pulses the falling observer sends, how many will the observer at
+          <i>R</i> ever receive? Will their arrivals be evenly spaced?</p>
+        <p class="verdict hidden" id="verSig"></p>
+      </div>
+
+      <div class="panel hidden" id="ctlWh">
+        <h2>Slice and ray</h2>
+        <div class="row">
+          <label>slice <i>V</i><sub>0</sub> <span class="v" id="vV0">&ndash;</span></label>
+          <input type="range" id="sV0" min="-0.99" max="0.99" step="0.005" value="0">
+        </div>
+        <div class="row">
+          <label>ray launched from <i>r</i><sub>L</sub> at <i>V</i> = 0 <span class="v" id="vrL">&ndash;</span></label>
+          <input type="range" id="srL" min="2.05" max="4" step="0.01" value="2.6">
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="play">Play</button>
+          <button class="btn" id="rst2">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="readWh">
+        <h2>Readouts</h2>
+        <table class="read">
+          <tr><td>throat radius on this slice</td><td class="n" id="wthr">&ndash;</td></tr>
+          <tr><td>the throat is</td><td class="n" id="wtr">&ndash;</td></tr>
+          <tr><td>ray: <i>U</i>, <i>r</i>, region</td><td class="n" id="wray">&ndash;</td></tr>
+          <tr><td>check <span class="gloss">(embedding vs slice metric)</span></td><td class="n" id="wchk">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel hidden" id="askWh">
+        <h2>Predict, then play</h2>
+        <p class="ask">Play sweeps the slice from <i>V</i><sub>0</sub> = &minus;0.99 to 0.99 while the light ray, the fastest
+          possible traveller, heads for the throat. Will it come out on the far sheet in region III?</p>
+        <p class="verdict hidden" id="verWh"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 17</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// =====================================================================================
+// Physics (G = c = M = 1).  Kruskal-Szekeres: U^2 - V^2 = F(r) = (r/2 - 1) e^{r/2},
+//   ds^2 = (32/r) e^{-r/2} (-dV^2 + dU^2) + r^2 dOmega^2.
+// Region I: tanh(t/4) = V/U;  region II: tanh(t/4) = U/V.
+// =====================================================================================
+var E = Math.E;
+function F(r){ return (r/2 - 1)*Math.exp(r/2); }
+
+// Lambert W, principal branch, y >= -1/e
+function W0(y){
+  if(y === 0) return 0;
+  var w;
+  if(y < -0.25) w = -1 + Math.sqrt(Math.max(2*(1 + E*y), 0));
+  else if(y < 3) w = Math.log(1 + y)*0.8;
+  else { var L = Math.log(y); w = L - Math.log(L); }
+  for(var i = 0; i < 40; i++){
+    var ew = Math.exp(w), f = w*ew - y, d = ew*(w + 1);
+    if(Math.abs(d) < 1e-300) break;
+    var dw = f/(d - (w + 2)*f/(2*w + 2));
+    if(!isFinite(dw)) break;
+    w -= dw;
+    if(Math.abs(dw) < 1e-14*(1 + Math.abs(w))) break;
+  }
+  return w;
+}
+// r from (U, V); 0 at or beyond the singularity
+function rOf(U, V){
+  var A = U*U - V*V;
+  if(A <= -1) return 0;
+  return 2*(1 + W0(A/E));
+}
+function tOf(U, V){            // Schwarzschild t in regions I, II, III, IV (NaN on horizons)
+  if(Math.abs(U) > Math.abs(V)) return 4*Math.atanh(V/U);
+  if(Math.abs(V) > Math.abs(U)) return 4*Math.atanh(U/V);
+  return NaN;
+}
+function region(U, V){
+  if(U > Math.abs(V)) return "I";
+  if(V > Math.abs(U)) return "II";
+  if(-U > Math.abs(V)) return "III";
+  if(-V > Math.abs(U)) return "IV";
+  return "horizon";
+}
+
+// Ingoing radial geodesic with energy e >= 1, from r = 60 to r = 0, placed so it meets
+// r = 0 at U = Uhit (there U = sinh(v/4), V = cosh(v/4)).  dv/dr = -1/[(e+s)s],
+// dtau/dr = -1/s, s = sqrt(e^2 - 1 + 2/r).  Integrated in r on a graded grid (Simpson
+// pieces via the trapezoid on a fine log grid, ample for display and the readouts).
+function infall(e, Uhit){
+  var N = 6000, rs = [], i;
+  for(i = 0; i < N; i++){
+    var x = i/(N - 1);
+    rs.push(60*Math.pow(1 - x, 2.2) + 1e-9);     // dense near r = 0
+  }
+  function s(r){ return Math.sqrt(e*e - 1 + 2/r); }
+  var v = [0], tau = [0];
+  for(i = 1; i < N; i++){
+    var r0 = rs[i - 1], r1 = rs[i], rm = 0.5*(r0 + r1), dr = r1 - r0;
+    var f = function(r){ var q = s(r); return -1/((e + q)*q); };
+    var g = function(r){ return -1/s(r); };
+    v.push(v[i - 1] + dr*(f(r0) + 4*f(rm) + f(r1))/6);
+    tau.push(tau[i - 1] + dr*(g(r0) + 4*g(rm) + g(r1))/6);
+  }
+  var shift = 4*Math.asinh(Uhit) - v[N - 1];
+  var W = [];
+  for(i = 0; i < N; i++){
+    var S = Math.exp((v[i] + shift)/4), D = F(rs[i])/S;
+    W.push({r: rs[i], U: 0.5*(S + D), V: 0.5*(S - D), tau: tau[i]});
+  }
+  return W;
+}
+// Outgoing radial light from (Ue, Ve): V - U = c. Reception on r = R (c < 0 only).
+function reception(Ue, Ve, R){
+  var c = Ve - Ue;
+  if(c >= 0) return null;
+  var A = F(R), Ur = -(A + c*c)/(2*c), Vr = Ur + c;
+  return {U: Ur, V: Vr, t: 4*Math.atanh(Vr/Ur)};
+}
+// Ingoing radial light: U + V = c. Reception on r = R from outside (probe at r > R).
+function receptionIn(Ue, Ve, R){
+  var c = Ue + Ve;
+  if(c <= 0) return null;
+  var A = F(R), Ur = (A + c*c)/(2*c), Vr = c - Ur;
+  if(Vr < Ve) return null;
+  return {U: Ur, V: Vr, t: 4*Math.atanh(Vr/Ur)};
+}
+// 1 + z for an outgoing photon from the infaller (energy e, at r) received at static R
+function onePlusZ(e, r, R){
+  var f = 1 - 2/r;
+  return Math.sqrt(1 - 2/R)*(e + Math.sqrt(e*e - f))/f;
+}
+
+// =====================================================================================
+// Canvas, DPR-aware. Logical 1100 x 600: Kruskal diagram on the left (0..610),
+// side panel on the right (610..1100).
+// =====================================================================================
+var CW = 1100, CH = 600;
+var cv = document.getElementById("c"), ctx = cv.getContext("2d");
+function setupDPR(){
+  var dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
+  cv.width = Math.round(CW*dpr); cv.height = Math.round(CH*dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+setupDPR();
+
+var COL = { ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B",
+            mute2:"#33465C", dim:"#C4CBD8", bg:"#FBFBF8", panel:"#EDF1F6", white:"#ffffff" };
+var SERIF = 'Georgia, "Times New Roman", serif';
+var SANS = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+// Kruskal view: one scale for U and V
+var KV = { cx: 262, cy: 300, s: 112, Umin: -2.25, Umax: 3.05, Vmin: -2.5, Vmax: 2.5 };
+function X(U){ return KV.cx + U*KV.s; }
+function Y(V){ return KV.cy - V*KV.s; }
+function Uof(x){ return (x - KV.cx)/KV.s; }
+function Vof(y){ return (KV.cy - y)/KV.s; }
+
+// ---- label registry for the collision audit -----------------------------------------
+var LABELS = [], CURVES = [];
+function regCurve(name, pts){ CURVES.push({name: name, pts: pts}); }
+function lineTo2(pts, color, lw, dash, name){
+  if(pts.length < 2) return;
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for(var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke(); ctx.restore();
+  if(name) regCurve(name, pts);
+}
+// Text with optional background patch; italic Georgia for variables, sans for words.
+function label(txt, x, y, opt){
+  opt = opt || {};
+  var size = opt.size || 18, font = opt.font || ((opt.serif ? "italic " : "") + size + "px " + (opt.serif ? SERIF : SANS));
+  if(opt.bold) font = "600 " + size + "px " + SANS;
+  ctx.save(); ctx.font = font;
+  var w = ctx.measureText(txt).width, h = size*0.92;
+  var ax = opt.align || "left", bx = ax === "center" ? x - w/2 : (ax === "right" ? x - w : x);
+  var rect = {x: bx - 3, y: y - h*0.78 - 2, w: w + 6, h: h + 4};
+  if(opt.bgfill !== false && opt.bg){ ctx.fillStyle = opt.bg; ctx.fillRect(rect.x, rect.y, rect.w, rect.h); }
+  ctx.fillStyle = opt.color || COL.ink; ctx.textAlign = ax; ctx.textBaseline = "alphabetic";
+  ctx.fillText(txt, x, y); ctx.restore();
+  LABELS.push({txt: txt, r: rect, bg: !!opt.bg, own: opt.own || null});
+  return rect;
+}
+// variable with subscript, e.g. ("r", "L")
+function labelSub(base, sub, x, y, opt){
+  opt = opt || {};
+  var size = opt.size || 18;
+  ctx.save(); ctx.font = "italic " + size + "px " + SERIF;
+  var wb = ctx.measureText(base).width;
+  ctx.font = "italic " + Math.round(size*0.72) + "px " + SERIF;
+  var ws = ctx.measureText(sub).width; ctx.restore();
+  var w = wb + ws + 1, ax = opt.align || "left", x0 = ax === "center" ? x - w/2 : (ax === "right" ? x - w : x);
+  if(opt.bg){ ctx.save(); ctx.fillStyle = opt.bg; ctx.fillRect(x0 - 3, y - size*0.78, w + 6, size*1.12); ctx.restore(); }
+  ctx.save(); ctx.fillStyle = opt.color || COL.ink; ctx.textBaseline = "alphabetic";
+  ctx.font = "italic " + size + "px " + SERIF; ctx.fillText(base, x0, y);
+  ctx.font = "italic " + Math.round(size*0.72) + "px " + SERIF; ctx.fillText(sub, x0 + wb + 1, y + size*0.22);
+  ctx.restore();
+  LABELS.push({txt: base + "_" + sub, r: {x: x0 - 3, y: y - size*0.78, w: w + 6, h: size*1.12}, bg: !!opt.bg});
+}
+
+// ---- Kruskal furniture ----------------------------------------------------------------
+function inView(U, V){ return U >= KV.Umin && U <= KV.Umax && V >= KV.Vmin && V <= KV.Vmax; }
+function sampleCurve(fn, a, b, n){            // fn(p) -> [U, V]; keep in-view runs
+  var runs = [], cur = [];
+  for(var i = 0; i <= n; i++){
+    var p = a + (b - a)*i/n, q = fn(p);
+    if(q && inView(q[0], q[1])){ cur.push([X(q[0]), Y(q[1])]); }
+    else if(cur.length){ runs.push(cur); cur = []; }
+  }
+  if(cur.length) runs.push(cur);
+  return runs;
+}
+function drawRuns(runs, color, lw, dash, name){ runs.forEach(function(r, i){ lineTo2(r, color, lw, dash, name + i); }); }
+
+function drawKruskalBase(opts){
+  opts = opts || {};
+  // clip to the diagram box
+  ctx.save();
+  ctx.beginPath(); ctx.rect(X(KV.Umin), Y(KV.Vmax), (KV.Umax - KV.Umin)*KV.s, (KV.Vmax - KV.Vmin)*KV.s); ctx.clip();
+  // hatch beyond the singularities
+  ctx.strokeStyle = "rgba(90,107,123,0.35)"; ctx.lineWidth = 1;
+  for(var k = -40; k < 40; k++){
+    ctx.beginPath();
+    var started = false;
+    for(var j = 0; j <= 80; j++){
+      var U = KV.Umin + (KV.Umax - KV.Umin)*j/80;
+      var V = 0.9*U + k*0.16;
+      var beyond = Math.abs(V) > Math.sqrt(U*U + 1) + 0.03;
+      if(beyond && inView(U, V)){
+        if(!started){ ctx.moveTo(X(U), Y(V)); started = true; } else ctx.lineTo(X(U), Y(V));
+      } else if(started){ ctx.stroke(); ctx.beginPath(); started = false; }
+    }
+    if(started) ctx.stroke();
+  }
+  // faint grid: r = const and t = const
+  if(opts.grid){
+    [1.0, 1.5, 2.5, 3.0, 4.0].forEach(function(r){
+      var A = F(r);
+      if(A > 0){
+        drawRuns(sampleCurve(function(p){ return [Math.sqrt(A + p*p), p]; }, -2.5, 2.5, 120), "rgba(138,90,24,0.28)", 1, [], null);
+        drawRuns(sampleCurve(function(p){ return [-Math.sqrt(A + p*p), p]; }, -2.5, 2.5, 120), "rgba(138,90,24,0.28)", 1, [], null);
+      } else {
+        drawRuns(sampleCurve(function(p){ return [p, Math.sqrt(p*p - A)]; }, -2.5, 2.5, 120), "rgba(138,90,24,0.28)", 1, [], null);
+        drawRuns(sampleCurve(function(p){ return [p, -Math.sqrt(p*p - A)]; }, -2.5, 2.5, 120), "rgba(138,90,24,0.28)", 1, [], null);
+      }
+    });
+    [-6, -3, 3, 6].forEach(function(t){
+      var th = Math.tanh(t/4);
+      lineTo2([[X(0), Y(0)], [X(3.05), Y(3.05*th)]], "rgba(15,110,147,0.25)", 1, [], null);
+      lineTo2([[X(0), Y(0)], [X(-3.05), Y(-3.05*th)]], "rgba(15,110,147,0.25)", 1, [], null);
+    });
+  }
+  ctx.restore();
+  // horizons
+  var L = 2.5;
+  lineTo2([[X(-L), Y(-L)], [X(L), Y(L)]], COL.ink, 1.6, [], "hz1");
+  lineTo2([[X(-L), Y(L)], [X(L), Y(-L)]], COL.ink, 1.6, [], "hz2");
+  // singularities (wiggly)
+  [1, -1].forEach(function(sg){
+    var pts = [], Uw = Math.sqrt(KV.Vmax*KV.Vmax - 1), n = 260;
+    for(var i = 0; i <= n; i++){
+      var U = -Uw + 2*Uw*i/n, V = sg*Math.sqrt(U*U + 1);
+      var nx = -U/Math.sqrt(U*U + 1), ny = 1;   // rough normal in (U,V)
+      var nn = Math.hypot(nx, ny), w = 0.025*Math.sin(i*0.9);
+      pts.push([X(U + w*nx/nn), Y(V + w*ny/nn)]);
+    }
+    lineTo2(pts, COL.brown, 1.8, [], sg > 0 ? "singF" : "singP");
+  });
+  // axes
+  ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.3; ctx.fillStyle = COL.ink;
+  ctx.beginPath(); ctx.moveTo(X(KV.Umin), Y(0)); ctx.lineTo(X(KV.Umax) - 2, Y(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(0), Y(KV.Vmin)); ctx.lineTo(X(0), Y(KV.Vmax) + 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(KV.Umax) + 6, Y(0)); ctx.lineTo(X(KV.Umax) - 6, Y(0) - 5); ctx.lineTo(X(KV.Umax) - 6, Y(0) + 5); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(X(0), Y(KV.Vmax) - 6); ctx.lineTo(X(0) - 5, Y(KV.Vmax) + 6); ctx.lineTo(X(0) + 5, Y(KV.Vmax) + 6); ctx.fill();
+  ctx.restore();
+  regCurve("axU", [[X(KV.Umin), Y(0)], [X(KV.Umax), Y(0)]]);
+  regCurve("axV", [[X(0), Y(KV.Vmin)], [X(0), Y(KV.Vmax)]]);
+  label("U", X(KV.Umax) - 4, Y(0) - 12, {serif: true, size: 21, align: "right"});
+  label("V", X(0) + 10, Y(KV.Vmax) + 18, {serif: true, size: 21, bg: COL.white});
+  // region labels
+  label("I", X(0.85), Y(-0.45), {font: "21px " + SERIF, align: "center", bg: COL.white});
+  label("II", X(0.32), Y(0.62), {font: "21px " + SERIF, align: "center", bg: COL.white});
+  label("III", X(-1.35), Y(-0.28), {font: "21px " + SERIF, align: "center", bg: COL.white});
+  label("IV", X(0.34), Y(-0.70), {font: "21px " + SERIF, align: "center", bg: COL.white});
+  // horizon / singularity tags
+  label("r = 2M", X(2.32), Y(2.32) + 26, {serif: true, size: 17, align: "right", bg: COL.white});
+  label("r = 0", X(-1.55), Y(Math.sqrt(1.55*1.55 + 1)) - 10, {serif: true, size: 17, color: COL.brown, align: "center", bg: COL.white});
+}
+
+// ---- right-hand panel frame -----------------------------------------------------------
+var PX0 = 625, PX1 = 1090;
+function panelFrame(title){
+  ctx.save(); ctx.fillStyle = "#F7F8FA"; ctx.fillRect(PX0 - 8, 0, CW - PX0 + 8, CH); ctx.restore();
+  lineTo2([[PX0 - 8, 0], [PX0 - 8, CH]], COL.dim, 1, [], null);
+  label(title, (PX0 + PX1)/2, 30, {font: "20px " + SERIF, align: "center"});
+}
+
+// =====================================================================================
+// State
+// =====================================================================================
+var S = {
+  mode: "sig",
+  R: 3.6, dtau: 0.2, e: 1.0, speed: 45,
+  Vanim: null, running: false, done: false,
+  probe: {U: 1.25, V: 1.12},
+  V0: 0, rL: 2.6, playing: false, whDone: false
+};
+var reduceMotion = typeof window !== "undefined" && window.matchMedia &&
+                   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// --- signals model (recomputed when inputs change) ---
+var SIG = null;
+function buildSignals(){
+  var W = infall(S.e, 0.45);
+  // index where r passes R (start of emission)
+  var iR = 0;
+  for(var i = 0; i < W.length; i++){ if(W[i].r <= S.R){ iR = i; break; } }
+  var tau0 = W[iR].tau, tauEnd = W[W.length - 1].tau;
+  var iH = iR; for(i = iR; i < W.length; i++){ if(W[i].r <= 2){ iH = i; break; } }
+  var pulses = [];
+  for(var k = 0; ; k++){
+    var tk = tau0 + k*S.dtau;
+    if(tk > tauEnd - 1e-6) break;
+    var j = iR; while(j < W.length - 1 && W[j].tau < tk) j++;
+    var a = W[j - 1] || W[j], b = W[j], f = (b.tau === a.tau) ? 0 : (tk - a.tau)/(b.tau - a.tau);
+    var Ue = a.U + f*(b.U - a.U), Ve = a.V + f*(b.V - a.V), re = a.r + f*(b.r - a.r);
+    var rec = reception(Ue, Ve, S.R);
+    var p = {k: k + 1, U: Ue, V: Ve, r: re, tau: tk - tau0, rec: rec};
+    p.z = rec ? onePlusZ(S.e, re, S.R) : null;
+    if(!rec){ var c = Ve - Ue; p.Vsing = (1 + c*c)/(2*c); }
+    pulses.push(p);
+  }
+  var Vstart = W[iR].V;
+  var tR0 = tOf(Math.sqrt(F(S.R) + Vstart*Vstart), Vstart);
+  // normalization check along the worldline: -(32/r)e^{-r/2}(dV^2 - dU^2)/dtau^2 vs 1
+  var worst = 0;
+  for(i = iR + 5; i < iH - 5; i += 7){
+    var p0 = W[i - 1], p1 = W[i + 1];
+    var dU = p1.U - p0.U, dV = p1.V - p0.V, dt = p1.tau - p0.tau, r = W[i].r;
+    var val = (32/r)*Math.exp(-r/2)*(dV*dV - dU*dU)/(dt*dt) - 1;
+    worst = Math.max(worst, Math.abs(val));
+  }
+  SIG = {W: W, iR: iR, iH: iH, tau0: tau0, tauEnd: tauEnd - tau0, tauH: W[iH].tau - tau0, pulses: pulses,
+         Vstart: Vstart, Vend: KV.Vmax + 0.6, tR0: tR0, chk: worst};
+}
+
+function worldAt(V){            // falling observer's state at Kruskal V (null if past singularity)
+  var W = SIG.W, lo = SIG.iR, hi = W.length - 1;
+  if(V < W[lo].V) return W[lo];
+  if(V >= W[hi].V) return null;
+  while(hi - lo > 1){ var m = (lo + hi) >> 1; if(W[m].V < V) lo = m; else hi = m; }
+  var a = W[lo], b = W[hi], f = (V - a.V)/(b.V - a.V);
+  return {U: a.U + f*(b.U - a.U), V: V, r: a.r + f*(b.r - a.r), tau: a.tau + f*(b.tau - a.tau)};
+}
+
+// =====================================================================================
+// Drawing: Signals
+// =====================================================================================
+function drawSignals(){
+  LABELS = []; CURVES = [];
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.fillStyle = COL.white; ctx.fillRect(0, 0, CW, CH);
+  drawKruskalBase({grid: true});
+  var Vnow = S.Vanim === null ? SIG.Vstart : S.Vanim;
+  var W = SIG.W, R = S.R, A = F(R);
+  // static observer's worldline (r = R)
+  var runs = sampleCurve(function(p){ return [Math.sqrt(A + p*p), p]; }, -2.5, 2.5, 200);
+  drawRuns(runs, COL.brown, 2.4, [], "static");
+  if(runs.length){
+    var lastRun = runs[runs.length - 1], q = lastRun[lastRun.length - 1];
+    if(Math.sqrt(A) < KV.Umax){
+      var Vl = -2.1, Ul = Math.sqrt(A + Vl*Vl);
+      if(Ul < KV.Umax - 0.05) label("R", X(Ul) + 10, Y(Vl) + 6, {serif: true, size: 19, color: COL.brown, bg: COL.white});
+    }
+  }
+  if(Math.sqrt(A) >= KV.Umax - 0.1){
+    label("R is off the diagram →", X(KV.Umax) - 6, Y(-2.25), {size: 17, color: COL.brown, align: "right", bg: COL.white});
+  }
+  // falling worldline (whole path, dashed) and its emission dots
+  var pts = [];
+  for(var i = 0; i < W.length; i += 3){ if(inView(W[i].U, W[i].V)) pts.push([X(W[i].U), Y(W[i].V)]); }
+  lineTo2(pts, COL.ink, 2, [7, 5], "fall");
+  // pulses
+  var sent = 0, recd = 0, last = null;
+  SIG.pulses.forEach(function(p){
+    var emitted = Vnow >= p.V;
+    if(!emitted) return;
+    ctx.save(); ctx.fillStyle = COL.blue;
+    ctx.beginPath(); ctx.arc(X(p.U), Y(p.V), 4.2, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+    sent++;
+    var c = p.V - p.U, Vtip;
+    if(p.rec){ Vtip = Math.min(Vnow, p.rec.V); }
+    else { Vtip = Math.min(Vnow, p.Vsing); }
+    var Vdraw = Math.min(Vtip, KV.Vmax, KV.Umax + c);
+    if(Vdraw > p.V) lineTo2([[X(p.U), Y(p.V)], [X(Vdraw - c), Y(Vdraw)]], COL.blue, 1.6, [4, 3], null);
+    if(p.rec && Vnow >= p.rec.V){
+      recd++; last = p;
+      if(inView(p.rec.U, p.rec.V)){
+        ctx.save(); ctx.fillStyle = COL.brown; ctx.beginPath(); ctx.arc(X(p.rec.U), Y(p.rec.V), 4.2, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+      }
+    }
+  });
+  // markers
+  var wnow = worldAt(Vnow);
+  if(wnow && inView(wnow.U, wnow.V)){
+    ctx.save(); ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(X(wnow.U), Y(wnow.V), 6.5, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+  }
+  var Us = Math.sqrt(A + Vnow*Vnow);
+  if(inView(Us, Vnow)){
+    ctx.save(); ctx.fillStyle = COL.brown; ctx.beginPath(); ctx.arc(X(Us), Y(Vnow), 6.5, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+  }
+  // probe and its future light cone
+  var P = S.probe;
+  var pc = P.V - P.U, pa = P.V + P.U;
+  ctx.save(); ctx.beginPath(); ctx.rect(X(KV.Umin), Y(KV.Vmax), (KV.Umax - KV.Umin)*KV.s, (KV.Vmax - KV.Vmin)*KV.s); ctx.clip();
+  lineTo2([[X(P.U), Y(P.V)], [X(P.U + 4), Y(P.V + 4)]], COL.mute2, 1.2, [3, 4], null);
+  lineTo2([[X(P.U), Y(P.V)], [X(P.U - 4), Y(P.V + 4)]], COL.mute2, 1.2, [3, 4], null);
+  ctx.restore();
+  ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.fillStyle = COL.white;
+  ctx.beginPath(); ctx.arc(X(P.U), Y(P.V), 7.5, 0, 2*Math.PI); ctx.fill(); ctx.stroke(); ctx.restore();
+  label("probe", P.U > 2.2 ? X(P.U) - 12 : X(P.U) + 12, Y(P.V) - 10, {size: 17, color: COL.mute2, bg: COL.white, own: "probe",
+        align: P.U > 2.2 ? "right" : "left"});
+
+  drawLadder(Vnow);
+  // readouts
+  setText("rf", wnow ? (wnow.r.toFixed(2) + "M, " + (wnow.tau - SIG.tau0).toFixed(2) + "M") : "r = 0 reached");
+  setText("rn", sent + " / " + recd);
+  setText("rlast", last ? ("+" + (last.rec.t - SIG.tR0).toFixed(1) + "M, " + last.z.toFixed(2)) : "–");
+  var rp = rOf(P.U, P.V), reg = region(P.U, P.V), tp = tOf(P.U, P.V);
+  setText("rp", reg + ", " + rp.toFixed(2) + "M, " + (isFinite(tp) ? tp.toFixed(2) + "M" : "–"));
+  var rt;
+  if(rp <= 0) rt = "beyond r = 0";
+  else if(reg === "II") rt = "never (inside r = 2M)";
+  else if(reg === "III") rt = "never (region III)";
+  else if(reg === "horizon") rt = "never (on the horizon)";
+  else {
+    var rr = rp < S.R ? reception(P.U, P.V, S.R) : receptionIn(P.U, P.V, S.R);
+    rt = rr ? (rr.t.toFixed(2) + "M") : "–";
+  }
+  setText("rpt", rt);
+  setText("rchk", SIG.chk.toExponential(1));
+}
+
+// emission/reception ladder on the right
+function cross(x, y, col){
+  lineTo2([[x - 5, y - 5], [x + 5, y + 5]], col, 1.6, [], null);
+  lineTo2([[x - 5, y + 5], [x + 5, y - 5]], col, 1.6, [], null);
+}
+function drawLadder(Vnow){
+  panelFrame("Sent and received");
+  var yB = 516, yT = 92, xa = PX0 + 100, xb = PX1 - 92;
+  var tauMax = SIG.tauEnd, Tmax = 30;
+  function ya(tau){ return yB - (yB - yT)*tau/tauMax; }
+  function yb(t){ return yB - (yB - yT)*t/Tmax; }
+  lineTo2([[xa, yB], [xa, yT]], COL.ink, 1.4, [], "axa");
+  lineTo2([[xb, yB], [xb, yT]], COL.ink, 1.4, [], "axb");
+  label("sent", xa, yB + 30, {size: 17, align: "center"});
+  label("falling clock τ", xa, yB + 52, {size: 17, color: COL.grey, align: "center"});
+  label("received", xb, yB + 30, {size: 17, align: "center"});
+  label("t at R", xb, yB + 52, {size: 17, color: COL.grey, align: "center"});
+  var yh = ya(SIG.tauH);
+  lineTo2([[xa - 14, yh], [xa + 14, yh]], COL.brown, 2.2, [], "hzTick");
+  label("r = 2M", xa - 18, yh + 6, {serif: true, size: 18, color: COL.brown, align: "right", bg: "#F7F8FA"});
+  label("r = 0", xa - 18, yT + 6, {serif: true, size: 18, color: COL.brown, align: "right", bg: "#F7F8FA"});
+  label("0", xa - 18, yB + 6, {size: 17, color: COL.grey, align: "right"});
+  for(var t = 0; t <= Tmax; t += 10){
+    lineTo2([[xb, yb(t)], [xb + 7, yb(t)]], COL.ink, 1, [], null);
+    label(String(t), xb + 12, yb(t) + 6, {size: 17, color: COL.grey});
+  }
+  var nNever = 0;
+  SIG.pulses.forEach(function(p){
+    if(Vnow < p.V) return;
+    var y1 = ya(p.tau);
+    ctx.save(); ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(xa, y1, 4, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+    if(p.rec){
+      var tr = p.rec.t - SIG.tR0;
+      if(Vnow < p.rec.V){
+        var frac = Math.min(1, Math.log(Math.max(Vnow - p.V, 1e-9) + 1)/Math.log(p.rec.V - p.V + 1));
+        var y2 = yb(Math.min(tr, Tmax + 1.5));
+        lineTo2([[xa, y1], [xa + (xb - xa)*frac, y1 + (y2 - y1)*frac]], "rgba(15,110,147,0.55)", 1.3, [4, 3], null);
+        return;
+      }
+      if(tr <= Tmax){
+        lineTo2([[xa, y1], [xb, yb(tr)]], COL.blue, 1.4, [], null);
+        ctx.save(); ctx.fillStyle = COL.brown; ctx.beginPath(); ctx.arc(xb, yb(tr), 4, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+      } else {
+        var yTop = yT - 4, xs = xa + (xb - xa)*(yTop - y1)/(yb(tr) - y1);
+        lineTo2([[xa, y1], [xs, yTop]], COL.blue, 1.4, [], null);
+      }
+    } else {
+      nNever++;
+      lineTo2([[xa, y1], [xa + 26, y1]], COL.grey, 1.2, [2, 3], null);
+      cross(xa + 33, y1, COL.grey);
+    }
+  });
+  var late = SIG.pulses.filter(function(p){ return p.rec && Vnow >= p.rec.V && p.rec.t - SIG.tR0 > Tmax; });
+  if(late.length){
+    var lp = late[late.length - 1];
+    label("↑ t = " + (lp.rec.t - SIG.tR0).toFixed(0) + "M", xb, yT - 16, {size: 17, color: COL.blue, align: "center", bg: "#F7F8FA"});
+  }
+  if(nNever) label("× never received", xa - 30, yT - 16, {size: 17, color: COL.grey, bg: "#F7F8FA"});
+}
+
+// =====================================================================================
+// Wormhole: slice V = V0 and its embedding
+// =====================================================================================
+function sliceProfile(V0, rmax){
+  // integrate z(U) along U >= 0 from the throat; returns arrays of r and z
+  var Umax = Math.sqrt(F(rmax) + V0*V0), N = 600, U, r, z = 0, out = [], prev = null;
+  var worstChk = 0;
+  for(var i = 0; i <= N; i++){
+    U = Umax*Math.pow(i/N, 1.5);
+    r = rOf(U, V0);
+    var dzdU = (8*Math.exp(-r/4)/r)*Math.sqrt(Math.max(1 - V0*V0*Math.exp(-r/2), 0));
+    if(prev){
+      var dU = U - prev.U;
+      z += 0.5*(dzdU + prev.d)*dU;
+      // check: (dz/dU)^2 + (dr/dU)^2 vs g_UU at the midpoint
+      var drdU = (r - prev.r)/dU, gUU = 32/((r + prev.r)/2)*Math.exp(-((r + prev.r)/2)/2);
+      var dzm = 0.5*(dzdU + prev.d);
+      if(i > 3) worstChk = Math.max(worstChk, Math.abs((dzm*dzm + drdU*drdU)/gUU - 1));
+    }
+    out.push({U: U, r: r, z: z});
+    prev = {U: U, r: r, d: dzdU};
+  }
+  return {pts: out, chk: worstChk};
+}
+function throatR(V0){ return rOf(0, V0); }
+
+function rayAt(V){ // light ray launched inward from rL at V = 0: U + V = c, c = U_L
+  var c = Math.sqrt(F(S.rL));
+  var U = c - V;
+  var r = rOf(U, V);
+  return {U: U, V: V, r: r, c: c, Vhit: (1 + c*c)/(2*c)};
+}
+
+function drawWormhole(){
+  LABELS = []; CURVES = [];
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.fillStyle = COL.white; ctx.fillRect(0, 0, CW, CH);
+  drawKruskalBase({grid: false});
+  var V0 = S.V0;
+  // the slice V = V0 (spacelike), restricted to r > 0
+  var Ucut = V0*V0 > 1 ? Math.sqrt(V0*V0 - 1) : 0;
+  lineTo2([[X(KV.Umin), Y(V0)], [X(KV.Umax), Y(V0)]], COL.blue, 3.2, [], "slice");
+  labelSub("V", "0", X(KV.Umin) + 8, Y(V0) - 10, {size: 18, color: COL.blue, bg: COL.white});
+  // the ray
+  var ray = rayAt(0), c = ray.c;
+  var Vend = Math.min(ray.Vhit, KV.Vmax);
+  lineTo2([[X(c), Y(0)], [X(c - Vend), Y(Vend)]], COL.blue, 1.6, [5, 4], "ray");
+  ctx.save(); ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(X(c), Y(0), 4.5, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+  labelSub("r", "L", X(c) + 8, Y(0) + 22, {size: 17, bg: COL.white});
+  var rnow = null;
+  if(V0 >= 0 && V0 <= ray.Vhit){
+    rnow = rayAt(V0);
+    ctx.save(); ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(X(rnow.U), Y(V0), 6.5, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+  }
+  // embedding panel
+  panelFrame("Embedding of the slice");
+  var cx = (PX0 + PX1)/2, cy = 318, sc = 30, rmax = 5.8, k = 0.22;
+  var prof = sliceProfile(V0, rmax), P = prof.pts;
+  var rth = throatR(V0);
+  // rings
+  var ringR = [2.6, 3.4, 4.4, 5.5];
+  [1, -1].forEach(function(sg){
+    // back half of rings first (faint), then profile, then front halves
+    ringR.concat([rth]).forEach(function(rr, idx){
+      if(rr < rth - 1e-9) return;
+      var zr = zAt(P, rr);
+      ring(cx, cy - sg*zr*sc, rr*sc, k*rr*sc, idx === ringR.length ? COL.brown : COL.mute2, idx === ringR.length ? 2.2 : 1.1, true);
+    });
+    // the r = 2M ring on this slice, if r = 2M lies on it (|U| = |V0|)
+    if(rth < 2){
+      var z2 = zAt(P, 2);
+      ring(cx, cy - sg*z2*sc, 2*sc, k*2*sc, COL.brown, 1.4, true, [5, 4]);
+    }
+  });
+  // silhouette (profile) lines: x = +-r, y = -+z
+  [1, -1].forEach(function(sg){
+    [1, -1].forEach(function(side){
+      var inner = [], outer = [];
+      P.forEach(function(q){
+        var pt = [cx + side*q.r*sc, cy - sg*q.z*sc];
+        if(q.r < 2) inner.push(pt); else outer.push(pt);
+      });
+      if(inner.length) lineTo2(inner, COL.brown, 2.2, [], "pin" + sg + side);
+      if(outer.length){ if(inner.length) outer.unshift(inner[inner.length - 1]); lineTo2(outer, COL.ink, 2, [], "pout" + sg + side); }
+    });
+  });
+  label("U > 0: region I side", cx, 72, {size: 17, color: COL.grey, align: "center", bg: "#F7F8FA"});
+  label("U < 0: region III side", cx, 588, {size: 17, color: COL.grey, align: "center", bg: "#F7F8FA"});
+  // throat label
+  label("throat", PX1 - 4, cy - 4, {size: 17, color: COL.brown, align: "right", bg: "#F7F8FA"});
+  label(rth.toFixed(2) + "M", PX1 - 4, cy + 16, {size: 17, color: COL.brown, align: "right", bg: "#F7F8FA"});
+  lineTo2([[cx + rth*sc + 4, cy], [PX1 - 62, cy]], COL.brown, 1, [], null);
+  // ray marker on the embedding
+  if(rnow && rnow.r > 0){
+    var zr2 = zAt(P, Math.max(rnow.r, rth));
+    var sgn = rnow.U >= 0 ? 1 : -1;
+    ctx.save(); ctx.fillStyle = COL.blue; ctx.beginPath();
+    ctx.arc(cx + Math.max(rnow.r, rth)*sc, cy - sgn*zr2*sc, 6.5, 0, 2*Math.PI); ctx.fill(); ctx.restore();
+  }
+  // readouts
+  setText("wthr", rth.toFixed(3) + "M");
+  setText("wtr", Math.abs(V0) < 0.005 ? "widest (V = 0)" : (V0 < 0 ? "opening (white-hole half)" : "closing"));
+  if(rnow) setText("wray", rnow.U.toFixed(2) + ", " + rnow.r.toFixed(2) + "M, " + region(rnow.U, V0));
+  else setText("wray", V0 < 0 ? "not launched yet" : "reached r = 0");
+  setText("wchk", prof.chk.toExponential(1));
+}
+function zAt(P, rr){
+  for(var i = 1; i < P.length; i++){
+    if(P[i].r >= rr){ var a = P[i - 1], b = P[i], f = (rr - a.r)/Math.max(b.r - a.r, 1e-12); return a.z + f*(b.z - a.z); }
+  }
+  return P[P.length - 1].z;
+}
+function ring(cx, cy, rx, ry, color, lw, back, dash){
+  ctx.save(); ctx.strokeStyle = color; ctx.setLineDash(dash || []);
+  ctx.lineWidth = lw*0.7; ctx.globalAlpha = 0.45;
+  ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, Math.PI, 2*Math.PI); ctx.stroke();
+  ctx.lineWidth = lw; ctx.globalAlpha = 1;
+  ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI); ctx.stroke();
+  ctx.restore();
+}
+
+// =====================================================================================
+// UI
+// =====================================================================================
+function $(id){ return document.getElementById(id); }
+function setText(id, s){ var el = $(id); if(el) el.textContent = s; }
+function show(id, on){ var el = $(id); if(el && el.classList) el.classList.toggle("hidden", !on); }
+function vPerSec(){ return 0.08 + 0.9*S.speed/100; }
+
+function syncLabels(){
+  setText("vR", S.R.toFixed(2) + " M");
+  setText("vdt", S.dtau.toFixed(2) + " M");
+  setText("ve", S.e.toFixed(2));
+  setText("vsp", vPerSec().toFixed(2) + " in V per s");
+  setText("vps", "1 s of animation = " + vPerSec().toFixed(2) + " in V");
+  setText("vV0", S.V0.toFixed(3));
+  setText("vrL", S.rL.toFixed(2) + " M");
+}
+function draw(){ syncLabels(); if(S.mode === "sig") drawSignals(); else drawWormhole(); }
+
+function sigVerdict(){
+  var got = SIG.pulses.filter(function(p){ return p.rec; }), lost = SIG.pulses.length - got.length;
+  var gaps = [];
+  for(var i = 1; i < got.length; i++) gaps.push(got[i].rec.t - got[i - 1].rec.t);
+  var lp = got[got.length - 1];
+  var txt = "<b>" + got.length + " of " + SIG.pulses.length + "</b> pulses arrive: every pulse sent before the crossing at " +
+            "&tau; = " + SIG.tauH.toFixed(2) + "<i>M</i> gets there, the last at <i>t</i> = +" + (lp.rec.t - SIG.tR0).toFixed(1) +
+            "<i>M</i> with 1 + <i>z</i> = " + lp.z.toFixed(1) + ". The gaps grow (" +
+            gaps.slice(0, 4).map(function(g){ return g.toFixed(1); }).join(", ") + (gaps.length > 4 ? ", …" : "") +
+            " <i>M</i>). The " + lost + " sent inside <i>r</i> = 2<i>M</i> never arrive. The crossing itself is never seen: " +
+            "light from it runs along the horizon <i>V</i> = <i>U</i>.";
+  var el = $("verSig"); if(el){ el.innerHTML = txt; }
+  show("verSig", true);
+}
+function whVerdict(){
+  var ray = rayAt(0), c = ray.c, Uh = c - ray.Vhit;
+  var txt;
+  if(c >= 1){
+    txt = "<b>No.</b> The throat pinches off (<i>r</i> &rarr; 0 at <i>V</i><sub>0</sub> = 1) before the ray reaches <i>U</i> = 0. " +
+          "The ray meets <i>r</i> = 0 at <i>V</i> = " + ray.Vhit.toFixed(2) + ", still on the <i>U</i> &gt; 0 side, in region II.";
+  } else {
+    txt = "<b>No.</b> The ray does cross <i>U</i> = 0 (at <i>V</i> = " + c.toFixed(2) + "), but the throat is then inside the horizon " +
+          "(<i>r</i> = " + throatR(c).toFixed(2) + "<i>M</i>), so it only reaches the <i>r</i> &lt; 2<i>M</i> part of the far sheet, " +
+          "which is region II. It meets <i>r</i> = 0 at <i>V</i> = " + ray.Vhit.toFixed(2) + ", <i>U</i> = " + Uh.toFixed(2) + ".";
+  }
+  txt += " Along the ray <i>U</i> + <i>V</i> = " + c.toFixed(2) + " &gt; 0, and region III has <i>U</i> + <i>V</i> &lt; 0.";
+  var el = $("verWh"); if(el){ el.innerHTML = txt; }
+  show("verWh", true);
+}
+
+// ---- animation loop: runs only while animating ---------------------------------------
+var rafId = null, lastT = null;
+function tick(ts){
+  if(lastT === null) lastT = ts;
+  var dt = Math.min(0.05, (ts - lastT)/1000); lastT = ts;
+  if(S.mode === "sig" && S.running){
+    // below the top of the diagram V advances steadily; above it, ln V does, so that the
+    // static observer's clock t (~ 4M ln V there) keeps advancing at a steady pace
+    if(S.Vanim < VFF) S.Vanim += vPerSec()*dt;
+    else S.Vanim *= Math.exp(0.35*vPerSec()*dt);
+    var Vstop = sigVstop();
+    if(S.Vanim >= Vstop){ S.Vanim = Vstop; S.running = false; S.done = true; sigVerdict(); }
+  }
+  if(S.mode === "wh" && S.playing){
+    S.V0 += 0.22*dt*(0.3 + 0.7*S.speed/100)*2;
+    if(S.V0 >= 0.99){ S.V0 = 0.99; S.playing = false; S.whDone = true; whVerdict(); }
+    var sv = $("sV0"); if(sv) sv.value = S.V0;
+  }
+  draw();
+  if(S.running || S.playing){ rafId = requestAnimationFrame(tick); }
+  else { rafId = null; lastT = null; setRunLabels(); }
+}
+var VFF = 2.9;
+function sigVstop(){
+  var m = KV.Vmax + 0.4;
+  SIG.pulses.forEach(function(p){ if(p.rec) m = Math.max(m, p.rec.V*1.02); });
+  return m;
+}
+function startLoop(){ if(rafId === null){ lastT = null; rafId = requestAnimationFrame(tick); } setRunLabels(); }
+function setRunLabels(){
+  var b = $("run"); if(b) b.textContent = S.running ? "Pause" : (S.done ? "Run again" : "Run");
+  var p = $("play"); if(p) p.textContent = S.playing ? "Pause" : (S.whDone ? "Play again" : "Play");
+}
+function finishInstantly(){        // reduced motion: jump to the end state
+  if(S.mode === "sig"){ S.Vanim = sigVstop(); S.running = false; S.done = true; sigVerdict(); }
+  else { S.V0 = 0.99; S.playing = false; S.whDone = true; whVerdict(); var sv = $("sV0"); if(sv) sv.value = S.V0; }
+  draw(); setRunLabels();
+}
+
+function resetSig(){ S.running = false; S.done = false; S.Vanim = null; show("verSig", false); buildSignals(); draw(); setRunLabels(); }
+function resetWh(){ S.playing = false; S.whDone = false; S.V0 = 0; var sv = $("sV0"); if(sv) sv.value = 0; show("verWh", false); draw(); setRunLabels(); }
+
+function bind(id, ev, fn){ var el = $(id); if(el && el.addEventListener) el.addEventListener(ev, fn); }
+bind("sR", "input", function(){ S.R = parseFloat($("sR").value); if(S.probe) {} resetSig(); });
+bind("sdt", "input", function(){ S.dtau = parseFloat($("sdt").value); resetSig(); });
+bind("se", "input", function(){ S.e = parseFloat($("se").value); resetSig(); });
+bind("ssp", "input", function(){ S.speed = parseFloat($("ssp").value); syncLabels(); setText("vps", "1 s of animation = " + vPerSec().toFixed(2) + " in V"); });
+bind("run", "click", function(){
+  if(S.running){ S.running = false; setRunLabels(); return; }
+  if(S.done || S.Vanim === null){ S.Vanim = SIG.Vstart; S.done = false; show("verSig", false); }
+  if(reduceMotion){ finishInstantly(); return; }
+  S.running = true; startLoop();
+});
+bind("rst", "click", resetSig);
+bind("sV0", "input", function(){ S.V0 = parseFloat($("sV0").value); S.playing = false; draw(); setRunLabels(); });
+bind("srL", "input", function(){ S.rL = parseFloat($("srL").value); show("verWh", false); S.whDone = false; draw(); setRunLabels(); });
+bind("play", "click", function(){
+  if(S.playing){ S.playing = false; setRunLabels(); return; }
+  if(S.whDone || S.V0 >= 0.985){ S.V0 = -0.99; S.whDone = false; show("verWh", false); }
+  else if(!S.whDone && S.V0 === 0){ S.V0 = -0.99; }
+  if(reduceMotion){ finishInstantly(); return; }
+  S.playing = true; startLoop();
+});
+bind("rst2", "click", resetWh);
+
+function setMode(m){
+  S.mode = m; S.running = false; S.playing = false;
+  var sig = m === "sig";
+  ["ctlSig", "readSig", "askSig", "modelSig"].forEach(function(id){ show(id, sig); });
+  ["ctlWh", "readWh", "askWh", "modelWh"].forEach(function(id){ show(id, !sig); });
+  var a = $("tabSig"), b = $("tabWh");
+  if(a && a.classList){ a.classList.toggle("active", sig); a.setAttribute("aria-selected", sig ? "true" : "false"); }
+  if(b && b.classList){ b.classList.toggle("active", !sig); b.setAttribute("aria-selected", sig ? "false" : "true"); }
+  draw(); setRunLabels();
+}
+bind("tabSig", "click", function(){ setMode("sig"); });
+bind("tabWh", "click", function(){ setMode("wh"); });
+
+// ---- direct manipulation: drag the probe (Signals) or the slice (Wormhole) ------------
+var dragging = null;
+function toLogical(ev){
+  var rc = cv.getBoundingClientRect();
+  return {x: (ev.clientX - rc.left)*CW/rc.width, y: (ev.clientY - rc.top)*CH/rc.height};
+}
+function onDown(ev){
+  var p = toLogical(ev);
+  if(S.mode === "sig"){
+    var dx = p.x - X(S.probe.U), dy = p.y - Y(S.probe.V);
+    if(dx*dx + dy*dy < 22*22 || p.x < PX0 - 10){ dragging = "probe"; }
+  } else if(p.x < PX0 - 10 && Math.abs(p.y - Y(S.V0)) < 18){ dragging = "slice"; S.playing = false; }
+  if(dragging){ if(cv.setPointerCapture && ev.pointerId !== undefined) cv.setPointerCapture(ev.pointerId); onMove(ev); }
+}
+function onMove(ev){
+  var p = toLogical(ev);
+  if(!dragging){
+    var hover = false;
+    if(S.mode === "sig"){ var dx = p.x - X(S.probe.U), dy = p.y - Y(S.probe.V); hover = dx*dx + dy*dy < 22*22; }
+    else hover = p.x < PX0 - 10 && Math.abs(p.y - Y(S.V0)) < 18;
+    cv.style.cursor = hover ? "grab" : "default";
+    return;
+  }
+  cv.style.cursor = "grabbing";
+  if(dragging === "probe"){
+    var U = Math.max(KV.Umin + 0.05, Math.min(KV.Umax - 0.05, Uof(p.x)));
+    var V = Math.max(KV.Vmin + 0.05, Math.min(KV.Vmax - 0.05, Vof(p.y)));
+    if(V*V - U*U > 0.995){ var sg = V > 0 ? 1 : -1; V = sg*Math.sqrt(U*U + 0.995); }   // stay inside r > 0
+    S.probe = {U: U, V: V};
+  } else {
+    S.V0 = Math.max(-0.99, Math.min(0.99, Vof(p.y)));
+    var sv = $("sV0"); if(sv) sv.value = S.V0;
+  }
+  draw();
+}
+function onUp(){ dragging = null; cv.style.cursor = "default"; }
+if(cv.addEventListener){
+  cv.addEventListener("pointerdown", onDown);
+  cv.addEventListener("pointermove", onMove);
+  cv.addEventListener("pointerup", onUp);
+  cv.addEventListener("pointercancel", onUp);
+}
+if(typeof window !== "undefined" && window.addEventListener){
+  window.addEventListener("resize", function(){ setupDPR(); draw(); });
+}
+
+// ---- audit hook for headless tests -----------------------------------------------------
+function audit(){
+  var issues = [];
+  function ov(a, b){ return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y); }
+  for(var i = 0; i < LABELS.length; i++){
+    var a = LABELS[i];
+    if(a.r.x < 0 || a.r.y < 0 || a.r.x + a.r.w > CW || a.r.y + a.r.h > CH) issues.push("off-canvas: " + a.txt);
+    for(var j = i + 1; j < LABELS.length; j++){
+      if(a.own === "probe" || LABELS[j].own === "probe") continue;   // follows the cursor
+      if(ov(a.r, LABELS[j].r)) issues.push("overlap: " + a.txt + " x " + LABELS[j].txt);
+    }
+    if(a.bg) continue;
+    CURVES.forEach(function(cu){
+      for(var k = 0; k < cu.pts.length - 1; k++){
+        var p0 = cu.pts[k], p1 = cu.pts[k + 1];
+        for(var s = 0; s <= 4; s++){
+          var x = p0[0] + (p1[0] - p0[0])*s/4, y = p0[1] + (p1[1] - p0[1])*s/4;
+          if(x > a.r.x + 1 && x < a.r.x + a.r.w - 1 && y > a.r.y + 1 && y < a.r.y + a.r.h - 1){
+            issues.push("label on curve: " + a.txt + " x " + cu.name); return;
+          }
+        }
+      }
+    });
+  }
+  return issues;
+}
+if(typeof window !== "undefined"){
+  window.__k = { S: S, draw: draw, audit: audit, setMode: setMode, resetSig: resetSig, resetWh: resetWh,
+                 finish: finishInstantly, sig: function(){ return SIG; }, rOf: rOf, F: F, reception: reception,
+                 throatR: throatR, rayAt: rayAt, buildSignals: buildSignals };
+}
+
+buildSignals();
+setMode("sig");
+})();
+</script>
+</body>
+</html>
