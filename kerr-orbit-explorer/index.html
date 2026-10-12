@@ -275,7 +275,7 @@ body.clean #showUI{display:inline-flex}
 </aside>
 
 <div id="hud" class="ui">
-  <div class="glass card" id="cardR"><div class="ct">Radial motion <span id="rNote">r vs dr/dλ</span></div><canvas id="cvR"></canvas></div>
+  <div class="glass card" id="cardR"><div class="ct">Radial motion <span id="rNote">(dr/dλ)/(r<sup>2</sup>+a<sup>2</sup>) vs r</span></div><canvas id="cvR"></canvas></div>
   <div class="glass card" id="cardT"><div class="ct">Polar motion <span>cos θ</span></div><canvas id="cvT"></canvas></div>
   <div class="glass card hidden" id="cardS"><div class="ct">Shadow edge <span id="sNote"></span></div><canvas id="cvS"></canvas></div>
   <div class="glass card" id="cardRead"></div>
@@ -311,7 +311,7 @@ body.clean #showUI{display:inline-flex}
     <tr><td>1–9, 0</td><td>guided scenes</td></tr>
   </table>
   <p>The 3D view is a <b>coordinate map</b>: Boyer–Lindquist r, θ and φ (or the ingoing azimuth) are drawn as if they were spherical polar coordinates in flat space, so r = 6 appears at radius 6. It is not what an observer would see; light bending is shown only by the light rays themselves. Units are G = c = M = 1.</p>
-  <p>Geodesics are integrated in Mino time with an adaptive Dormand–Prince 5(4) scheme; the readout |u·u + 1| is computed from the evolved state and measures the accumulated integration error.</p>
+  <p>Geodesics are integrated in Mino time with an adaptive Dormand–Prince 5(4) scheme; the readout |u·u + 1| is computed from the evolved state. It checks that the state stays on the shell fixed by E, L<sub>z</sub> and Q; it does not detect phase errors along the orbit, which are of order 10<sup>−6</sup> after thousands of M at the default tolerance.</p>
   <div style="margin-top:12px;text-align:right"><button class="btn primary" id="helpClose">Close</button></div>
 </div>
 <div id="hint" class="ui">Drag to look around · scroll to zoom · <b style="color:#fff;font-weight:500">Scenes</b> for a guided tour</div>
@@ -1365,7 +1365,7 @@ Track.prototype.freezeBL = function () {
   var c1L = v.vb[(2 * i + 2) * 7 + 5], step = Math.min(0.5, 0.03 / Math.max(Om, 1e-3)), Tend = 16 / k2;
   for (var s = step; s <= Tend; s += step) {
     var e = Math.exp(-k2 * s), g = (1 - e) / k2;
-    v.add(tL + s, H.rp + (rL - H.rp) * e, thL + dth * g, phL + Om * s + (dph - Om) * g, -1, c1L * Math.sqrt(e), 1);
+    v.add(tL + s, H.rp + (rL - H.rp) * e, thL + dth * g, phL + Om * s + (dph - Om) * g, -1, c1L * e, 1);   // dtau/dt ~ Delta ~ exp(-2 kappa t)
   }
   v.end = 2;
 };
@@ -1412,9 +1412,10 @@ function Obj(kind, p) {
 Obj.prototype.free = function () { this.tracks.concat(this.ghost).forEach(function (t) { t.free(); }); this.tracks = []; this.ghost = []; };
 function rangeOf(C, r0) {   // radial interval with R >= 0 containing r0, and polar turning angle
   var H = K.hor(C.a), lo = r0, hi = r0, dr, it = 0;
-  while (lo > H.rp && it++ < 4000) { dr = Math.max(1e-3, 0.004 * lo); if (K.Rr(C, lo - dr) < 0) break; lo -= dr; }
+  function bis(x0, x1) { for (var k = 0; k < 60; k++) { var m = 0.5 * (x0 + x1); if (K.Rr(C, m) >= 0) x1 = m; else x0 = m; } return x1; }   // R(x0) < 0 <= R(x1)
+  while (lo > H.rp && it++ < 4000) { dr = Math.max(1e-3, 0.004 * lo); if (K.Rr(C, lo - dr) < 0) { lo = bis(lo - dr, lo); break; } lo -= dr; }
   it = 0;
-  while (hi < 400 && it++ < 4000) { dr = 0.004 * hi; if (K.Rr(C, hi + dr) < 0) break; hi += dr; }
+  while (hi < 400 && it++ < 4000) { dr = 0.004 * hi; if (K.Rr(C, hi + dr) < 0) { hi = bis(hi + dr, hi); break; } hi += dr; }
   var rmin = lo <= H.rp ? null : lo, rmax = hi >= 400 ? null : hi;
   var bq = C.a * C.a * (C.mu - C.E * C.E), Bc = C.Q + bq + C.L * C.L, y;
   if (Math.abs(bq) < 1e-12) y = Bc > 0 ? C.Q / Bc : 0;
@@ -2149,9 +2150,10 @@ function updateReadouts(now) {
   }
   if (o.info.F) {
     var Fq = o.info.F, op = Math.abs(Fq.Op);
-    h += '<div class="rl"><span>Ω<sub>r</sub> : Ω<sub>θ</sub> : Ω<sub>φ</sub></span><b>' + (Fq.Or / op).toFixed(3) + ' : ' + (Math.abs(Fq.Ot) / op).toFixed(3) + ' : 1</b></div>';
+    if (o.info.x === 0) h += '<div class="rl"><span>Ω<sub>r</sub> : Ω<sub>θ</sub></span><b>' + (Fq.Or / Fq.Ot).toFixed(3) + ' : 1</b></div><div class="rl"><span>Plane drift Ω<sub>φ</sub> (L<sub>z</sub> = 0)</span><b>' + Fq.Op.toFixed(5) + '</b></div>';
+    else h += '<div class="rl"><span>Ω<sub>r</sub> : Ω<sub>θ</sub> : Ω<sub>φ</sub></span><b>' + (Fq.Or / op).toFixed(3) + ' : ' + (Math.abs(Fq.Ot) / op).toFixed(3) + ' : 1</b></div>';
     var equat = Math.abs(o.info.x) > 0.9999, peri = 360 * ((equat ? Math.abs(Fq.Op) : Fq.Ot) / Fq.Or - 1);
-    h += '<div class="rl"><span>Periapsis shift per radial cycle</span><b>' + (o.p.e > 0.005 ? sgnfmt(peri, 1) + '°' : '—') + '</b></div>';
+    h += '<div class="rl"><span>Periapsis shift per radial cycle' + (o.p.e > 0.005 ? (equat ? ', in φ' : ', in the plane') : '') + '</span><b>' + (o.p.e > 0.005 ? sgnfmt(peri, 1) + '°' : '—') + '</b></div>';
     h += '<div class="rl"><span>Node shift per polar cycle</span><b>' + (!equat ? sgnfmt(360 * nodeRate(o) / Fq.Ot, 1) + '°' : '—') + '</b></div>';
     var res = nearRes(Fq.Or / Math.abs(Fq.Ot));
     if (res && o.p.e > 0.005 && Math.abs(o.info.x) < 0.9999) h += '<div class="muted">Near the ' + res + ' r–θ resonance: the orbit nearly closes in (r, θ).</div>';
@@ -2192,13 +2194,13 @@ var SCENES = [
     setup: function () { scene({ a: 0.9, cam: { az: 0.6, el: 0.75, dist: 20 }, speed: 30, objs: [{ kind: 'orbit', p: { p: K.pSep(0.9, 0.6, Math.cos(30 * DEG)) + 0.004, e: 0.6, inc: 30 } }] }); } },
   { t: 'Lense–Thirring precession', d: 'The orbital plane is dragged', text: 'A spherical orbit at r = 7M inclined at 45°. The arrow is the orbit-averaged normal to the orbital plane; it precesses about the spin axis at Ω<sub>φ</sub> − Ω<sub>θ</sub>, about 31° per polar period here. The grey a = 0 orbit with the same r and ι keeps a fixed plane. Far from the hole the rate tends to 2J/r<sup>3</sup>.',
     setup: function () { scene({ a: 0.9, layers: { normal: 1, ghost: 1, isco: 0 }, cam: { az: 0.9, el: 0.28, dist: 23 }, speed: 45, objs: [{ kind: 'orbit', p: { p: 7, e: 0, inc: 45, phi0: 0.4 } }] }); } },
-  { t: 'Carter’s constant', d: 'Two spheres and two cones', text: 'A generic orbit (p = 7M, e = 0.5, ι = 50°) fills the region between two spheres, its radial turning points, and two cones, its polar turning points. In Mino time the radial and polar motions are independent oscillators (bottom left), and Q sets the polar one. Kerr has only two Killing vectors; Q comes from a Killing tensor.',
+  { t: 'Carter’s constant', d: 'Two spheres and two cones', text: 'A generic orbit (p = 7M, e = 0.5, ι = 50°) fills the region between two spheres, its radial turning points, and two cones, its polar turning points. In Mino time the radial and polar motions are independent oscillators (bottom left); Q, with L<sub>z</sub> and E, sets the polar one. Kerr has only two Killing vectors; Q comes from a Killing tensor.',
     setup: function () { scene({ a: 0.9, layers: { turn: 1, isco: 0 }, trail: 'full', cam: { az: 0.55, el: 0.3, dist: 50 }, speed: 70, objs: [{ kind: 'orbit', p: { p: 7, e: 0.5, inc: 50 } }] });
       ['cardR', 'cardT'].forEach(function (id) { var e = $(id); e.classList.remove('pulse'); void e.offsetWidth; e.classList.add('pulse'); }); } },
-  { t: 'The photon shell', d: 'Spherical photon orbits', text: 'Spherical photon orbits fill the shell between the prograde (1.56M) and retrograde (3.91M) light rings: each stays at fixed r while oscillating in θ. They are unstable. The fourth orbit started 10<sup>−6</sup> of its radius off and peels away within a few orbits; this exponential instability is what makes the photon ring around a black-hole image so thin.',
+  { t: 'The photon shell', d: 'Spherical photon orbits', text: 'Spherical photon orbits fill the shell between the prograde (1.56M) and retrograde (3.91M) light rings: each stays at fixed r while oscillating in θ. They are unstable. The fourth orbit started 10<sup>−6</sup> of its radius off and peels away within a few orbits. The same instability is why successive photon-ring images of a black hole are exponentially thinner.',
     setup: function () { scene({ a: 0.9, layers: { shell: 1, isco: 0, ergo: 0, cut: 1 }, cam: { az: 0.7, el: 0.42, dist: 15 }, speed: 7, objs: [
       { kind: 'sph', p: { u: 0.7 } }, { kind: 'sph', p: { u: 0.0 } }, { kind: 'sph', p: { u: -0.7 } }, { kind: 'sph', p: { u: 0.35, perturb: true, name: 'Nudged photon', col: '#ff6f61' } }] }); } },
-  { t: 'Falling in', d: 'Frozen in t, not in τ', text: 'A probe released from rest relative to the local ZAMO at r = 7M. In Boyer–Lindquist time it never reaches r<sub>+</sub>: it freezes on the horizon, circling at Ω<sub>H</sub>. Its own clock disagrees. Switch to the ingoing chart to follow it through r<sub>+</sub> in finite proper time and on to the inner horizon r<sub>−</sub>, where this chart, and classical predictability, end.',
+  { t: 'Falling in', d: 'Frozen in t, not in τ', text: 'A probe released from rest relative to the local ZAMO at r = 7M. In Boyer–Lindquist time it never reaches r<sub>+</sub>: it freezes on the horizon, circling at Ω<sub>H</sub>. Its own clock disagrees. Switch to the ingoing chart to follow it through r<sub>+</sub> in finite proper time and on to the inner horizon r<sub>−</sub>. That is a Cauchy horizon: beyond it the classical evolution is no longer fixed by initial data, so the viewer stops there.',
     extra: function () { var sp = document.createElement('span'); sp.style.display = 'flex'; sp.style.gap = '6px';
       sp.appendChild(btn('Ingoing chart', 'Switch to the horizon-penetrating chart (C)', function () { setChart('KS'); }));
       sp.appendChild(btn('Clock: τ', 'Play along the probe’s proper time (T)', function () { setClock('tau'); }));
@@ -2297,6 +2299,7 @@ function drawNormal() {
   var key = inc.toFixed(4) + ':' + Lr.toFixed(3);
   if (key !== ncKey) { var pts = []; for (var k = 0; k < 120; k++) { var q = 2 * Math.PI * k / 120; pts.push([Lr * Math.sin(inc) * Math.cos(q), Lr * Math.cos(inc), -Lr * Math.sin(inc) * Math.sin(q)]); } normalCircle.set(pts, true); ncKey = key; }
   var node = (o.p.phi0 || 0) + nodeRate(o) * S.T;
+  if (S.chart === 'KS') node += K.psiF(S.a, K.hor(S.a), o.info.c.p);   // drawn azimuth is phiK = phi + psi(r); exact for e = 0
   var n = [Math.sin(inc) * Math.sin(node), -Math.sin(inc) * Math.cos(node), Math.cos(inc)];
   var tip = [Lr * n[0], Lr * n[2], -Lr * n[1]];
   normalShaft.set([[0, 0, 0], tip], false);
