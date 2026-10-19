@@ -312,7 +312,7 @@ body.clean #showUI{display:inline-flex}
     <tr><td>C · T</td><td>switch chart (Boyer–Lindquist / ingoing) · switch clock (t / τ)</td></tr>
     <tr><td>H · F</td><td>hide panels · follow selected probe</td></tr>
     <tr><td>1–9, 0</td><td>guided scenes</td></tr>
-    <tr><td>VR</td><td>in the Meta Quest browser, opens the same scene in the headset. Right trigger: next scene; left trigger: previous; A play/pause; B restart; X switch chart; Y hide the panel; grip: grab and turn the black hole; right stick: size and speed; left stick: spin a/M</td></tr>
+    <tr><td>VR</td><td>in the Meta Quest browser, opens the same scene in the headset. With hands: pinch and drag to move and turn the scene, pinch with both hands to resize and rotate it, and pinch while pointing at the floating panel to press its buttons. With controllers: grip to grab (both grips to resize), triggers for scenes, A play/pause, B restart, X chart, Y hide panel, sticks for size, speed and spin</td></tr>
   </table>
   <p>The 3D view is a <b>coordinate map</b>: Boyer–Lindquist r, θ and φ (or the ingoing azimuth) are drawn as if they were spherical polar coordinates in flat space, so r = 6 appears at radius 6. It is not what an observer would see; light bending is shown only by the light rays themselves. Units are G = c = M = 1.</p>
   <p>Geodesics are integrated in Mino time with an adaptive Dormand–Prince 5(4) scheme; the readout |u·u + 1| is computed from the evolved state. It checks that the state stays on the shell fixed by E, L<sub>z</sub> and Q; it does not detect phase errors along the orbit, which are of order 10<sup>−6</sup> after thousands of M at the default tolerance.</p>
@@ -2437,7 +2437,8 @@ function frame(now) {
 // to move and turn it. The physics, objects and scenes are exactly those of the desktop view.
 var XR = { s: null, ref: null, ar: false, M: new Float32Array(16), Minv: new Float32Array(16), last: 0, prev: {}, grab: null,
   panel: true, panelM: new Float32Array(16), cv: document.createElement('canvas'), pt: 0, spin: null, floor: true };
-XR.cv.width = 1024; XR.cv.height = 600;
+XR.cv.width = 1024; XR.cv.height = 720;
+XR.hits = new Map(); XR.pinch = new Map(); XR.hold = null; XR.hover = -1; XR.rays = [new GLR.Line(), new GLR.Line(), new GLR.Line()];
 function m4set(o, a) { for (var i = 0; i < 16; i++) o[i] = a[i]; return o; }
 function xrPlace(scale) {   // hole 1.0 m ahead at chest height, panel to the left, turned toward you
   var y = XR.floor ? 1.25 : -0.15;
@@ -2455,9 +2456,9 @@ function enterXR(mode) {
   if (!navigator.xr) { toast('VR needs a WebXR browser: open this page in the Meta Quest browser'); return; }
   var ar = mode === 'immersive-ar';
   var prep = gl.makeXRCompatible ? gl.makeXRCompatible() : Promise.resolve();
-  prep.then(function () { return navigator.xr.requestSession(mode, { optionalFeatures: ['local-floor'] }); })
+  prep.then(function () { return navigator.xr.requestSession(mode, { optionalFeatures: ['local-floor', 'hand-tracking'] }); })
     .then(function (s) {
-      XR.s = s; XR.ar = ar; XR.prev = {}; XR.grab = null;
+      XR.s = s; XR.ar = ar; XR.prev = {}; XR.grab = null; XR.hold = null; XR.pinch = new Map(); XR.hits = new Map();
       s.updateRenderState({ baseLayer: new XRWebGLLayer(s, gl, { antialias: false, alpha: ar, depth: true }), depthNear: 0.02, depthFar: 2000 });
       s.addEventListener('end', function () { XR.s = null; F.xr = false; endSpinStick(); last = performance.now(); requestAnimationFrame(frame); });
       return s.requestReferenceSpace('local-floor').then(function (r) { XR.floor = true; return r; },
@@ -2477,13 +2478,13 @@ function xrButtons(src, now) {
   function hit(i) { var p = b[i] && b[i].pressed; return p && !prev[i]; }
   var sx = ax.length > 3 ? ax[2] : (ax[0] || 0), sy = ax.length > 3 ? ax[3] : (ax[1] || 0);
   if (h === 'right') {
-    if (hit(0)) { loadScene(((S.scene < 0 ? -1 : S.scene) + 1) % SCENES.length); xrSetScale(xrScaleFor()); XR.panelDirty = true; }
+    if (hit(0)) { if (!xrClick(src)) xrAction('next'); }
     if (hit(4)) { S.playing = !S.playing; updatePlay(); XR.panelDirty = true; }
     if (hit(5)) { restart(); }
     if (Math.abs(sy) > 0.2) xrRescale(Math.exp(-sy * 1.3 * dt));
     if (Math.abs(sx) > 0.3) { setSpeed(S.speed * Math.exp(sx * 1.4 * dt)); XR.panelDirty = true; }
   } else if (h === 'left') {
-    if (hit(0)) { loadScene(((S.scene < 0 ? 0 : S.scene) + SCENES.length - 1) % SCENES.length); xrSetScale(xrScaleFor()); XR.panelDirty = true; }
+    if (hit(0)) { if (!xrClick(src)) xrAction('prev'); }
     if (hit(4)) { setChart(S.chart === 'BL' ? 'KS' : 'BL', true); XR.panelDirty = true; }
     if (hit(5)) { XR.panel = !XR.panel; }
     if (Math.abs(sx) > 0.25) {   // spin: preview while the stick is held, relaunch on release
@@ -2494,26 +2495,96 @@ function xrButtons(src, now) {
   }
   XR.prev[h] = b.map(function (x) { return x.pressed; });
 }
-var xrTmp = new Float32Array(16), xrTmp2 = new Float32Array(16), ctrlSpr = new Float32Array(8 * 4), ctrlN = 0;
-function xrInput(xf, now) {
+var xrTmp = new Float32Array(16), xrTmp2 = new Float32Array(16), ctrlSpr = new Float32Array(8 * 40), ctrlN = 0;
+// ---- panel buttons (clickable with a controller trigger or a hand pinch while pointing at them) ----
+var XR_BTNS = [['prev', '‹  Previous'], ['play', 'Play / pause'], ['next', 'Next  ›'], ['chart', 'Switch chart'], ['reset', 'Reset view']];
+function xrAction(k) {
+  if (k === 'next') { loadScene(((S.scene < 0 ? -1 : S.scene) + 1) % SCENES.length); xrSetScale(xrScaleFor()); }
+  else if (k === 'prev') { loadScene(((S.scene < 0 ? 0 : S.scene) + SCENES.length - 1) % SCENES.length); xrSetScale(xrScaleFor()); }
+  else if (k === 'play') { S.playing = !S.playing; updatePlay(); }
+  else if (k === 'chart') setChart(S.chart === 'BL' ? 'KS' : 'BL', true);
+  else if (k === 'reset') xrPlace(xrScaleFor());
+  XR.panelDirty = true;
+}
+var BTN_Y0 = 628, BTN_Y1 = 692;
+function btnAt(u, v) {   // canvas pixel coordinates -> button index
+  var W = XR.cv.width, n = XR_BTNS.length, gap = 12, bw = (W - 80 - gap * (n - 1)) / n;
+  if (v < BTN_Y0 || v > BTN_Y1) return -1;
+  for (var i = 0; i < n; i++) { var x0 = 40 + i * (bw + gap); if (u >= x0 && u <= x0 + bw) return i; }
+  return -1;
+}
+var panInv = new Float32Array(16);
+function rayPanel(m) {   // target-ray pose matrix -> hit on the panel {u, v (canvas px), btn, p (world)} or null
+  if (!XR.panel) return null;
+  GLR.m4inv(panInv, XR.panelM);
+  var o = [m[12], m[13], m[14]], d = [-m[8], -m[9], -m[10]];
+  function T(q, w) { return [panInv[0] * q[0] + panInv[4] * q[1] + panInv[8] * q[2] + w * panInv[12], panInv[1] * q[0] + panInv[5] * q[1] + panInv[9] * q[2] + w * panInv[13], panInv[2] * q[0] + panInv[6] * q[1] + panInv[10] * q[2] + w * panInv[14]]; }
+  var lo = T(o, 1), ld = T(d, 0); if (Math.abs(ld[2]) < 1e-6) return null;
+  var t = -lo[2] / ld[2]; if (t <= 0) return null;
+  var x = lo[0] + t * ld[0], y = lo[1] + t * ld[1]; if (Math.abs(x) > 1 || Math.abs(y) > 1) return null;
+  var u = (x + 1) / 2 * XR.cv.width, v = (1 - y) / 2 * XR.cv.height;
+  return { u: u, v: v, btn: btnAt(u, v), p: [o[0] + t * d[0], o[1] + t * d[1], o[2] + t * d[2]], o: o };
+}
+function xrClick(src) { var h = XR.hits.get(src); if (!h) return false; if (h.btn >= 0) xrAction(XR_BTNS[h.btn][0]); return true; }
+// ---- grabbing: one holder moves and turns the scene rigidly; two holders scale and rotate it ----
+function rotBetween(u0, u1) {   // rotation matrix taking unit u0 to unit u1 (Rodrigues)
+  var ax = [u0[1] * u1[2] - u0[2] * u1[1], u0[2] * u1[0] - u0[0] * u1[2], u0[0] * u1[1] - u0[1] * u1[0]];
+  var sn = Math.hypot(ax[0], ax[1], ax[2]), c = u0[0] * u1[0] + u0[1] * u1[1] + u0[2] * u1[2];
+  if (sn < 1e-9) return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  var x = ax[0] / sn, y = ax[1] / sn, z = ax[2] / sn, C = 1 - c;
+  return [c + x * x * C, y * x * C + z * sn, z * x * C - y * sn, 0, x * y * C - z * sn, c + y * y * C, z * y * C + x * sn, 0, x * z * C + y * sn, y * z * C - x * sn, c + z * z * C, 0, 0, 0, 0, 1];
+}
+function sub3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function unit3(a) { var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+function xrHolders(xf) {   // every hand pinching / controller squeezing that is not busy clicking the panel
+  var out = [], srcs = XR.s.inputSources || [];
   ctrlN = 0;
-  var srcs = XR.s.inputSources || [];
+  function dot(p, size, col, al) { if (ctrlN >= 40) return; var o = ctrlN * 8; ctrlSpr[o] = p[0]; ctrlSpr[o + 1] = p[1]; ctrlSpr[o + 2] = p[2]; ctrlSpr[o + 3] = size; ctrlSpr[o + 4] = col[0]; ctrlSpr[o + 5] = col[1]; ctrlSpr[o + 6] = col[2]; ctrlSpr[o + 7] = al; ctrlN++; }
+  XR.hits.clear(); XR.hover = -1; XR.nrays = 0;
   for (var i = 0; i < srcs.length; i++) {
-    var src = srcs[i];
-    xrButtons(src, now);
-    var gp = src.gamepad, pose = src.gripSpace ? xf.getPose(src.gripSpace, XR.ref) : null;
-    if (!pose) continue;
-    var m = pose.transform.matrix;
-    if (ctrlN < 4) { var o = ctrlN * 8; ctrlSpr[o] = m[12]; ctrlSpr[o + 1] = m[13]; ctrlSpr[o + 2] = m[14]; ctrlSpr[o + 3] = 9; ctrlSpr[o + 4] = 0.7; ctrlSpr[o + 5] = 0.85; ctrlSpr[o + 6] = 1.0; ctrlSpr[o + 7] = 0.8; ctrlN++; }
-    var squeeze = gp && gp.buttons[1] && gp.buttons[1].pressed;
-    if (squeeze && (!XR.grab || XR.grab.src !== src) && !(XR.grab && XR.grab.held)) {
-      XR.grab = { src: src, held: true, C0inv: Float32Array.from(pose.transform.inverse.matrix), M0: Float32Array.from(XR.M) };
-    }
-    if (XR.grab && XR.grab.src === src) {
-      if (squeeze) { GLR.m4mul(xrTmp, m, XR.grab.C0inv); GLR.m4mul(XR.M, xrTmp, XR.grab.M0); }
-      else XR.grab = null;
+    var src = srcs[i], ray = src.targetRaySpace ? xf.getPose(src.targetRaySpace, XR.ref) : null, hit = ray ? rayPanel(ray.transform.matrix) : null;
+    if (hit) { XR.hits.set(src, hit); if (hit.btn >= 0) XR.hover = hit.btn; }
+    if (src.hand && xf.getJointPose) {
+      var tip = xf.getJointPose(src.hand.get('index-finger-tip'), XR.ref), th = xf.getJointPose(src.hand.get('thumb-tip'), XR.ref), wr = xf.getJointPose(src.hand.get('wrist'), XR.ref);
+      if (!tip || !th || !wr) continue;
+      var a = tip.transform.position, b = th.transform.position, gap = Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+      var mid = [(a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2], st = XR.pinch.get(src) || { on: false, click: false };
+      var on = st.on ? gap < 0.035 : gap < 0.018;   // hysteresis
+      if (on && !st.on) st.click = !!hit && (xrClick(src), true);   // a pinch that starts on the panel is a click
+      if (!on) st.click = false;
+      st.on = on; XR.pinch.set(src, st);
+      var wm = wr.transform.matrix, pm = [wm[0], wm[1], wm[2], 0, wm[4], wm[5], wm[6], 0, wm[8], wm[9], wm[10], 0, mid[0], mid[1], mid[2], 1];
+      dot([a.x, a.y, a.z], on ? 10 : 6, on ? [1, 0.85, 0.4] : [0.7, 0.85, 1], 0.9); dot([b.x, b.y, b.z], on ? 10 : 6, on ? [1, 0.85, 0.4] : [0.7, 0.85, 1], 0.9);
+      if (on && !st.click) out.push({ src: src, p: mid, m: pm });
+      if (hit && !on) xrRay(hit);
+    } else if (src.gamepad) {
+      var gp = src.gamepad, g = src.gripSpace ? xf.getPose(src.gripSpace, XR.ref) : null;
+      if (g) { var m = g.transform.matrix; dot([m[12], m[13], m[14]], 9, [0.7, 0.85, 1], 0.8);
+        if (gp.buttons[1] && gp.buttons[1].pressed) out.push({ src: src, p: [m[12], m[13], m[14]], m: Float32Array.from(m) }); }
+      if (hit) xrRay(hit);
     }
   }
+  return out;
+}
+function xrRay(hit) { if (XR.nrays >= 3) return; XR.rays[XR.nrays].set([hit.o, hit.p], false); XR.rays[XR.nrays].hitp = hit.p; XR.nrays++; }
+function xrInput(xf, now) {
+  var srcs = XR.s.inputSources || [];
+  for (var i = 0; i < srcs.length; i++) if (!srcs[i].hand) xrButtons(srcs[i], now);
+  var hs = xrHolders(xf), key = hs.map(function (h) { return h.src.handedness; }).join(',');
+  if (!hs.length) { XR.hold = null; return; }
+  if (!XR.hold || XR.hold.key !== key) {   // a hand joined or left: restart the gesture from the current state
+    XR.hold = { key: key, M0: Float32Array.from(XR.M), m0inv: GLR.m4inv(new Float32Array(16), hs[0].m), p0: hs.map(function (h) { return h.p.slice(); }) };
+  }
+  var H = XR.hold;
+  if (hs.length === 1) { GLR.m4mul(xrTmp, hs[0].m, H.m0inv); GLR.m4mul(XR.M, xrTmp, H.M0); return; }
+  var a0 = H.p0[0], b0 = H.p0[1], a = hs[0].p, b = hs[1].p;
+  var d0 = sub3(b0, a0), d1 = sub3(b, a), k = clamp(Math.hypot(d1[0], d1[1], d1[2]) / Math.max(1e-3, Math.hypot(d0[0], d0[1], d0[2])), 0.02, 50);
+  var m0 = [(a0[0] + b0[0]) / 2, (a0[1] + b0[1]) / 2, (a0[2] + b0[2]) / 2], m1 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+  var R = rotBetween(unit3(d0), unit3(d1));
+  // M = T(m1) R S(k) T(-m0) M0
+  var A = [k * R[0], k * R[1], k * R[2], 0, k * R[4], k * R[5], k * R[6], 0, k * R[8], k * R[9], k * R[10], 0, 0, 0, 0, 1];
+  A[12] = m1[0] - (A[0] * m0[0] + A[4] * m0[1] + A[8] * m0[2]); A[13] = m1[1] - (A[1] * m0[0] + A[5] * m0[1] + A[9] * m0[2]); A[14] = m1[2] - (A[2] * m0[0] + A[6] * m0[1] + A[10] * m0[2]);
+  GLR.m4mul(XR.M, A, H.M0);
 }
 // panel text: tiny rich-text layout that understands <b>, <sub>, <sup>
 function richRuns(html) {
@@ -2550,10 +2621,19 @@ function drawXRPanel() {
   c.fillStyle = '#ffffff'; c.font = '600 40px ' + base; c.fillText(sc ? sc.t : 'Free exploration', 40, y + 50);
   y = richDraw(c, sc ? sc.text : 'Pull the right trigger to start the guided scenes. Grip either controller to grab the black hole; push the right stick up or down to change its size.', 40, y + 100, W - 80, 25, 35, '#c9d2e0', '#ffffff');
   var Tn = S.T, st = 'a/M ' + S.a.toFixed(3) + '   ·   ' + (S.chart === 'BL' ? 'Boyer–Lindquist t' : 'ingoing t(KS)') + ' = ' + Tn.toFixed(Tn < 1000 ? 1 : 0) + ' M   ·   ' + (S.speed < 10 ? S.speed.toFixed(1) : S.speed.toFixed(0)) + ' M/s' + (S.playing ? '' : '   ·   paused');
-  c.fillStyle = '#ffffff'; c.font = '500 25px ' + base; c.fillText(st, 40, Hh - 108);
+  c.fillStyle = '#ffffff'; c.font = '500 25px ' + base; c.fillText(st, 40, Hh - 194);
   c.fillStyle = '#8f9bb0'; c.font = '400 21px ' + base;
-  c.fillText('Right: trigger next scene · A play/pause · B restart · stick ↕ size, ↔ speed', 40, Hh - 66);
-  c.fillText('Left: trigger previous · X chart · Y hide panel · stick ↔ spin a/M · grip: grab', 40, Hh - 36);
+  c.fillText('Hands: pinch and drag to move and turn it · pinch with both hands and pull apart to resize', 40, Hh - 152);
+  c.fillText('Controllers: grip to grab (both grips: resize) · triggers: scenes · left stick: spin a/M', 40, Hh - 122);
+  var n = XR_BTNS.length, gap = 12, bw = (W - 80 - gap * (n - 1)) / n;
+  for (var i = 0; i < n; i++) {
+    var x0 = 40 + i * (bw + gap), on = XR.hover === i;
+    c.fillStyle = on ? 'rgba(94,200,230,0.95)' : 'rgba(255,255,255,0.10)';
+    c.beginPath(); if (c.roundRect) c.roundRect(x0, BTN_Y0, bw, BTN_Y1 - BTN_Y0, 32); else c.rect(x0, BTN_Y0, bw, BTN_Y1 - BTN_Y0); c.fill();
+    c.fillStyle = on ? '#04121a' : '#ffffff'; c.font = '500 25px ' + base;
+    var lb = XR_BTNS[i][0] === 'play' ? (S.playing ? 'Pause' : 'Play') : XR_BTNS[i][1], tw = c.measureText(lb).width;
+    c.fillText(lb, x0 + (bw - tw) / 2, BTN_Y0 + 42);
+  }
   GLR.panelUpload(XR.cv);
 }
 function xrFrame(t, xf) {
@@ -2564,13 +2644,19 @@ function xrFrame(t, xf) {
   stepSim(dt, 2500);
   var pose = xf.getViewerPose(XR.ref); if (!pose) return;
   var layer = s.renderState.baseLayer;
+  if (XR.hover !== XR.lastHover) { XR.lastHover = XR.hover; XR.panelDirty = true; }
   if (XR.panel && (XR.panelDirty || t - XR.pt > 250)) { XR.pt = t; XR.panelDirty = false; drawXRPanel(); }
   GLR.m4inv(XR.Minv, XR.M);
   for (var i = 0; i < pose.views.length; i++) {
     var v = pose.views[i], vp = layer.getViewport(v), p = v.transform.position;
     GLR.xrView(v.projectionMatrix, v.transform.inverse.matrix, XR.M, XR.Minv, [p.x, p.y, p.z], vp.width, vp.height);
     drawScene(XR.ar);
-    if (ctrlN) { m4set(xrTmp2, F.VP); m4set(F.VP, F.VPw); F.dim = 0; GLR.drawSprites(ctrlSpr, ctrlN); m4set(F.VP, xrTmp2); }
+    if (ctrlN || XR.nrays) {   // hands, controllers and pointer rays live in room coordinates
+      m4set(xrTmp2, F.VP); m4set(F.VP, F.VPw); F.dim = 0;
+      GLR.ribbonBegin(); for (var q = 0; q < XR.nrays; q++) { GLR.drawLine(XR.rays[q], { col: [0.4, 0.8, 1.0], w: 2.0, alpha: 0.7 }); }
+      for (q = 0; q < XR.nrays && ctrlN < 40; q++) { var hp2 = XR.rays[q].hitp, oo = ctrlN * 8; ctrlSpr[oo] = hp2[0]; ctrlSpr[oo + 1] = hp2[1]; ctrlSpr[oo + 2] = hp2[2]; ctrlSpr[oo + 3] = 12; ctrlSpr[oo + 4] = 1; ctrlSpr[oo + 5] = 1; ctrlSpr[oo + 6] = 1; ctrlSpr[oo + 7] = 1; ctrlN++; }
+      GLR.drawSprites(ctrlSpr, ctrlN); m4set(F.VP, xrTmp2);
+    }
     GLR.finish(0, { fb: layer.framebuffer, vp: [vp.x, vp.y, vp.width, vp.height], ar: XR.ar });
     if (XR.panel) GLR.drawPanel(XR.panelM);
   }
