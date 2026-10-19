@@ -54,6 +54,7 @@ sub,sup{font-size:.72em;line-height:0}
 .cap:hover{background:rgba(40,52,74,.75);border-color:var(--hair-hi)}
 .cap.icon{width:31px;height:31px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-weight:600}
 .cap.on{background:var(--accent);color:#04121a;border-color:transparent}
+#vrBtn.ready{border-color:rgba(94,200,230,.65);color:#fff}
 
 /* scenes menu */
 #scenesMenu{position:fixed;right:16px;top:52px;width:330px;padding:8px;z-index:6}
@@ -235,6 +236,8 @@ body.clean #showUI{display:inline-flex}
     <button data-v="BL" class="on" title="Boyer–Lindquist r, θ, φ and time t (C)">Boyer–Lindquist</button>
     <button data-v="KS" title="Ingoing Kerr–Schild azimuth and time: regular across the horizon (C)">Ingoing</button>
   </div>
+  <button class="cap" id="vrBtn" title="View in a VR headset (Meta Quest browser)">VR</button>
+  <button class="cap hidden" id="arBtn" title="Mixed reality: the black hole in your room (passthrough)">Passthrough</button>
   <button class="cap" id="scenesBtn" aria-haspopup="true" aria-expanded="false">Scenes</button>
   <button class="cap icon" id="helpBtn" aria-label="Help">?</button>
   <button class="cap icon" id="hideBtn" aria-label="Hide panels (H)" title="Hide panels (H)">
@@ -309,6 +312,7 @@ body.clean #showUI{display:inline-flex}
     <tr><td>C · T</td><td>switch chart (Boyer–Lindquist / ingoing) · switch clock (t / τ)</td></tr>
     <tr><td>H · F</td><td>hide panels · follow selected probe</td></tr>
     <tr><td>1–9, 0</td><td>guided scenes</td></tr>
+    <tr><td>VR</td><td>in the Meta Quest browser, opens the same scene in the headset. Right trigger: next scene; left trigger: previous; A play/pause; B restart; X switch chart; Y hide the panel; grip: grab and turn the black hole; right stick: size and speed; left stick: spin a/M</td></tr>
   </table>
   <p>The 3D view is a <b>coordinate map</b>: Boyer–Lindquist r, θ and φ (or the ingoing azimuth) are drawn as if they were spherical polar coordinates in flat space, so r = 6 appears at radius 6. It is not what an observer would see; light bending is shown only by the light rays themselves. Units are G = c = M = 1.</p>
   <p>Geodesics are integrated in Mino time with an adaptive Dormand–Prince 5(4) scheme; the readout |u·u + 1| is computed from the evolved state. It checks that the state stays on the shell fixed by E, L<sub>z</sub> and Q; it does not detect phase errors along the orbit, which are of order 10<sup>−6</sup> after thousands of M at the default tolerance.</p>
@@ -901,14 +905,21 @@ var SRC = {
     'vec3 S(vec2 off){ return texture(uTex, vUv + off*uTexel*uRad).rgb; }',
     'void main(){ vec3 r = S(vec2(0,0))*4.0 + (S(vec2(-1,0))+S(vec2(1,0))+S(vec2(0,-1))+S(vec2(0,1)))*2.0',
     '  + S(vec2(-1,-1))+S(vec2(1,-1))+S(vec2(-1,1))+S(vec2(1,1)); o = vec4(r/16.0, 1.0); }'].join('\n'),
+  panV: HEAD + [
+    'uniform mat4 uMVP; out vec2 vUv;',
+    'void main(){ int i = gl_VertexID; vec2 p = vec2((i == 1 || i == 2 || i == 4) ? 1.0 : -1.0, (i == 2 || i == 4 || i == 5) ? 1.0 : -1.0);',
+    '  vUv = vec2(p.x*0.5 + 0.5, 0.5 - p.y*0.5); gl_Position = uMVP*vec4(p, 0.0, 1.0); }'].join('\n'),
+  panF: HEAD + [
+    'uniform sampler2D uTex; in vec2 vUv; out vec4 o; void main(){ o = texture(uTex, vUv); }'].join('\n'),
   compF: HEAD + [
-    'uniform sampler2D uScene; uniform sampler2D uBloom; uniform float uBloomK; uniform float uExp; in vec2 vUv; out vec4 o;',
+    'uniform sampler2D uScene; uniform sampler2D uBloom; uniform float uBloomK; uniform float uExp; uniform float uAR; uniform float uVig; in vec2 vUv; out vec4 o;',
     'vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0); }',
-    'void main(){ vec3 c = texture(uScene, vUv).rgb + uBloomK*texture(uBloom, vUv).rgb;',
-    '  c = aces(c*uExp); vec2 q = vUv - 0.5; c *= 1.0 - 0.55*dot(q,q);',
+    'void main(){ vec4 s = texture(uScene, vUv); vec3 c = s.rgb + uBloomK*texture(uBloom, vUv).rgb;',
+    '  c = aces(c*uExp); vec2 q = vUv - 0.5; c *= 1.0 - uVig*dot(q,q);',
     '  c = pow(c, vec3(1.0/2.2));',
     '  float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233)))*43758.5453); c += (n - 0.5)/255.0;',
-    '  o = vec4(c, 1.0); }'].join('\n')
+    '  float a = uAR > 0.5 ? clamp(max(s.a, max(c.r, max(c.g, c.b))), 0.0, 1.0) : 1.0;',
+    '  o = vec4(c, a); }'].join('\n')
 };
 
 function compile(type, src) {
@@ -928,7 +939,7 @@ function program(vs, fs) {
 var P = {
   stars: program(SRC.starsV, SRC.starsF), mesh: program(SRC.meshV, SRC.meshF), rib: program(SRC.ribV, SRC.ribF),
   spr: program(SRC.sprV, SRC.sprF), ell: program(SRC.ellV, SRC.ellF),
-  down: program(SRC.fsV, SRC.downF), up: program(SRC.fsV, SRC.upF), comp: program(SRC.fsV, SRC.compF)
+  down: program(SRC.fsV, SRC.downF), up: program(SRC.fsV, SRC.upF), comp: program(SRC.fsV, SRC.compF), pan: program(SRC.panV, SRC.panF)
 };
 var emptyVAO = gl.createVertexArray();
 
@@ -1144,17 +1155,17 @@ function project(p, out) {   // world -> CSS px; returns false if behind camera
   out[1] = (1 - ((m[1] * x + m[5] * y + m[9] * z + m[13]) / cw * 0.5 + 0.5)) * F.cssH;
   out[2] = cw; return true;
 }
-function begin(bg) {
+function begin(bg, alpha) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, SAMPLES > 0 ? RT.msF : RT.scF);
   gl.viewport(0, 0, F.w, F.h);
-  gl.clearColor(bg[0], bg[1], bg[2], 1); gl.clearDepth(1);
+  gl.clearColor(bg[0], bg[1], bg[2], alpha == null ? 1 : alpha); gl.clearDepth(1);
   gl.depthMask(true); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 function blendAdd() { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); }
 function blendOver() { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
 function drawStars(k) {
   gl.disable(gl.DEPTH_TEST); gl.depthMask(false); blendAdd();
-  gl.useProgram(P.stars.p); gl.uniformMatrix4fv(P.stars.u.uVP, false, F.VP); gl.uniform1f(P.stars.u.uDpr, F.dpr * F.scale * (k || 1));
+  gl.useProgram(P.stars.p); gl.uniformMatrix4fv(P.stars.u.uVP, false, F.xr ? F.VPw : F.VP); gl.uniform1f(P.stars.u.uDpr, F.dpr * F.scale * (k || 1));
   gl.bindVertexArray(starVAO); gl.drawArrays(gl.POINTS, 0, NSTAR);
 }
 function drawMesh(m, o) {
@@ -1213,7 +1224,7 @@ function drawEllipsoids(arr, n) {
   gl.bindVertexArray(ellVAO); gl.drawElementsInstanced(gl.TRIANGLES, ellN, gl.UNSIGNED_INT, 0, n);
   gl.disable(gl.CULL_FACE);
 }
-function finish(bloomK) {
+function finish(bloomK, out) {   // out (WebXR): { fb, vp: [x, y, w, h], ar }
   gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.BLEND);
   if (SAMPLES > 0) {
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, RT.msF); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, RT.scF);
@@ -1221,7 +1232,7 @@ function finish(bloomK) {
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
   }
   gl.bindVertexArray(emptyVAO);
-  var nm = RT.mipT.length, i, src = RT.scT, sw = F.w, sh = F.h;
+  var nm = bloomK > 0 ? RT.mipT.length : 0, i, src = RT.scT, sw = F.w, sh = F.h;
   gl.useProgram(P.down.p); gl.uniform1i(P.down.u.uTex, 0); gl.activeTexture(gl.TEXTURE0);
   for (i = 0; i < nm; i++) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, RT.mipF[i]); gl.viewport(0, 0, RT.mipW[i], RT.mipH[i]);
@@ -1238,15 +1249,60 @@ function finish(bloomK) {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   gl.disable(gl.BLEND);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
+  if (out) { gl.bindFramebuffer(gl.FRAMEBUFFER, out.fb); gl.viewport(out.vp[0], out.vp[1], out.vp[2], out.vp[3]); }
+  else { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height); }
   gl.useProgram(P.comp.p);
+  gl.uniform1f(P.comp.u.uAR, out && out.ar ? 1 : 0); gl.uniform1f(P.comp.u.uVig, out ? 0.0 : 0.55);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, RT.scT); gl.uniform1i(P.comp.u.uScene, 0);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, RT.mipT[0]); gl.uniform1i(P.comp.u.uBloom, 1);
   gl.uniform1f(P.comp.u.uBloomK, bloomK); gl.uniform1f(P.comp.u.uExp, 1.0);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.activeTexture(gl.TEXTURE0);
 }
-var GLR = { gl: gl, HDR: HDR, REDUCED: REDUCED, F: F, lin: lin, resize: resize, setCamera: setCamera, project: project,
+// ---------- WebXR helpers ----------
+function m4inv(o, m) {
+  var a00 = m[0], a01 = m[1], a02 = m[2], a03 = m[3], a10 = m[4], a11 = m[5], a12 = m[6], a13 = m[7],
+    a20 = m[8], a21 = m[9], a22 = m[10], a23 = m[11], a30 = m[12], a31 = m[13], a32 = m[14], a33 = m[15];
+  var b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10, b03 = a01 * a12 - a02 * a11,
+    b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12, b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30,
+    b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+  var det = 1 / (b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06);
+  o[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det; o[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+  o[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det; o[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+  o[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det; o[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+  o[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det; o[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+  o[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det; o[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+  o[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det; o[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+  o[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det; o[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+  o[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det; o[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+  return o;
+}
+F.VPw = new Float32Array(16); F.xr = false;
+// one eye: world view-projection P V, scene VP = P V M, and the eye position in scene (model) coordinates
+function xrView(proj, view, M, Minv, eyeW, w, h) {
+  F.xr = true; m4mul(F.VPw, proj, view); m4mul(F.VP, F.VPw, M);
+  F.eye = [Minv[0] * eyeW[0] + Minv[4] * eyeW[1] + Minv[8] * eyeW[2] + Minv[12], Minv[1] * eyeW[0] + Minv[5] * eyeW[1] + Minv[9] * eyeW[2] + Minv[13], Minv[2] * eyeW[0] + Minv[6] * eyeW[1] + Minv[10] * eyeW[2] + Minv[14]];
+  F.dpr = 1.25; F.scale = 1;
+  if (w !== RT.w || h !== RT.h) buildRT(w, h);
+  F.w = w; F.h = h;
+}
+var panTex = gl.createTexture();
+function panelUpload(cv) {
+  gl.bindTexture(gl.TEXTURE_2D, panTex); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+}
+var panMVP = new Float32Array(16);
+function drawPanel(Mpanel) {   // after finish(), straight into the XR framebuffer (already sRGB)
+  m4mul(panMVP, F.VPw, Mpanel);
+  gl.useProgram(P.pan.p); gl.uniformMatrix4fv(P.pan.u.uMVP, false, panMVP);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, panTex); gl.uniform1i(P.pan.u.uTex, 0);
+  gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.bindVertexArray(emptyVAO); gl.drawArrays(gl.TRIANGLES, 0, 6); gl.disable(gl.BLEND);
+}
+var GLR = { m4mul: m4mul, m4inv: m4inv, xrView: xrView, panelUpload: panelUpload, drawPanel: drawPanel, gl: gl, HDR: HDR, REDUCED: REDUCED, F: F, lin: lin, resize: resize, setCamera: setCamera, project: project,
   begin: begin, finish: finish, drawStars: drawStars, drawMesh: drawMesh, ribbonBegin: ribbonBegin, drawLine: drawLine,
   drawRibbon: drawRibbon, drawSprites: drawSprites, drawEllipsoids: drawEllipsoids, Mesh: Mesh, Line: Line, GPURibbon: GPURibbon,
   revolve: revolve, meshFromGrid: meshFromGrid, sph: sph };
@@ -2309,13 +2365,8 @@ function drawNormal() {
 }
 var renderScale = 1, slowN = 0, fastN = 0, last = performance.now(), lastT = 0, viewShift = -160;
 var STATS = { n: 0, ms: 0, pump: 0, gl: 0 };
-function frame(now) {
-  var tStart = performance.now();
-  var rawDt = (now - last) / 1000, dt = Math.min(0.05, rawDt); last = now;
-  if (rawDt > 0.018 && rawDt < 0.08) { slowN = rawDt > 0.026 ? slowN + 1 : 0; fastN = 0; if (slowN > 20 && renderScale > 0.6) { renderScale = Math.max(0.6, renderScale - 0.1); slowN = 0; } }
-  else if (rawDt < 0.0175) { fastN++; slowN = 0; if (fastN > 180 && renderScale < 1) { renderScale = Math.min(1, renderScale + 0.05); fastN = 0; } }
-  // spin animation (scene 1)
-  if (S.spinAnim) {
+function stepSim(dt, budget) {
+  if (S.spinAnim) {   // scene 1
     var sa = S.spinAnim; sa.t += dt;
     var f = clamp(sa.t / sa.dur, 0, 1), fe = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
     if (sa.t > 0) setSpin(sa.from + (sa.to - sa.from) * fe, false);
@@ -2333,18 +2384,14 @@ function frame(now) {
   }
   if (S.T > S.scrubMax * 0.97) S.scrubMax = S.T * 1.3;
   if (!S.scrubbing) { scrub.max = S.scrubMax; scrub.value = S.preview ? 0 : S.T; paintRange(scrub); }
-  var tP = performance.now(); pump(S.preview ? 30000 : 6000); STATS.pump += performance.now() - tP; var tG = performance.now();
+  var tP = performance.now(); pump(S.preview ? 4 * budget : budget); STATS.pump += performance.now() - tP;
   if (S.layers.drag) advanceDust(S.preview ? 0 : S.T - Tprev);
-  // render
-  GLR.resize(renderScale);
-  var wantShift = (!document.body.classList.contains('clean') && window.innerWidth > 980) ? -160 : 0;
-  viewShift += (wantShift - viewShift) * (1 - Math.exp(-8 * dt));
-  var asp = F.cssW / Math.max(1, F.cssH), fovy = Math.max(cam.fov, 2 * Math.atan(Math.tan(0.31) / asp));   // keep >= ~35 deg horizontally on portrait screens
-  var eye = camEye(); GLR.setCamera(eye, cam.tgt, fovy, Math.max(0.01, cam.dist * 0.004), 6000, viewShift);
+}
+function drawScene(ar) {   // camera already set; renders into the HDR target
   var H = K.hor(S.a); F.rp = H.rp; F.dim = S.chart === 'KS' ? 1 : 0;
-  GLR.begin([0.0012, 0.0016, 0.0035]);
-  GLR.drawStars(1);
-  var cutv = [Math.sin(cam.az), 0, Math.cos(cam.az), S.layers.cut ? 1 : 0], phase = H.OmH * S.T;
+  GLR.begin([0.0012, 0.0016, 0.0035], ar ? 0 : 1);
+  if (!ar) GLR.drawStars(1);
+  var el = Math.hypot(F.eye[0], F.eye[2]) || 1, cutv = [F.eye[0] / el, 0, F.eye[2] / el, S.layers.cut ? 1 : 0], phase = H.OmH * S.T;
   if (S.chart === 'BL') GLR.drawMesh(G.unit, { mode: 0, scale: H.rp, col: lin(COL.hor, 1.1), phase: phase, cut: cutv });
   if (S.layers.inner && S.a > 0.02) GLR.drawMesh(G.unit, { mode: 1, scale: H.rm, col: lin(COL.inner, 1.3), alpha: 0.42, cut: cutv });
   if (S.layers.ergo && S.a > 0.01) GLR.drawMesh(G.ergo, { mode: 1, col: lin(COL.ergo, 1.05), alpha: 0.15, cut: cutv });
@@ -2361,6 +2408,21 @@ function frame(now) {
   collectSprites();
   drawNormal();
   GLR.drawSprites(sprites, nspr);
+}
+function frame(now) {
+  if (XR.s) return;   // the headset drives the loop while a session is running
+  var tStart = performance.now();
+  var rawDt = (now - last) / 1000, dt = Math.min(0.05, rawDt); last = now;
+  if (rawDt > 0.018 && rawDt < 0.08) { slowN = rawDt > 0.026 ? slowN + 1 : 0; fastN = 0; if (slowN > 20 && renderScale > 0.6) { renderScale = Math.max(0.6, renderScale - 0.1); slowN = 0; } }
+  else if (rawDt < 0.0175) { fastN++; slowN = 0; if (fastN > 180 && renderScale < 1) { renderScale = Math.min(1, renderScale + 0.05); fastN = 0; } }
+  stepSim(dt, 6000);
+  var tG = performance.now();
+  F.xr = false; GLR.resize(renderScale);
+  var wantShift = (!document.body.classList.contains('clean') && window.innerWidth > 980) ? -160 : 0;
+  viewShift += (wantShift - viewShift) * (1 - Math.exp(-8 * dt));
+  var asp = F.cssW / Math.max(1, F.cssH), fovy = Math.max(cam.fov, 2 * Math.atan(Math.tan(0.31) / asp));   // keep >= ~35 deg horizontally on portrait screens
+  var eye = camEye(); GLR.setCamera(eye, cam.tgt, fovy, Math.max(0.01, cam.dist * 0.004), 6000, viewShift);
+  drawScene(false);
   GLR.finish(0.55);
   STATS.gl += performance.now() - tG;
   updateLabels();
@@ -2369,6 +2431,159 @@ function frame(now) {
   STATS.n++; STATS.ms += performance.now() - tStart;
   requestAnimationFrame(frame);
 }
+
+// ---------- WebXR: the same scene in a headset (Meta Quest browser) ----------
+// The black hole sits in front of you at a fixed scale (metres per M); grab it with a grip button
+// to move and turn it. The physics, objects and scenes are exactly those of the desktop view.
+var XR = { s: null, ref: null, ar: false, M: new Float32Array(16), Minv: new Float32Array(16), last: 0, prev: {}, grab: null,
+  panel: true, panelM: new Float32Array(16), cv: document.createElement('canvas'), pt: 0, spin: null, floor: true };
+XR.cv.width = 1024; XR.cv.height = 600;
+function m4set(o, a) { for (var i = 0; i < 16; i++) o[i] = a[i]; return o; }
+function xrPlace(scale) {   // hole 1.0 m ahead at chest height, panel to the left, turned toward you
+  var y = XR.floor ? 1.25 : -0.15;
+  m4set(XR.M, [scale, 0, 0, 0, 0, scale, 0, 0, 0, 0, scale, 0, 0, y, -1.0, 1]);
+  var yaw = 0.82, c = Math.cos(yaw), sn = Math.sin(yaw), hw = 0.34, hh = hw * XR.cv.height / XR.cv.width;
+  m4set(XR.panelM, [hw * c, 0, -hw * sn, 0, 0, hh, 0, 0, sn, 0, c, 0, -0.78, y + 0.12, -0.62, 1]);
+}
+function xrScaleFor() { var d = cam.tween ? cam.tween.to.dist : cam.gdist; return clamp(1.15 / d, 0.008, 0.25); }
+function xrRescale(k) {   // scale the scene about the hole's centre
+  for (var i = 0; i < 12; i++) XR.M[i] *= k;
+}
+function xrSetScale(sNew) { var sc = Math.hypot(XR.M[0], XR.M[1], XR.M[2]); xrRescale(sNew / sc); }
+function enterXR(mode) {
+  if (XR.s) return;
+  if (!navigator.xr) { toast('VR needs a WebXR browser: open this page in the Meta Quest browser'); return; }
+  var ar = mode === 'immersive-ar';
+  var prep = gl.makeXRCompatible ? gl.makeXRCompatible() : Promise.resolve();
+  prep.then(function () { return navigator.xr.requestSession(mode, { optionalFeatures: ['local-floor'] }); })
+    .then(function (s) {
+      XR.s = s; XR.ar = ar; XR.prev = {}; XR.grab = null;
+      s.updateRenderState({ baseLayer: new XRWebGLLayer(s, gl, { antialias: false, alpha: ar, depth: true }), depthNear: 0.02, depthFar: 2000 });
+      s.addEventListener('end', function () { XR.s = null; F.xr = false; endSpinStick(); last = performance.now(); requestAnimationFrame(frame); });
+      return s.requestReferenceSpace('local-floor').then(function (r) { XR.floor = true; return r; },
+        function () { XR.floor = false; return s.requestReferenceSpace('local'); });
+    })
+    .then(function (ref) {
+      if (!ref) return;
+      XR.ref = ref; xrPlace(xrScaleFor()); XR.panelDirty = true; XR.last = performance.now();
+      XR.s.requestAnimationFrame(xrFrame);
+    })
+    .catch(function (e) { XR.s = null; toast('Could not start ' + (ar ? 'passthrough' : 'VR') + ': ' + (e && e.message ? e.message : e)); });
+}
+function endSpinStick() { if (XR.spin) { setSpin(XR.spin.a, true); endPreview(); XR.spin = null; } }
+function xrButtons(src, now) {
+  var gp = src.gamepad; if (!gp) return;
+  var h = src.handedness, prev = XR.prev[h] || [], b = gp.buttons, ax = gp.axes, dt = XR.dt;
+  function hit(i) { var p = b[i] && b[i].pressed; return p && !prev[i]; }
+  var sx = ax.length > 3 ? ax[2] : (ax[0] || 0), sy = ax.length > 3 ? ax[3] : (ax[1] || 0);
+  if (h === 'right') {
+    if (hit(0)) { loadScene(((S.scene < 0 ? -1 : S.scene) + 1) % SCENES.length); xrSetScale(xrScaleFor()); XR.panelDirty = true; }
+    if (hit(4)) { S.playing = !S.playing; updatePlay(); XR.panelDirty = true; }
+    if (hit(5)) { restart(); }
+    if (Math.abs(sy) > 0.2) xrRescale(Math.exp(-sy * 1.3 * dt));
+    if (Math.abs(sx) > 0.3) { setSpeed(S.speed * Math.exp(sx * 1.4 * dt)); XR.panelDirty = true; }
+  } else if (h === 'left') {
+    if (hit(0)) { loadScene(((S.scene < 0 ? 0 : S.scene) + SCENES.length - 1) % SCENES.length); xrSetScale(xrScaleFor()); XR.panelDirty = true; }
+    if (hit(4)) { setChart(S.chart === 'BL' ? 'KS' : 'BL', true); XR.panelDirty = true; }
+    if (hit(5)) { XR.panel = !XR.panel; }
+    if (Math.abs(sx) > 0.25) {   // spin: preview while the stick is held, relaunch on release
+      if (!XR.spin) { S.spinAnim = null; beginPreview(); XR.spin = { a: S.a, t: 0 }; }
+      XR.spin.a = clamp(XR.spin.a + sx * 0.25 * dt, 0, 0.999);
+      if (now - XR.spin.t > 120) { XR.spin.t = now; setSpin(XR.spin.a, true); XR.panelDirty = true; }
+    } else if (XR.spin) { endSpinStick(); XR.panelDirty = true; }
+  }
+  XR.prev[h] = b.map(function (x) { return x.pressed; });
+}
+var xrTmp = new Float32Array(16), xrTmp2 = new Float32Array(16), ctrlSpr = new Float32Array(8 * 4), ctrlN = 0;
+function xrInput(xf, now) {
+  ctrlN = 0;
+  var srcs = XR.s.inputSources || [];
+  for (var i = 0; i < srcs.length; i++) {
+    var src = srcs[i];
+    xrButtons(src, now);
+    var gp = src.gamepad, pose = src.gripSpace ? xf.getPose(src.gripSpace, XR.ref) : null;
+    if (!pose) continue;
+    var m = pose.transform.matrix;
+    if (ctrlN < 4) { var o = ctrlN * 8; ctrlSpr[o] = m[12]; ctrlSpr[o + 1] = m[13]; ctrlSpr[o + 2] = m[14]; ctrlSpr[o + 3] = 9; ctrlSpr[o + 4] = 0.7; ctrlSpr[o + 5] = 0.85; ctrlSpr[o + 6] = 1.0; ctrlSpr[o + 7] = 0.8; ctrlN++; }
+    var squeeze = gp && gp.buttons[1] && gp.buttons[1].pressed;
+    if (squeeze && (!XR.grab || XR.grab.src !== src) && !(XR.grab && XR.grab.held)) {
+      XR.grab = { src: src, held: true, C0inv: Float32Array.from(pose.transform.inverse.matrix), M0: Float32Array.from(XR.M) };
+    }
+    if (XR.grab && XR.grab.src === src) {
+      if (squeeze) { GLR.m4mul(xrTmp, m, XR.grab.C0inv); GLR.m4mul(XR.M, xrTmp, XR.grab.M0); }
+      else XR.grab = null;
+    }
+  }
+}
+// panel text: tiny rich-text layout that understands <b>, <sub>, <sup>
+function richRuns(html) {
+  var out = [], re = /<(\/?)(b|sub|sup)>|<[^>]+>|([^<]+)/g, m, st = { b: 0, sub: 0, sup: 0 };
+  while ((m = re.exec(html))) {
+    if (m[3]) out.push({ t: m[3].replace(/&amp;/g, '&'), b: st.b > 0, sub: st.sub > 0, sup: st.sup > 0 });
+    else if (m[2]) st[m[2]] += m[1] ? -1 : 1;
+  }
+  return out;
+}
+function richDraw(c, html, x, y, w, size, lh, col, colB) {
+  var runs = richRuns(html), cx = x, cy = y, base = '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+  runs.forEach(function (r) {
+    var small = r.sub || r.sup, fs = small ? size * 0.7 : size, dy = r.sub ? size * 0.28 : r.sup ? -size * 0.38 : 0;
+    c.font = (r.b ? '600 ' : '400 ') + fs + 'px ' + base; c.fillStyle = r.b ? colB : col;
+    r.t.split(/(\s+)/).forEach(function (wd) {
+      if (!wd) return;
+      var ww = c.measureText(wd).width;
+      if (/^\s+$/.test(wd)) { if (cx > x) cx += ww; return; }
+      if (cx + ww > x + w && cx > x && !small) { cx = x; cy += lh; }
+      c.fillText(wd, cx, cy + dy); cx += ww;
+    });
+  });
+  return cy + lh;
+}
+function drawXRPanel() {
+  var c = XR.cv.getContext('2d'), W = XR.cv.width, Hh = XR.cv.height, sc = SCENES[S.scene];
+  c.clearRect(0, 0, W, Hh);
+  c.fillStyle = 'rgba(12,17,28,0.86)'; c.strokeStyle = 'rgba(255,255,255,0.16)'; c.lineWidth = 2;
+  c.beginPath(); if (c.roundRect) c.roundRect(4, 4, W - 8, Hh - 8, 28); else c.rect(4, 4, W - 8, Hh - 8); c.fill(); c.stroke();
+  var y = 62, base = '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+  c.fillStyle = '#7f8ba0'; c.font = '500 24px ' + base;
+  c.fillText(sc ? 'SCENE ' + (S.scene + 1) + ' / ' + SCENES.length : 'KERR ORBIT EXPLORER', 40, y);
+  c.fillStyle = '#ffffff'; c.font = '600 40px ' + base; c.fillText(sc ? sc.t : 'Free exploration', 40, y + 50);
+  y = richDraw(c, sc ? sc.text : 'Pull the right trigger to start the guided scenes. Grip either controller to grab the black hole; push the right stick up or down to change its size.', 40, y + 100, W - 80, 25, 35, '#c9d2e0', '#ffffff');
+  var Tn = S.T, st = 'a/M ' + S.a.toFixed(3) + '   ·   ' + (S.chart === 'BL' ? 'Boyer–Lindquist t' : 'ingoing t(KS)') + ' = ' + Tn.toFixed(Tn < 1000 ? 1 : 0) + ' M   ·   ' + (S.speed < 10 ? S.speed.toFixed(1) : S.speed.toFixed(0)) + ' M/s' + (S.playing ? '' : '   ·   paused');
+  c.fillStyle = '#ffffff'; c.font = '500 25px ' + base; c.fillText(st, 40, Hh - 108);
+  c.fillStyle = '#8f9bb0'; c.font = '400 21px ' + base;
+  c.fillText('Right: trigger next scene · A play/pause · B restart · stick ↕ size, ↔ speed', 40, Hh - 66);
+  c.fillText('Left: trigger previous · X chart · Y hide panel · stick ↔ spin a/M · grip: grab', 40, Hh - 36);
+  GLR.panelUpload(XR.cv);
+}
+function xrFrame(t, xf) {
+  var s = XR.s; if (!s) return;
+  s.requestAnimationFrame(xrFrame);
+  var dt = clamp((t - XR.last) / 1000, 0, 0.05); XR.last = t; XR.dt = dt;
+  xrInput(xf, t);
+  stepSim(dt, 2500);
+  var pose = xf.getViewerPose(XR.ref); if (!pose) return;
+  var layer = s.renderState.baseLayer;
+  if (XR.panel && (XR.panelDirty || t - XR.pt > 250)) { XR.pt = t; XR.panelDirty = false; drawXRPanel(); }
+  GLR.m4inv(XR.Minv, XR.M);
+  for (var i = 0; i < pose.views.length; i++) {
+    var v = pose.views[i], vp = layer.getViewport(v), p = v.transform.position;
+    GLR.xrView(v.projectionMatrix, v.transform.inverse.matrix, XR.M, XR.Minv, [p.x, p.y, p.z], vp.width, vp.height);
+    drawScene(XR.ar);
+    if (ctrlN) { m4set(xrTmp2, F.VP); m4set(F.VP, F.VPw); F.dim = 0; GLR.drawSprites(ctrlSpr, ctrlN); m4set(F.VP, xrTmp2); }
+    GLR.finish(0, { fb: layer.framebuffer, vp: [vp.x, vp.y, vp.width, vp.height], ar: XR.ar });
+    if (XR.panel) GLR.drawPanel(XR.panelM);
+  }
+}
+(function () {   // show the VR / passthrough buttons; on browsers without WebXR the VR button explains
+  var bv = $('vrBtn'), ba = $('arBtn');
+  bv.addEventListener('click', function () { enterXR('immersive-vr'); });
+  ba.addEventListener('click', function () { enterXR('immersive-ar'); });
+  if (navigator.xr && navigator.xr.isSessionSupported) {
+    navigator.xr.isSessionSupported('immersive-vr').then(function (ok) { if (ok) bv.classList.add('ready'); }).catch(function () {});
+    navigator.xr.isSessionSupported('immersive-ar').then(function (ok) { if (ok) ba.classList.remove('hidden'); }).catch(function () {});
+  }
+})();
 
 // ---------- start ----------
 updatePlay(); updateSub(); setSpeed(20); syncLayerChips();
@@ -2383,7 +2598,7 @@ function settle(T) {   // test hook: finish camera moves and spin animations, ju
   if (S.spinAnim) { var sa = S.spinAnim; S.spinAnim = null; setSpin(sa.to, true); }
   if (T != null) { S.T = T; for (var k = 0; k < 400; k++) pump(20000); }
 }
-window.__kerr = { STATS: STATS, settle: settle, tauToT: tauToT, beginPreview: beginPreview, endPreview: endPreview, setClock: setClock, S: S, cam: cam, loadScene: loadScene, setChart: setChart, setSpin: setSpin, addObj: addObj, K: K, flyTo: flyTo, setLayer: setLayer, restart: restart };
+window.__kerr = { XR: XR, enterXR: enterXR, STATS: STATS, settle: settle, tauToT: tauToT, beginPreview: beginPreview, endPreview: endPreview, setClock: setClock, S: S, cam: cam, loadScene: loadScene, setChart: setChart, setSpin: setSpin, addObj: addObj, K: K, flyTo: flyTo, setLayer: setLayer, restart: restart };
 requestAnimationFrame(frame);
 })();
 </script>
