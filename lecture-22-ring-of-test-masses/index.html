@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 22: A Ring of Test Masses — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+.sub sup,.sub sub{line-height:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{padding:9px 14px;font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab:hover{border-color:var(--blued)}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.tab:disabled{opacity:.45;cursor:default}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/520}
+#w{aspect-ratio:1100/210}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.5;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model sup,.model sub,table.read sup,table.read sub,.verdict sup,.verdict sub,.ask sup,.ask sub,label sup,label sub,.fine sup,.fine sub{line-height:0}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 8px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12.5px;color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.fine{font-size:12px;color:var(--grey);margin:2px 0 0}
+.viewtabs{margin:0}
+.viewtabs .tab{padding:5px 12px;font-size:13px}
+.qtabs .tab{padding:5px 11px;font-size:13px}
+
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:8px 14px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+table.read tr.sep td{border-top:1px solid var(--dim);padding-top:4px}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.5;margin:8px 0 0}
+.verdict{font-size:12.5px;line-height:1.5;margin:6px 0 0;color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.hidden{display:none}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 22</div>
+    <h1>A Ring of Test Masses</h1>
+    <div class="sub">A plane gravitational wave passes free masses: fixed coordinates, changing distances, two polarizations, and a strain &frac12;<i>h<sub>ij</sub>n<sup>i</sup>n<sup>j</sup></i>.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist" id="tabs">
+        <button class="tab active" data-tab="face" role="tab" aria-selected="true">Face-on ring</button>
+        <button class="tab" data-tab="side" role="tab" aria-selected="false">Side view</button>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="canvasWrap"><canvas id="w"></canvas></div>
+      <div class="model" id="model">&ndash;</div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>The wave</h2>
+        <div class="row">
+          <label><i>h</i><sub>+</sub> amplitude <span class="v" id="vap">&ndash;</span></label>
+          <input type="range" id="aps" min="0" max="40" step="1" value="30">
+        </div>
+        <div class="row">
+          <label><i>h</i><sub>&times;</sub> amplitude <span class="v" id="vax">&ndash;</span></label>
+          <input type="range" id="axs" min="0" max="40" step="1" value="0">
+        </div>
+        <div class="row" id="lagrow">
+          <label><i>h</i><sub>&times;</sub> lags <i>h</i><sub>+</sub> by <span class="v" id="vlag">&ndash;</span></label>
+          <input type="range" id="lags" min="0" max="360" step="15" value="0">
+        </div>
+        <div class="row">
+          <label>Draw the masses at</label>
+          <div class="tabs viewtabs" id="views">
+            <button class="tab" data-view="coord">Coordinates <i>x</i>, <i>y</i></button>
+            <button class="tab active" data-view="proper">Proper distances <i>X</i>, <i>Y</i></button>
+          </div>
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="go">Play</button>
+          <button class="btn" id="rs">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel" id="detpanel">
+        <h2>L-shaped detector</h2>
+        <div class="row">
+          <label>detector arm 1 angle &phi; from <i>x</i> <span class="v" id="vphi">&ndash;</span></label>
+          <input type="range" id="phis" min="0" max="180" step="1" value="0">
+        </div>
+        <table class="read">
+          <tr><td>arm 1 strain, &frac12;<i>h<sub>ij</sub>n<sup>i</sup>n<sup>j</sup></i></td><td class="n" id="vs1">?</td></tr>
+          <tr><td>arm 1 from the drawn masses <span class="gloss">(&minus; formula = <i>O</i>(<i>h</i><sup>2</sup>))</span></td><td class="n" id="vm1">?</td></tr>
+          <tr><td>arm 2 (&phi; + 90&deg;) strain</td><td class="n" id="vs2">?</td></tr>
+          <tr class="sep"><td>ring area / &pi;<i>r</i><sup>2</sup> <span class="gloss">(1 + <i>O</i>(<i>h</i><sup>2</sup>))</span></td><td class="n" id="var">?</td></tr>
+        </table>
+      </div>
+
+      <div class="panel" id="sidepanel" style="display:none">
+        <h2>Side view readouts</h2>
+        <table class="read">
+          <tr><td>strain across the beam, lower pair</td><td class="n" id="vz1">?</td></tr>
+          <tr><td>strain across the beam, upper pair</td><td class="n" id="vz2">?</td></tr>
+          <tr><td>along the beam (grey pair), &Delta;<i>Z</i> / &Delta;<i>z</i></td><td class="n" id="vzz">?</td></tr>
+          <tr class="sep"><td>crest delay &divide; &Delta;<i>z</i>, in <i>T</i>/&lambda; <span class="gloss">(= 1/<i>c</i>)</span></td><td class="n" id="vdel">?</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Predict, then run</h2>
+        <div class="tabs qtabs" id="qtabs">
+          <button class="tab" data-q="1">1</button>
+          <button class="tab" data-q="2">2</button>
+          <button class="tab" data-q="3">3</button>
+          <button class="tab" data-q="4">4</button>
+          <button class="tab active" data-q="0">Free play</button>
+        </div>
+        <p class="ask" id="ask">&ndash;</p>
+        <p class="verdict hidden" id="verdict"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 22</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+// =====================================================================================
+// Physics (TT coordinates of the lecture, first order in the amplitude, G = c = 1).
+//   h_+(t, z) = A_+ sin(w(t - z)),  h_x(t, z) = A_x sin(w(t - z) - lag)   (the lecture's f = a sin(w(t - z)))
+//   proper position of a mass at coordinate x^i, relative to the central mass at the origin
+//   (both at z = 0):  X^i = x^i + (1/2) h_ij x^j
+//   strain of an arm along n = (cos phi, sin phi):  (1/2) h_ij n^i n^j
+//                                  = (1/2) [h_+ cos 2phi + h_x sin 2phi]
+// Time is in units of the wave period T; lengths in units of the ring radius.
+// =====================================================================================
+var TWO_PI = 2*Math.PI, W = TWO_PI;          // omega, with T = 1
+var LAMBDA_SIDE = 4.0;                        // wavelength in the side view, in mass spacings
+function hp(t, z){ return S.Ap*Math.sin(W*(t - z)); }
+function hx(t, z){ return S.Ax*Math.sin(W*(t - z) - S.lag); }
+function strain(phi, t){ return 0.5*(hp(t, 0)*Math.cos(2*phi) + hx(t, 0)*Math.sin(2*phi)); }
+function properPos(x, y, t){          // first-order map  X = x + (1/2) h x
+  var a = hp(t, 0), b = hx(t, 0);
+  return [x + 0.5*(a*x + b*y), y + 0.5*(b*x - a*y)];
+}
+
+// =====================================================================================
+// Canvas set-up (DPR-aware, logical coordinates)
+// =====================================================================================
+var cv = document.getElementById("c"), cw = document.getElementById("w");
+var CW = 1100, CH = 520, WW = 1100, WH = 210;
+var ctx = cv.getContext("2d"), wtx = cw.getContext("2d");
+function setupCanvas(c, x, Wd, Ht){
+  var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  c.width = Math.round(Wd*dpr); c.height = Math.round(Ht*dpr);
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+setupCanvas(cv, ctx, CW, CH);
+setupCanvas(cw, wtx, WW, WH);
+
+var COL = { ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B",
+            dim:"#C4CBD8", panel:"#EDF1F6", mute2:"#33465C", white:"#ffffff", grid:"#E3E8F0",
+            bandP:"rgba(15,110,147,0.10)", bandN:"rgba(138,90,24,0.10)" };
+var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+var LABELS = [];      // label boxes drawn this frame (canvas tag): for collision tests
+var CURVES = [];      // sampled points of curves and masses drawn this frame (canvas tag)
+
+// Math label: segments [text, kind]; kind "i" italic Georgia, "n" upright sans,
+// "sub"/"sup" small italic lowered/raised, "nsub"/"nsup" small upright.
+function mathLabel(x, c, segs, px, py, size, color, align, bg){
+  var i, w = 0, parts = [];
+  for(i = 0; i < segs.length; i++){
+    var s = segs[i][0], k = segs[i][1], small = /sub|sup/.test(k), fs = small ? 0.68*size : size;
+    var ital = (k === "i" || k === "sub" || k === "sup");
+    var font = (ital ? "italic " : "") + fs + "px " + (ital ? "Georgia,serif" : SANS);
+    x.font = font;
+    var mw = x.measureText(s).width;
+    var dy = k.indexOf("sub") >= 0 ? 0.28*size : (k.indexOf("sup") >= 0 ? -0.42*size : 0);
+    var extra = (ital && !small ? 0.04*size : 0);
+    parts.push([s, font, mw, dy, extra]);
+    w += mw + extra;
+  }
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, c: c,
+              s: segs.map(function(q){ return q[0]; }).join("") };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.textBaseline = "alphabetic";
+  var cx = x0;
+  for(i = 0; i < parts.length; i++){
+    x.font = parts[i][1]; x.fillText(parts[i][0], cx, py + parts[i][3]);
+    cx += parts[i][2] + parts[i][4];
+  }
+  LABELS.push(box);
+  return box;
+}
+function textLabel(x, c, s, px, py, size, color, align, bg, weight){
+  x.font = (weight ? weight + " " : "") + size + "px " + SANS;
+  var w = x.measureText(s).width;
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size, c: c, s: s };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.textBaseline = "alphabetic";
+  x.fillText(s, x0, py);
+  LABELS.push(box);
+  return box;
+}
+function line(x, c, pts, color, lw, dash, record){
+  x.strokeStyle = color; x.lineWidth = lw; x.setLineDash(dash || []);
+  x.beginPath();
+  for(var i = 0; i < pts.length; i++){ if(i === 0) x.moveTo(pts[i][0], pts[i][1]); else x.lineTo(pts[i][0], pts[i][1]); }
+  x.stroke(); x.setLineDash([]);
+  if(record !== false){
+    for(var j = 0; j + 1 < pts.length; j++){
+      var n = Math.max(1, Math.ceil(Math.hypot(pts[j+1][0]-pts[j][0], pts[j+1][1]-pts[j][1])/4));
+      for(var k = 0; k <= n; k++) CURVES.push({ x: pts[j][0] + (pts[j+1][0]-pts[j][0])*k/n,
+                                               y: pts[j][1] + (pts[j+1][1]-pts[j][1])*k/n, c: c });
+    }
+  }
+}
+function arrowHead(x, c, x0, y0, x1, y1, color, size){
+  var a = Math.atan2(y1 - y0, x1 - x0), s = size || 10;
+  x.fillStyle = color; x.beginPath();
+  x.moveTo(x1, y1);
+  x.lineTo(x1 - s*Math.cos(a - 0.38), y1 - s*Math.sin(a - 0.38));
+  x.lineTo(x1 - s*Math.cos(a + 0.38), y1 - s*Math.sin(a + 0.38));
+  x.closePath(); x.fill();
+  CURVES.push({ x: x1, y: y1, c: c });
+}
+function arrow(x, c, x0, y0, x1, y1, color, lw){
+  line(x, c, [[x0, y0], [x1, y1]], color, lw || 1.5);
+  arrowHead(x, c, x0, y0, x1, y1, color, 11);
+}
+function mass(x, c, px, py, r, color){
+  x.fillStyle = color; x.beginPath(); x.arc(px, py, r, 0, TWO_PI); x.fill();
+  for(var k = 0; k < 8; k++) CURVES.push({ x: px + r*Math.cos(k*Math.PI/4), y: py + r*Math.sin(k*Math.PI/4), c: c });
+}
+
+// =====================================================================================
+// State
+// =====================================================================================
+var S = { tab: "face", view: "proper", Ap: 0.30, Ax: 0.0, lag: 0, phi: 0, t: 0.25,
+          playing: false, q: 0, revealed: true, played: 0 };
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var NRING = 16;
+function el(id){ return document.getElementById(id); }
+function fmt(v, d){ var s = (Math.abs(v) < 0.5*Math.pow(10, -d) ? 0 : v).toFixed(d); return s.replace("-", "−"); }
+function sgn(v, d){ var s = fmt(v, d); return (s.charAt(0) === "−" || Number(s) === 0) ? s : "+" + s; }
+
+// =====================================================================================
+// Face-on view
+// =====================================================================================
+var FC = { cx: 560, cy: 262, R: 162 };
+function toCan(p){ return [FC.cx + FC.R*p[0], FC.cy - FC.R*p[1]]; }
+function posOf(x, y){                     // drawn position (logical px) of the mass at coordinates (x, y)
+  return toCan(S.view === "proper" ? properPos(x, y, S.t) : [x, y]);
+}
+function placeArmLabel(x, c, txt, ang, color){
+  // candidates: just outside the ring near the arm's direction, then a little further out; take the
+  // first whose box clears both axes, the canvas edge, the labels already drawn and every curve point
+  var size = 18, tries = [13, -13, 24, -24, 36, -36, 0], radii = [1.52, 1.66];
+  x.font = size + "px " + SANS;
+  var w = x.measureText(txt).width + 6, h = 1.25*size, pad = 4, first = null;
+  for(var r = 0; r < radii.length; r++) for(var k = 0; k < tries.length; k++){
+    var a = ang + tries[k]*Math.PI/180;
+    var px = FC.cx + FC.R*radii[r]*Math.cos(a), py = FC.cy - FC.R*radii[r]*Math.sin(a) + 6;
+    if(!first) first = [px, py];
+    var b = { x: px - w/2, y: py - 0.82*size, w: w, h: h };
+    var ok = !(b.x - pad < FC.cx && FC.cx < b.x + b.w + pad) && !(b.y - pad < FC.cy && FC.cy < b.y + b.h + pad)
+             && b.x > 2 && b.x + b.w < CW - 2 && b.y > 2 && b.y + b.h < CH - 2;
+    for(var j = 0; ok && j < LABELS.length; j++){
+      var o = LABELS[j];
+      if(o.c === c && b.x < o.x + o.w + pad && o.x < b.x + b.w + pad && b.y < o.y + o.h + pad && o.y < b.y + b.h + pad) ok = false;
+    }
+    for(var m = 0; ok && m < CURVES.length; m++){
+      var q = CURVES[m];
+      if(q.c === c && q.x > b.x - 1 && q.x < b.x + b.w + 1 && q.y > b.y - 1 && q.y < b.y + b.h + 1) ok = false;
+    }
+    if(ok){ mathLabel(x, c, [[txt, "n"]], px, py, size, color, "center", COL.white); return; }
+  }
+  mathLabel(x, c, [[txt, "n"]], first[0], first[1], size, color, "center", COL.white);
+}
+function drawFace(){
+  var x = ctx, c = "c";
+  var i, k, g;
+  // coordinate grid (straight in coordinates; carried by the linear map in the proper view)
+  for(g = -1.25; g <= 1.251; g += 0.25){
+    var p1 = [], p2 = [];
+    for(k = 0; k <= 12; k++){
+      var s = -1.25 + 2.5*k/12;
+      p1.push(posOf(g, s)); p2.push(posOf(s, g));
+    }
+    line(x, c, p1, COL.grid, 1, null, false); line(x, c, p2, COL.grid, 1, null, false);
+  }
+  // axes
+  var L = 1.5;
+  arrow(x, c, FC.cx - FC.R*L, FC.cy, FC.cx + FC.R*L, FC.cy, COL.grey, 1.3);
+  arrow(x, c, FC.cx, FC.cy + FC.R*L, FC.cx, FC.cy - FC.R*L, COL.grey, 1.3);
+  var lx = S.view === "proper" ? "X" : "x", ly = S.view === "proper" ? "Y" : "y";
+  mathLabel(x, c, [[lx, "i"]], FC.cx + FC.R*L + 8, FC.cy + 7, 22, COL.grey, "left");
+  mathLabel(x, c, [[ly, "i"]], FC.cx + 14, FC.cy - FC.R*L + 10, 22, COL.grey, "left");
+  // the set of points one unit of proper distance from the center
+  var uc = [];
+  for(k = 0; k <= 160; k++){
+    var th = TWO_PI*k/160, n = [Math.cos(th), Math.sin(th)];
+    if(S.view === "proper") uc.push(toCan(n));
+    else { var st = strain(th, S.t); uc.push(toCan([n[0]/(1 + st), n[1]/(1 + st)])); }
+  }
+  line(x, c, uc, COL.brown, 1.6, [7, 5]);
+  // ring outline through the masses
+  var rp = [];
+  for(k = 0; k <= 160; k++){ var a = TWO_PI*k/160; rp.push(posOf(Math.cos(a), Math.sin(a))); }
+  line(x, c, rp, COL.dim, 1.2, null, false);
+  // detector arms (L-shaped detector: arm 1 at phi, arm 2 at phi + 90 deg)
+  var e1 = posOf(Math.cos(S.phi), Math.sin(S.phi));
+  var e2 = posOf(Math.cos(S.phi + Math.PI/2), Math.sin(S.phi + Math.PI/2));
+  var o = posOf(0, 0);
+  line(x, c, [o, e1], COL.blue, 3.2);
+  line(x, c, [o, e2], COL.brown, 3.2);
+  // ring of masses
+  for(i = 0; i < NRING; i++){
+    var a2 = TWO_PI*i/NRING;
+    var p = posOf(Math.cos(a2), Math.sin(a2));
+    mass(x, c, p[0], p[1], 6.5, COL.mute2);
+  }
+  mass(x, c, o[0], o[1], 7, COL.ink);
+  mass(x, c, e1[0], e1[1], 9, COL.blue);
+  mass(x, c, e2[0], e2[1], 9, COL.brown);
+  // handle ring on arm-1 end mass
+  x.strokeStyle = COL.blue; x.lineWidth = 1.5; x.beginPath(); x.arc(e1[0], e1[1], 14, 0, TWO_PI); x.stroke();
+  // arm labels, outside the ring along the arm direction
+  // arm labels: just outside the ring, near the arm's direction; try a few angles and take the
+  // first one whose box clears both axes, the axis labels and the other arm label
+  placeArmLabel(x, c, "arm 1", S.phi, COL.blue);
+  placeArmLabel(x, c, "arm 2", S.phi + Math.PI/2, COL.brown);
+  // corner captions
+  textLabel(x, c, S.view === "proper" ? "Proper distances: masses at (X, Y)" : "Coordinates: masses at fixed (x, y)",
+            24, 34, 19, COL.ink, "left", null, "600");
+  textLabel(x, c, "dashed: proper distance 1 from the center", 24, 60, 17, COL.brown, "left");
+  // wave direction: out of the screen
+  var wx = 985, wy = 62;
+  x.strokeStyle = COL.ink; x.lineWidth = 1.6; x.beginPath(); x.arc(wx, wy, 14, 0, TWO_PI); x.stroke();
+  mass(x, c, wx, wy, 3.5, COL.ink);
+  textLabel(x, c, "wave toward you (+z)", wx, wy + 40, 17, COL.grey, "center");
+  // time
+  mathLabel(x, c, [["t", "i"], [" / ", "n"], ["T", "i"], [" = " + fmt(S.t % 1, 2), "n"]], 24, CH - 22, 19,
+            COL.grey, "left");
+}
+
+// =====================================================================================
+// Side view: masses in the x-z plane, the wave travelling up the page (+z)
+// =====================================================================================
+var SV = { cx: 600, z0: 470, dx: 82, dz: 52, nx: 7, nz: 9 };
+function sideX(ix, iz, t){          // proper horizontal position (units of mass spacing), relative to x = 0
+  var xc = ix - (SV.nx - 1)/2;
+  var z = iz/LAMBDA_SIDE;            // z in wavelengths; t in periods
+  return xc*(1 + 0.5*hp(t, z));
+}
+function sideCan(ix, iz){
+  var xc = S.view === "proper" ? sideX(ix, iz, S.t) : ix - (SV.nx - 1)/2;
+  return [SV.cx + SV.dx*xc, SV.z0 - SV.dz*iz];
+}
+var PAIR_LO = 2, PAIR_HI = 3, PAIR_COL = 5, PAIR_ZCOL = (SV.nx - 1)/2;
+function drawSide(){
+  var x = ctx, c = "c", i, j, k;
+  // waveform h_+(t - z) on the left, moving up at c
+  var gx0 = 150, ga = 90;
+  line(x, c, [[gx0, SV.z0 + 10], [gx0, SV.z0 - SV.dz*(SV.nz - 1) - 6]], COL.grey, 1.1);
+  var wf = [];
+  for(k = 0; k <= 200; k++){
+    var iz = (SV.nz - 1)*k/200;
+    wf.push([gx0 + ga*hp(S.t, iz/LAMBDA_SIDE)/0.4, SV.z0 - SV.dz*iz]);
+  }
+  line(x, c, wf, COL.blue, 2.2);
+  mathLabel(x, c, [["h", "i"], ["+", "nsub"], ["(", "n"], ["t", "i"], [" − ", "n"], ["z", "i"], [")", "n"]],
+            gx0, SV.z0 + 38, 18, COL.blue, "center");
+  // horizontal bands: sign of h_+ across the field of masses
+  for(k = 0; k < 64; k++){
+    var za = (SV.nz - 1)*k/64, zb = (SV.nz - 1)*(k + 1)/64, v = hp(S.t, (za + zb)/2/LAMBDA_SIDE);
+    x.fillStyle = v >= 0 ? COL.bandP : COL.bandN;
+    x.globalAlpha = Math.min(1, Math.abs(v)/0.3);
+    x.fillRect(280, SV.z0 - SV.dz*zb, 640, SV.dz*(zb - za) + 0.5);
+  }
+  x.globalAlpha = 1;
+  // highlighted pairs
+  var lo1 = sideCan(PAIR_COL - 4, PAIR_LO), lo2 = sideCan(PAIR_COL, PAIR_LO);
+  var hi1 = sideCan(PAIR_COL - 4, PAIR_HI), hi2 = sideCan(PAIR_COL, PAIR_HI);
+  line(x, c, [lo1, lo2], COL.blue, 3);
+  line(x, c, [hi1, hi2], COL.brown, 3);
+  var v1 = sideCan(PAIR_ZCOL, 6), v2 = sideCan(PAIR_ZCOL, 8);
+  line(x, c, [v1, v2], COL.grey, 3);
+  for(j = 0; j < SV.nz; j++) for(i = 0; i < SV.nx; i++){
+    var p = sideCan(i, j);
+    mass(x, c, p[0], p[1], 5.5, COL.mute2);
+  }
+  // axis and direction labels
+  arrow(x, c, 985, SV.z0, 985, SV.z0 - SV.dz*(SV.nz - 1), COL.ink, 1.6);
+  mathLabel(x, c, [["+", "n"], ["z", "i"], [", speed ", "n"], ["c", "i"]], 1000, SV.z0 - SV.dz*(SV.nz - 1)/2, 18,
+            COL.ink, "left");
+  mathLabel(x, c, [[S.view === "proper" ? "X" : "x", "i"], [" →", "n"]], SV.cx, SV.z0 + 38, 18, COL.grey, "center");
+  // lambda marker
+  var ly0 = SV.z0 - SV.dz*0.0, ly1 = SV.z0 - SV.dz*LAMBDA_SIDE;
+  line(x, c, [[245, ly0], [245, ly1]], COL.grey, 1.2);
+  line(x, c, [[238, ly0], [252, ly0]], COL.grey, 1.2);
+  line(x, c, [[238, ly1], [252, ly1]], COL.grey, 1.2);
+  mathLabel(x, c, [["λ", "i"]], 258, (ly0 + ly1)/2 + 6, 20, COL.grey, "left");
+  textLabel(x, c, S.view === "proper" ? "Side view: proper distances" : "Side view: coordinates", 24, 34, 19, COL.ink,
+            "left", null, "600");
+  mathLabel(x, c, [["t", "i"], [" / ", "n"], ["T", "i"], [" = " + fmt(S.t % 1, 2), "n"]], CW - 24, CH - 12, 19,
+            COL.grey, "right");
+}
+
+// =====================================================================================
+// Strip chart: strain against time over the last three periods
+// =====================================================================================
+var ST = { x0: 70, x1: 1060, ym: 108, ya: 220 };      // ya: px per unit strain
+function drawStrip(){
+  var x = wtx, c = "w", k;
+  x.clearRect(0, 0, WW, WH);
+  line(x, c, [[ST.x0, ST.ym], [ST.x1, ST.ym]], COL.dim, 1, null, false);
+  line(x, c, [[ST.x0, 18], [ST.x0, WH - 22]], COL.grey, 1.1);
+  mathLabel(x, c, [["δ", "i"], ["L", "i"], [" / ", "n"], ["L", "i"], ["\u2217", "nsub"]], ST.x0 - 8, ST.ym + 6, 17, COL.grey, "right");
+  var t1 = S.t, t0 = t1 - 3;
+  var show = S.revealed;
+  function f1(t){ return S.tab === "face" ? strain(S.phi, t) : 0.5*hp(t, PAIR_LO/LAMBDA_SIDE); }
+  function f2(t){ return S.tab === "face" ? strain(S.phi + Math.PI/2, t) : 0.5*hp(t, PAIR_HI/LAMBDA_SIDE); }
+  if(show){
+    var a = [], b = [];
+    for(k = 0; k <= 300; k++){
+      var t = t0 + 3*k/300, px = ST.x0 + (ST.x1 - ST.x0)*k/300;
+      a.push([px, ST.ym - ST.ya*f1(t)]); b.push([px, ST.ym - ST.ya*f2(t)]);
+    }
+    line(x, c, b, COL.brown, 2.2);
+    line(x, c, a, COL.blue, 2.2);
+    var la = S.tab === "face" ? "arm 1" : "lower pair", lb = S.tab === "face" ? "arm 2" : "upper pair";
+    var ba = textLabel(x, c, la, ST.x1 - 4, 26, 17, COL.blue, "right", COL.white);
+    textLabel(x, c, lb, ba.x - 16, 26, 17, COL.brown, "right", COL.white);
+  } else {
+    textLabel(x, c, "Predict first, then press Run to reveal the strain traces.", (ST.x0 + ST.x1)/2, ST.ym + 6, 18,
+              COL.grey, "center");
+  }
+  textLabel(x, c, "last 3 wave periods  →  now", (ST.x0 + ST.x1)/2, WH - 8, 17, COL.grey, "center");
+}
+
+// =====================================================================================
+// Readouts, model, prompts
+// =====================================================================================
+function readouts(){
+  el("vap").textContent = fmt(S.Ap, 2);
+  el("vax").textContent = fmt(S.Ax, 2);
+  el("vlag").textContent = Math.round(S.lag*180/Math.PI) + "°";
+  el("vphi").textContent = Math.round(S.phi*180/Math.PI) + "°";
+  var hide = !S.revealed;
+  var s1 = strain(S.phi, S.t), s2 = strain(S.phi + Math.PI/2, S.t);
+  var P = properPos(Math.cos(S.phi), Math.sin(S.phi), S.t), m1 = Math.hypot(P[0], P[1]) - 1;
+  el("vs1").textContent = hide ? "?" : sgn(s1, 4);
+  el("vm1").textContent = hide ? "?" : sgn(m1, 4);
+  el("vs2").textContent = hide ? "?" : sgn(s2, 4);
+  var a = hp(S.t, 0), b = hx(S.t, 0);
+  el("var").textContent = fmt((1 + 0.5*a)*(1 - 0.5*a) - 0.25*b*b, 4);     // det of the first-order map
+  var z1 = 0.5*hp(S.t, PAIR_LO/LAMBDA_SIDE), z2 = 0.5*hp(S.t, PAIR_HI/LAMBDA_SIDE);
+  el("vz1").textContent = hide ? "?" : sgn(z1, 4);
+  el("vz2").textContent = hide ? "?" : sgn(z2, 4);
+  var za = sideCan(PAIR_ZCOL, 6), zb = sideCan(PAIR_ZCOL, 8);           // drawn positions of the grey pair
+  el("vzz").textContent = hide ? "?" : fmt(Math.hypot(zb[0] - za[0], zb[1] - za[1])/(2*SV.dz), 4);
+  // delay check: phase difference of the two pairs' strain traces, converted to time per unit z
+  var dz = (PAIR_HI - PAIR_LO)/LAMBDA_SIDE;
+  var delay = S.Ap > 0 ? measuredDelay(dz)/dz : NaN;
+  el("vdel").textContent = hide ? "?" : (isFinite(delay) ? fmt(delay, 3) : "–");
+}
+function measuredDelay(dz){
+  // time of the first maximum of the upper pair's strain after the lower pair's maximum (numerical)
+  var best = 0, bv = -1e9, t;
+  for(t = 0; t <= 1; t += 0.0005){ var v = hp(t + 0, dz) ; if(v > bv){ bv = v; best = t; } }
+  var tl = 0, lv = -1e9;
+  for(t = 0; t <= 1; t += 0.0005){ var u = hp(t, 0); if(u > lv){ lv = u; tl = t; } }
+  var d = best - tl; while(d < 0) d += 1; while(d >= 1) d -= 1;
+  return d;
+}
+function model(){
+  el("model").innerHTML = S.tab === "face"
+    ? "<b>Model:</b> plane wave along +<i>z</i> in the lecture’s coordinates, <i>h</i><sub>+</sub> = <i>A</i><sub>+</sub> sin <i>ω</i>(<i>t</i> − <i>z</i>), <i>h</i><sub>×</sub> the same with a lag; first order in the amplitude, masses in the plane <i>z</i> = 0. " +
+      "Proper positions <i>X<sup>i</sup></i> = <i>x<sup>i</sup></i> + ½<i>h<sub>ij</sub>x<sup>j</sup></i> relative to the central mass. " +
+      "<b>Exaggerated:</b> real strains are ~10<sup>−21</sup>, not 0.3; one period takes 2 s on screen (a 100 Hz wave is 200× faster)."
+    : "<b>Model:</b> the same wave seen edge-on: masses in the <i>x</i>–<i>z</i> plane, <i>h</i><sub>+</sub> only (<i>h</i><sub>×</sub> moves masses in <i>x</i>–<i>y</i>). " +
+      "Each row is stretched by 1 + ½<i>h</i><sub>+</sub>(<i>t</i> − <i>z</i>); separations along <i>z</i> are unchanged. " +
+      "<b>Exaggerated:</b> amplitude up to 0.4; one period = 2 s on screen.";
+}
+var Q = {
+  0: { ask: "Free play: set the amplitudes and lag, drag the blue handle to turn the detector, and switch views.", verdict: "" },
+  1: { ask: "Pure + wave, coordinate view. When the wave passes, do the masses move? Does the distance between them change?",
+       verdict: "<b>The masses never move in (<i>x</i>, <i>y</i>)</b>: coordinate separations are fixed. But the brown curve (one unit of <i>proper</i> distance from the center) breathes and the strains oscillate: <b>the distances change</b>. Proper view: the same spacetime, drawn as moving masses." },
+  2: { ask: "Pure + wave, detector arm 1 at 45°. Will arm 1’s length oscillate like an arm along x, less, or not at all?",
+       verdict: "<b>Not at all</b>, to first order: ½<i>h<sub>ij</sub>n<sup>i</sup>n<sup>j</sup></i> = ½<i>h</i><sub>+</sub>cos 2φ = 0 at φ = 45°. Arm 2 is also flat. An L-shaped detector at 45° to the + axes is blind to +, and sees × with full strength: try raising <i>h</i><sub>×</sub>." },
+  3: { ask: "Equal + and × amplitudes, with × a quarter cycle behind. Predict the ring’s motion.",
+       verdict: "<b>Circular polarization</b>: the ellipse keeps its shape and <b>rotates</b>, at half the wave frequency (strain = <span style='white-space:nowrap'>½<i>h</i> sin(ω<i>t</i> − 2φ)</span>). Every arm angle sees the same amplitude at a different time; each mass moves on a small circle." },
+  4: { ask: "Side view: the wave travels up the page. Which separations change, and do masses at different heights stretch together?",
+       verdict: "<b>Only separations across the beam change</b>; the grey pair along the beam keeps Δ<i>Z</i>/Δ<i>z</i> = 1 (transverse). The upper pair stretches <b>later</b>, by Δ<i>z</i>/<i>c</i>: the pattern depends on <i>t</i> − <i>z</i> and moves up at the speed of light." }
+};
+function prompts(){
+  el("ask").innerHTML = Q[S.q].ask;
+  var v = el("verdict");
+  if(S.q && S.revealed && (S.played >= 1 || reduced)){ v.innerHTML = Q[S.q].verdict; v.classList.remove("hidden"); }
+  else { v.classList.add("hidden"); v.innerHTML = ""; }
+}
+
+// =====================================================================================
+// Animation (one rAF loop, runs only while playing; real elapsed time, steps capped)
+// =====================================================================================
+var last = null, raf = null, SPEED = 0.5;        // periods per second on screen
+function frame(now){
+  if(!S.playing){ raf = null; return; }
+  if(last === null) last = now;
+  var dt = Math.min((now - last)/1000, 0.05); last = now;
+  S.t += SPEED*dt; S.played += SPEED*dt;
+  draw();
+  if(S.playing) raf = requestAnimationFrame(frame); else raf = null;
+}
+function play(){
+  S.revealed = true;
+  if(reduced){ S.t += 0.25; S.played += 1; S.playing = false; draw(); return; }
+  S.playing = true; last = null;
+  if(!raf) raf = requestAnimationFrame(frame);
+  draw();
+}
+function pause(){ S.playing = false; draw(); }
+function draw(){
+  LABELS = []; CURVES = [];
+  ctx.clearRect(0, 0, CW, CH);
+  if(S.tab === "face") drawFace(); else drawSide();
+  drawStrip(); readouts(); model(); prompts();
+  el("go").textContent = S.playing ? "Pause" : (S.q && !S.revealed ? "Run" : "Play");
+  el("detpanel").style.display = S.tab === "face" ? "" : "none";
+  el("sidepanel").style.display = S.tab === "side" ? "" : "none";
+  el("lagrow").style.opacity = S.Ax > 0 ? 1 : 0.5;
+}
+
+// =====================================================================================
+// Controls
+// =====================================================================================
+function syncSliders(){
+  el("aps").value = Math.round(S.Ap*100); el("axs").value = Math.round(S.Ax*100);
+  el("lags").value = Math.round(S.lag*180/Math.PI); el("phis").value = Math.round(S.phi*180/Math.PI);
+}
+function setTabs(group, attr, val){
+  var bs = el(group).querySelectorAll(".tab");
+  for(var i = 0; i < bs.length; i++){
+    var on = bs[i].getAttribute(attr) === String(val);
+    bs[i].classList.toggle("active", on); bs[i].setAttribute("aria-selected", on ? "true" : "false");
+  }
+}
+function setTab(t){ S.tab = t; setTabs("tabs", "data-tab", t); draw(); }
+function setView(v){ S.view = v; setTabs("views", "data-view", v); draw(); }
+function setQ(q){
+  S.q = q; S.playing = false; S.played = 0; setTabs("qtabs", "data-q", q);
+  if(q === 0){ S.revealed = true; draw(); return; }
+  S.revealed = false; S.t = 0;
+  if(q === 1){ S.Ap = 0.30; S.Ax = 0; S.lag = 0; S.phi = 0; setView("coord"); setTab("face"); }
+  if(q === 2){ S.Ap = 0.30; S.Ax = 0; S.lag = 0; S.phi = Math.PI/4; setView("proper"); setTab("face"); }
+  if(q === 3){ S.Ap = 0.25; S.Ax = 0.25; S.lag = Math.PI/2; S.phi = 0; setView("proper"); setTab("face"); }
+  if(q === 4){ S.Ap = 0.30; S.Ax = 0; S.lag = 0; setView("proper"); setTab("side"); }
+  syncSliders(); draw();
+}
+el("tabs").addEventListener("click", function(e){ var b = e.target.closest(".tab"); if(b) setTab(b.getAttribute("data-tab")); });
+el("views").addEventListener("click", function(e){ var b = e.target.closest(".tab"); if(b) setView(b.getAttribute("data-view")); });
+el("qtabs").addEventListener("click", function(e){ var b = e.target.closest(".tab"); if(b) setQ(Number(b.getAttribute("data-q"))); });
+el("aps").addEventListener("input", function(){ S.Ap = this.value/100; draw(); });
+el("axs").addEventListener("input", function(){ S.Ax = this.value/100; draw(); });
+el("lags").addEventListener("input", function(){ S.lag = this.value*Math.PI/180; draw(); });
+el("phis").addEventListener("input", function(){ S.phi = this.value*Math.PI/180; draw(); });
+el("go").addEventListener("click", function(){ if(S.playing) pause(); else play(); });
+el("rs").addEventListener("click", function(){
+  S.playing = false; S.t = S.q ? 0 : 0.25; S.played = 0; if(S.q) S.revealed = false; draw();
+});
+
+// drag the arm-1 end mass to turn the detector (pointer events, logical coordinates)
+var dragging = false;
+function logical(e){
+  var r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left)*CW/r.width, (e.clientY - r.top)*CH/r.height];
+}
+function nearHandle(p){
+  if(S.tab !== "face") return false;
+  var e1 = posOf(Math.cos(S.phi), Math.sin(S.phi));
+  return Math.hypot(p[0] - e1[0], p[1] - e1[1]) < 26;
+}
+cv.addEventListener("pointerdown", function(e){
+  var p = logical(e);
+  if(nearHandle(p)){ dragging = true; cv.setPointerCapture(e.pointerId); }
+});
+cv.addEventListener("pointermove", function(e){
+  var p = logical(e);
+  if(!dragging){ cv.style.cursor = nearHandle(p) ? "grab" : "default"; return; }
+  cv.style.cursor = "grabbing";
+  var a = Math.atan2(-(p[1] - FC.cy), p[0] - FC.cx);
+  if(a < 0) a += Math.PI;                       // the arm direction is defined modulo 180 degrees
+  S.phi = Math.round(a*180/Math.PI)*Math.PI/180;
+  if(S.phi > Math.PI) S.phi = Math.PI;
+  syncSliders(); draw();
+});
+function endDrag(){ dragging = false; cv.style.cursor = "default"; }
+cv.addEventListener("pointerup", endDrag);
+cv.addEventListener("pointercancel", endDrag);
+
+// test hook (headless checks only; harmless in class)
+window.__ring = { S: S, FC: FC, draw: draw, setQ: setQ, setTab: setTab, setView: setView, strain: strain,
+                  properPos: properPos, hp: hp, hx: hx, labels: function(){ return LABELS; },
+                  curves: function(){ return CURVES; }, measuredDelay: measuredDelay };
+
+syncSliders(); setTabs("views", "data-view", S.view); setQ(0);
+})();
+</script>
+</body>
+</html>

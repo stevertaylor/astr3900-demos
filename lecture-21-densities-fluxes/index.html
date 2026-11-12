@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 21: Densities and Fluxes — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+         color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+.sub sup,.sub sub{line-height:0}
+
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:16px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{padding:9px 14px;font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.tab:hover{border-color:var(--blued)}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+/* aspect-ratio uses LOGICAL size; the backing store is logical x devicePixelRatio */
+#c{aspect-ratio:1100/600}
+
+.model{background:var(--panel);border:1px solid var(--dim);border-radius:10px;
+       padding:9px 13px;font-size:12px;line-height:1.5;color:var(--mute2)}
+.model b{color:var(--ink)}
+.model sup,.model sub,table.read sup,table.read sub,.verdict sup,.verdict sub,.ask sup,.ask sub,label sup,label sub,.fine sup,.fine sub,.opt sup,.opt sub{line-height:0}
+
+aside{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:12px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 9px}
+.row{margin:0 0 8px}
+label{display:block;font-size:12.5px;color:var(--mute2);margin:0 0 3px}
+label .v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;
+         font-size:12.5px;color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.fine{font-size:12px;color:var(--grey);margin:2px 0 0}
+.minitabs{margin:2px 0 8px}
+.minitabs .tab{padding:5px 11px;font-size:13px}
+
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:8px 14px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;border-radius:8px;
+     cursor:pointer;border:1px solid var(--blued);background:#fff;color:var(--blued)}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.opts{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 0}
+.opt{padding:5px 10px;font:600 12.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     border-radius:8px;border:1px solid var(--dim);background:#fff;color:var(--ink);cursor:pointer}
+.opt.chosen{border-color:var(--brown);color:var(--brown);background:#fbf3e6}
+
+table.read{width:100%;border-collapse:collapse;font-size:13px}
+table.read td{padding:2px 0;vertical-align:baseline}
+table.read td.n{text-align:right;font-family:"SF Mono","Cascadia Code",Consolas,
+                "Courier New",monospace;font-size:12.5px;white-space:nowrap}
+table.read tr.sep td{border-top:1px solid var(--dim);padding-top:4px}
+.gloss{font-size:11px;color:var(--grey)}
+.ask{color:var(--brown);font-size:13px;line-height:1.5;margin:0}
+.verdict{font-size:12.5px;line-height:1.5;margin:8px 0 0;padding-top:8px;border-top:1px solid var(--dim);color:var(--mute2)}
+.verdict b{color:var(--ink)}
+.result{background:#fff;border:1px solid var(--dim);border-left:4px solid var(--brown);border-radius:10px;
+        padding:9px 13px;font-size:13px;line-height:1.5;color:var(--mute2)}
+.result b{color:var(--ink)}
+.result sup,.result sub{line-height:0}
+.hidden{display:none}
+.ul{text-decoration:underline;text-underline-offset:2px}
+
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;
+       flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 &middot; Lecture 21</div>
+    <h1>Densities and Fluxes</h1>
+    <div class="sub">Count moving dust through spacelike and timelike surfaces, then boost a box and watch its stress-energy tensor <i>T</i><sup><i>&alpha;&beta;</i></sup> change.</div>
+  </header>
+
+  <main>
+    <div class="col">
+      <div class="tabs" role="tablist" id="tabs">
+        <button class="tab active" data-tab="count" role="tab" aria-selected="true">Count through a surface</button>
+        <button class="tab" data-tab="boost" role="tab" aria-selected="false">Boost the box</button>
+      </div>
+      <div class="canvasWrap"><canvas id="c"></canvas></div>
+      <div class="result hidden" id="verdictC"></div>
+      <div class="model" id="model">&ndash;</div>
+    </div>
+
+    <aside>
+      <!-- ============================ COUNT TAB ============================ -->
+      <div class="panel" data-for="count">
+        <h2>The dust and the surface</h2>
+        <div class="tabs minitabs" id="surfTabs">
+          <button class="tab active" data-surf="ruler">Ruler (spacelike)</button>
+          <button class="tab" data-surf="det">Detector (timelike)</button>
+        </div>
+        <div class="row">
+          <label>dust speed <i>v</i> <span class="v" id="vv">&ndash;</span></label>
+          <input type="range" id="vs" min="-75" max="75" step="1" value="60">
+        </div>
+        <div class="row">
+          <label>observer&rsquo;s speed <i>u</i> (tilts the surface) <span class="v" id="vu">&ndash;</span></label>
+          <input type="range" id="us" min="-75" max="75" step="1" value="0">
+        </div>
+        <p class="fine">Drag the end handle to tilt the surface; drag its middle to slide it.</p>
+        <div class="btns">
+          <button class="btn primary" id="goC">Count</button>
+          <button class="btn" id="rsC">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel" data-for="count">
+        <h2>Number current</h2>
+        <table class="read">
+          <tr><td>lab density <i>N</i><sup><i>t</i></sup> = <i>N</i><sub>&lowast;</sub>&gamma;</td><td class="n" id="rNt">&ndash;</td></tr>
+          <tr><td>lab flux <i>N</i><sup><i>x</i></sup> = <i>N</i><sub>&lowast;</sub>&gamma;<i>v</i></td><td class="n" id="rNx">&ndash;</td></tr>
+          <tr><td>check: <span class="ul"><i>N</i></span>&middot;<span class="ul"><i>N</i></span> = &minus;(<i>N</i><sup><i>t</i></sup>)<sup>2</sup> + (<i>N</i><sup><i>x</i></sup>)<sup>2</sup></td><td class="n" id="rNN">&ndash;</td></tr>
+          <tr class="sep"><td id="lPred">prediction &minus;<span class="ul"><i>N</i></span>&middot;<span class="ul"><i>n</i></span>&thinsp;&Delta;<i>V</i></td><td class="n" id="rPred">?</td></tr>
+          <tr><td>crossings counted</td><td class="n" id="rCount">?</td></tr>
+          <tr><td id="lObs">density this observer measures</td><td class="n" id="rObs">?</td></tr>
+        </table>
+      </div>
+
+      <div class="panel" data-for="count">
+        <h2>Predict, then count</h2>
+        <p class="ask">The surface is 10 rest spacings long (or 10 units of proper time). Will fewer than 10, exactly 10, or more worldlines cross it?</p>
+        <div class="opts" id="optsC">
+          <button class="opt" data-p="fewer">fewer</button>
+          <button class="opt" data-p="ten">exactly 10</button>
+          <button class="opt" data-p="more">more</button>
+        </div>
+      </div>
+
+      <!-- ============================ BOOST TAB ============================ -->
+      <div class="panel hidden" data-for="boost">
+        <h2>Boost the box</h2>
+        <div class="row">
+          <label>box speed <i>v</i> (target) <span class="v" id="vb">&ndash;</span></label>
+          <input type="range" id="bs" min="0" max="90" step="1" value="80">
+        </div>
+        <div class="row">
+          <label>rest-frame pressure <i>p</i>/&rho; <span class="v" id="vp">&ndash;</span></label>
+          <input type="range" id="ps" min="0" max="1000" step="1" value="0">
+          <p class="fine">0 is dust; 1/3 is a gas of photons or ultra-hot particles.</p>
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="goB">Boost</button>
+          <button class="btn" id="rsB">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel hidden" data-for="boost">
+        <h2>Measured in the lab</h2>
+        <table class="read">
+          <tr><td>current speed <i>v</i>, &gamma;</td><td class="n" id="rg">&ndash;</td></tr>
+          <tr><td>number density <i>N</i><sup><i>t</i></sup>/<i>N</i><sub>&lowast;</sub></td><td class="n" id="rn">&ndash;</td></tr>
+          <tr><td>energy density <i>T</i><sup><i>tt</i></sup>/&rho;</td><td class="n" id="rtt">?</td></tr>
+          <tr><td>energy per particle &divide; <i>m</i></td><td class="n" id="rpp">?</td></tr>
+          <tr class="sep"><td>check: &minus;<i>T</i><sup><i>&alpha;</i></sup><sub><i>&alpha;</i></sub> <span class="gloss">(= &rho; &minus; 3<i>p</i> in every frame)</span></td><td class="n" id="rtr">&ndash;</td></tr>
+        </table>
+      </div>
+
+      <div class="panel hidden" data-for="boost">
+        <h2>Predict, then boost</h2>
+        <p class="ask" id="askB">&ndash;</p>
+        <div class="opts" id="optsB">
+          <button class="opt" data-p="1">1 (no change)</button>
+          <button class="opt" data-p="g">&gamma;</button>
+          <button class="opt" data-p="g2">&gamma;<sup>2</sup></button>
+          <button class="opt" data-p="ig">1/&gamma;</button>
+        </div>
+        <p class="verdict hidden" id="verdictB"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>S. Taylor &middot; Vanderbilt University</span>
+    <span>ASTR 3900/8090 &middot; Lecture 21</span>
+  </footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+
+// =====================================================================================
+// Physics (special relativity, c = 1, one space dimension for counting).
+// COUNT: dust with one particle per unit REST length (N_* = 1) moving at v. Particle k has
+//   label f(x, t) = gamma_v (x - v t) = k, so its worldline is x = k/gamma_v + v t.
+//   N = gamma_v (1, v) in (t, x).  An observer moving at u owns two surfaces through C:
+//     ruler    (spacelike): C + s L e,  e = gamma_u (1, u) in (x, t), normal n = U_obs = gamma_u (1, u) in (t, x)
+//     detector (timelike) : C + s L e,  e = gamma_u (u, 1) in (x, t), normal n = gamma_u (u, 1) in (t, x)
+//   with s in [-1/2, 1/2] and L = 10 (proper length / proper time).  The number of worldlines
+//   crossing is the number of integers between f at the two ends; it differs from
+//   |Delta f| = L |N.n| by less than 1, and |N.n| = gamma_rel (ruler) or gamma_rel |v_rel| (detector).
+// BOOST: perfect fluid, T^{ab} = (rho + p) U^a U^b + p eta^{ab}, rho = 1, boosted along x.
+// =====================================================================================
+var cv = document.getElementById("c");
+var CW = 1100, CH = 600;
+var ctx = cv.getContext("2d");
+function setupCanvas(c, x, W, H){
+  var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+  c.width = Math.round(W*dpr); c.height = Math.round(H*dpr);
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+setupCanvas(cv, ctx, CW, CH);
+
+var COL = { ink:"#15243C", blue:"#0F6E93", blued:"#2E6DA4", brown:"#8A5A18", grey:"#5A6B7B",
+            dim:"#C4CBD8", panel:"#EDF1F6", mute2:"#33465C", white:"#ffffff", wl:"#9AA6B5" };
+var SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+var MONO = '"SF Mono","Cascadia Code",Consolas,"Courier New",monospace';
+var LABELS = [];      // label boxes drawn this frame (logical px): for collision tests
+var CURVES = [];      // sampled curve / arrow points drawn this frame (logical px)
+
+function el(id){ return document.getElementById(id); }
+function gam(v){ return 1/Math.sqrt(1 - v*v); }
+function f3(x){ return (x < 0 ? "−" : "") + Math.abs(x).toFixed(3); }
+function f2(x){ return (x < 0 ? "−" : "") + Math.abs(x).toFixed(2); }
+
+// Math label: segments [text, kind]; kind "i" italic Georgia, "n" upright sans,
+// "sub"/"sup" small italic lowered/raised, "nsub"/"nsup" small upright; "iu" italic underlined.
+function mathLabel(x, segs, px, py, size, color, align, bg){
+  var i, w = 0, parts = [];
+  for(i = 0; i < segs.length; i++){
+    var s = segs[i][0], k = segs[i][1], small = /sub|sup/.test(k), fs = small ? 0.68*size : size;
+    var ital = (k === "i" || k === "iu" || k === "sub" || k === "sup");
+    var font = (ital ? "italic " : "") + fs + "px " + (ital ? "Georgia,serif" : SANS);
+    x.font = font;
+    var mw = x.measureText(s).width;
+    var dy = k.indexOf("sub") >= 0 ? 0.28*size : (k.indexOf("sup") >= 0 ? -0.42*size : 0);
+    var extra = (ital && !small ? 0.04*size : 0);
+    parts.push([s, font, mw, dy, extra, k === "iu"]);
+    w += mw + extra;
+  }
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.strokeStyle = color; x.textBaseline = "alphabetic";
+  var cx = x0;
+  for(i = 0; i < parts.length; i++){
+    x.font = parts[i][1]; x.fillText(parts[i][0], cx, py + parts[i][3]);
+    if(parts[i][5]){ x.lineWidth = Math.max(1.2, size/14); x.beginPath(); x.moveTo(cx, py + 0.16*size); x.lineTo(cx + parts[i][2], py + 0.16*size); x.stroke(); }
+    cx += parts[i][2] + parts[i][4];
+  }
+  LABELS.push(box);
+  return box;
+}
+function textLabel(x, s, px, py, size, color, align, bg, weight, font){
+  x.font = (weight ? weight + " " : "") + size + "px " + (font || SANS);
+  var w = x.measureText(s).width;
+  var x0 = align === "center" ? px - w/2 : (align === "right" ? px - w : px);
+  var box = { x: x0 - 3, y: py - 0.82*size, w: w + 6, h: 1.25*size };
+  if(bg){ x.fillStyle = bg; x.fillRect(box.x, box.y, box.w, box.h); }
+  x.fillStyle = color; x.textBaseline = "alphabetic"; x.fillText(s, x0, py);
+  LABELS.push(box);
+  return box;
+}
+function arrow(x, x0, y0, x1, y1, color, lw, head){
+  var dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if(L < 1) return;
+  var ux = dx/L, uy = dy/L, hh = Math.min(head || 10, 0.6*L);
+  x.strokeStyle = color; x.fillStyle = color; x.lineWidth = lw;
+  x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1 - ux*hh*0.8, y1 - uy*hh*0.8); x.stroke();
+  x.beginPath(); x.moveTo(x1, y1);
+  x.lineTo(x1 - ux*hh - uy*hh*0.45, y1 - uy*hh + ux*hh*0.45);
+  x.lineTo(x1 - ux*hh + uy*hh*0.45, y1 - uy*hh - ux*hh*0.45);
+  x.closePath(); x.fill();
+  CURVES.push({ pts: [[x0, y0], [x1, y1]], tag: "arrow" });
+}
+
+// =====================================================================================
+// State
+// =====================================================================================
+var S = { tab: "count",
+          v: 0.6, u: 0, surf: "ruler", cx: 0, ct: 0, L: 10,
+          run: null, counting: false, revealedC: false, predC: null,
+          bvT: 0.8, bv: 0, pr: 0, boosting: false, boostT: 0, revealedB: false, predB: null,
+          moving: false, phase: 0, jt: 0 };
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var RUN_DUR = 2.6, BOOST_DUR = 2.4;
+var LMAX = 0.75;                       // |v|, |u| clamp on the Count tab
+
+// ---- count geometry -----------------------------------------------------------------
+var OX = 550, OY = 300, PS = 34;       // origin (logical px) and px per unit, equal scales
+function P(x, t){ return [OX + x*PS, OY - t*PS]; }
+function D(px, py){ return [(px - OX)/PS, (OY - py)/PS]; }
+function surface(){
+  var gu = gam(S.u);
+  var e = S.surf === "ruler" ? { x: gu, t: gu*S.u } : { x: gu*S.u, t: gu };
+  return { c: { x: S.cx, t: S.ct }, e: e, L: S.L };
+}
+function label_f(x, t){ return gam(S.v)*(x - S.v*t); }
+function crossings(){
+  var sg = surface(), gv = gam(S.v);
+  var f0 = label_f(sg.c.x, sg.c.t);
+  var df = gv*(sg.e.x - S.v*sg.e.t)*sg.L;
+  var a = f0 - df/2, b = f0 + df/2;
+  // half-open interval [min, max): a particle sitting exactly on one end is counted once, not twice;
+  // a detector riding along a worldline (df = 0) is crossed by nothing
+  var pts = [];
+  if(Math.abs(df) < 1e-12) return { pts: pts, df: df };
+  var lo = Math.ceil(Math.min(a, b) - 1e-12), hi = Math.ceil(Math.max(a, b) - 1e-12) - 1;
+  for(var k = lo; k <= hi; k++){
+    var s = (k - f0)/df;
+    pts.push({ k: k, s: s, x: sg.c.x + s*sg.L*sg.e.x, t: sg.c.t + s*sg.L*sg.e.t });
+  }
+  pts.sort(function(p, q){ return p.s - q.s; });
+  return { pts: pts, df: df };
+}
+function Ncomp(){ var gv = gam(S.v); return { t: gv, x: gv*S.v }; }
+function normal(){
+  var gu = gam(S.u);
+  return S.surf === "ruler" ? { t: gu, x: gu*S.u } : { t: gu*S.u, x: gu };
+}
+function NdotN(){ var N = Ncomp(); return -N.t*N.t + N.x*N.x; }
+function Ndotn(){ var N = Ncomp(), n = normal(); return -N.t*n.t + N.x*n.x; }
+function vrel(){ return (S.v - S.u)/(1 - S.u*S.v); }
+function predicted(){ return Math.abs(Ndotn())*S.L; }
+
+// ---- boost physics ------------------------------------------------------------------
+function Tmat(v, p){
+  var g2 = 1/(1 - v*v), rho = 1;
+  var T = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  T[0][0] = g2*(rho + p*v*v);
+  T[0][1] = T[1][0] = g2*(rho + p)*v;
+  T[1][1] = g2*(p + rho*v*v);
+  T[2][2] = T[3][3] = p;
+  return T;
+}
+function traceNeg(T){ return T[0][0] - T[1][1] - T[2][2] - T[3][3]; }   // -T^a_a with eta = diag(-1,1,1,1)
+
+// =====================================================================================
+// Drawing: COUNT tab
+// =====================================================================================
+var HANDLE_END = null, HANDLE_MID = null;
+function drawCount(){
+  var x = ctx;
+  x.clearRect(0, 0, CW, CH); x.fillStyle = COL.white; x.fillRect(0, 0, CW, CH);
+  var gv = gam(S.v), xr = (CW/2)/PS + 1, tr = (CH/2)/PS + 1;
+  // axes
+  x.strokeStyle = COL.dim; x.lineWidth = 1.2;
+  x.beginPath(); x.moveTo(0, OY); x.lineTo(CW, OY); x.moveTo(OX, 0); x.lineTo(OX, CH); x.stroke();
+  // worldlines x = k/gamma + v t
+  x.strokeStyle = COL.wl; x.lineWidth = 1.15;
+  var kmin = Math.floor((-xr - Math.abs(S.v)*tr)*gv) - 1, kmax = Math.ceil((xr + Math.abs(S.v)*tr)*gv) + 1;
+  for(var k = kmin; k <= kmax; k++){
+    var a = P(k/gv - S.v*tr, -tr), b = P(k/gv + S.v*tr, tr);
+    x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke();
+  }
+  var sg = surface();
+  var C = P(sg.c.x, sg.c.t);
+  // light cone through the surface's centre
+  x.save(); x.setLineDash([5, 5]); x.strokeStyle = "#E3C9A3"; x.lineWidth = 1.2;
+  var lc = 7.2;
+  x.beginPath(); var q1 = P(sg.c.x - lc, sg.c.t - lc), q2 = P(sg.c.x + lc, sg.c.t + lc);
+  x.moveTo(q1[0], q1[1]); x.lineTo(q2[0], q2[1]);
+  q1 = P(sg.c.x - lc, sg.c.t + lc); q2 = P(sg.c.x + lc, sg.c.t - lc);
+  x.moveTo(q1[0], q1[1]); x.lineTo(q2[0], q2[1]); x.stroke(); x.restore();
+  // the surface
+  var A = P(sg.c.x - 0.5*sg.L*sg.e.x, sg.c.t - 0.5*sg.L*sg.e.t);
+  var B = P(sg.c.x + 0.5*sg.L*sg.e.x, sg.c.t + 0.5*sg.L*sg.e.t);
+  x.strokeStyle = COL.blue; x.lineWidth = 4.5; x.lineCap = "round";
+  x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.stroke(); x.lineCap = "butt";
+  CURVES.push({ pts: [A, B], tag: "surface" });
+  // normal n at the centre (2 proper units long)
+  var n = normal();
+  var Nt = P(sg.c.x + 2*n.x, sg.c.t + 2*n.t);
+  arrow(x, C[0], C[1], Nt[0], Nt[1], COL.brown, 2.6, 13);
+  // crossings
+  var cr = crossings(), shown = 0;
+  var showUpTo = S.counting ? S.run : (S.revealedC ? 1 : -1);
+  x.fillStyle = COL.brown;
+  for(var i = 0; i < cr.pts.length; i++){
+    if(cr.pts[i].s <= showUpTo - 0.5 + 1e-9){
+      var p = P(cr.pts[i].x, cr.pts[i].t);
+      x.beginPath(); x.arc(p[0], p[1], 5.2, 0, 2*Math.PI); x.fill(); shown++;
+    }
+  }
+  // counting marker
+  if(S.counting){
+    var m = P(sg.c.x + (S.run - 0.5)*sg.L*sg.e.x, sg.c.t + (S.run - 0.5)*sg.L*sg.e.t);
+    x.strokeStyle = COL.ink; x.lineWidth = 2.2; x.beginPath(); x.arc(m[0], m[1], 9, 0, 2*Math.PI); x.stroke();
+  }
+  // handles
+  x.fillStyle = COL.white; x.strokeStyle = COL.blue; x.lineWidth = 2.4;
+  x.beginPath(); x.arc(B[0], B[1], 8, 0, 2*Math.PI); x.fill(); x.stroke();
+  x.fillStyle = COL.blue; x.beginPath(); x.arc(C[0], C[1], 5, 0, 2*Math.PI); x.fill();
+  HANDLE_END = { x: B[0], y: B[1] }; HANDLE_MID = { x: C[0], y: C[1] };
+
+  // ---- labels (background rectangles: they sit on the worldline field) ----
+  // n label: beside the arrow tip, on the side away from the surface
+  var nl = S.surf === "ruler" ? [Nt[0] + (S.u >= 0 ? -16 : 16), Nt[1] - 8, S.u >= 0 ? "right" : "left"]
+                              : [Nt[0] + 6, Nt[1] - 16, "left"];
+  mathLabel(x, [["n", "iu"]], nl[0], nl[1], 24, COL.brown, nl[2], COL.white);
+  // surface name at its far end
+  var nm = S.surf === "ruler" ? "ruler (spacelike)" : "detector (timelike)";
+  if(S.surf === "ruler") textLabel(x, nm, B[0] - 6, S.u >= 0 ? B[1] - 20 : B[1] + 32, 18, COL.blue, "right", COL.white, "600");
+  else if(S.u >= 0) textLabel(x, nm, B[0] + 16, B[1] + 6, 18, COL.blue, "left", COL.white, "600");
+  else textLabel(x, nm, B[0] - 16, B[1] + 6, 18, COL.blue, "right", COL.white, "600");
+  // N arrow, on a worldline at the far left
+  var k0 = Math.round(gv*(-13.4 - S.v*1.6)), t0 = 1.2;
+  var s0 = P(k0/gv + S.v*t0, t0), s1 = P(k0/gv + S.v*(t0 + 2.2*gv), t0 + 2.2*gv);
+  arrow(x, s0[0], s0[1], s1[0], s1[1], COL.ink, 2.4, 13);
+  mathLabel(x, [["N", "iu"]], s1[0], s1[1] - 14, 24, COL.ink, "center", COL.white);
+  // axis labels
+  mathLabel(x, [["x", "i"]], CW - 14, OY - 10, 21, COL.grey, "right", COL.white);
+  mathLabel(x, [["t", "i"]], OX + 10, 26, 21, COL.grey, "left", COL.white);
+  // running count
+  var txt = S.counting || S.revealedC ? "crossings counted: " + shown : "crossings counted: ?";
+  textLabel(x, txt, 18, CH - 18, 19, COL.ink, "left", COL.white, "600");
+  mathLabel(x, [["lab frame,  ", "n"], ["c", "i"], [" = 1", "n"]], CW - 18, CH - 18, 17, COL.grey, "right", COL.white);
+  return shown;
+}
+
+// =====================================================================================
+// Drawing: BOOST tab
+// =====================================================================================
+var DOTS = (function(){
+  var pts = [], seed = 7;
+  function rnd(){ seed = (seed*16807) % 2147483647; return seed/2147483647; }
+  while(pts.length < 22){
+    var p = [0.08 + 0.84*rnd(), 0.08 + 0.84*rnd()], ok = true;
+    for(var i = 0; i < pts.length; i++) if(Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]) < 0.17) ok = false;
+    if(ok) pts.push(p);
+  }
+  return pts;
+})();
+function jig(i, t){ return [Math.sin(2.1*t + 1.7*i)*0.025 + Math.sin(3.3*t + 0.6*i)*0.012,
+                             Math.cos(1.9*t + 2.3*i)*0.025 + Math.cos(2.9*t + 1.1*i)*0.012]; }
+function drawBox(x, x0, y0, w, h, dash, jit){
+  x.save(); if(dash) x.setLineDash([6, 5]);
+  x.strokeStyle = COL.ink; x.lineWidth = 2; x.strokeRect(x0, y0, w, h); x.restore();
+  x.fillStyle = COL.mute2;
+  for(var i = 0; i < DOTS.length; i++){
+    var j = jit ? jig(i, S.jt) : [0, 0];
+    var px = Math.min(1, Math.max(0, (DOTS[i][0] + j[0] - 0.05)/0.9)), py = Math.min(1, Math.max(0, (DOTS[i][1] + j[1] - 0.05)/0.9));
+    x.beginPath(); x.arc(x0 + 7 + px*(w - 14), y0 + 7 + py*(h - 14), 4.2, 0, 2*Math.PI); x.fill();
+  }
+}
+var MAT = { x0: 640, y0: 150, cw: 106, ch: 82 };
+function drawBoost(){
+  var x = ctx;
+  x.clearRect(0, 0, CW, CH); x.fillStyle = COL.white; x.fillRect(0, 0, CW, CH);
+  var v = S.bv, g = gam(v), H = 150, W = 150, jit = S.pr > 0.002;
+  // lane 1: moving box
+  mathLabel(x, [["moving at ", "n"], ["v", "i"], [" = " + v.toFixed(2) + "   (lab view, contraction to scale)", "n"]], 30, 58, 18, COL.ink, "left", null);
+  x.strokeStyle = COL.dim; x.lineWidth = 1.2;
+  x.beginPath(); x.moveTo(30, 255); x.lineTo(570, 255); x.stroke();
+  var w = W/g, track = 540 - w, bx = 30 + (S.phase % 1)*track;
+  drawBox(x, bx, 90, w, H, false, jit);
+  if(v > 0.01) arrow(x, bx + w/2 - 34, 274, bx + w/2 + 34, 274, COL.blue, 2.2, 12);
+  // lane 2: the same box at rest
+  textLabel(x, "the same box at rest", 30, 352, 18, COL.ink, "left", null, "600");
+  x.beginPath(); x.strokeStyle = COL.dim; x.moveTo(30, 549); x.lineTo(570, 549); x.stroke();
+  drawBox(x, 225, 384, W, H, true, jit);
+  textLabel(x, "22 particles in each", 410, 470, 17, COL.grey, "left", null);
+
+  // matrix
+  var T = Tmat(v, S.pr), M = MAT;
+  mathLabel(x, [["T", "i"], ["αβ", "sup"], ["  in the lab, in units of the rest energy density ", "n"], ["\u03c1", "i"]],
+            M.x0 - 8, 58, 19, COL.ink, "left", null);
+  var lab = ["t", "x", "y", "z"];
+  var tint = function(a, b){ if(a === 0 && b === 0) return "rgba(15,110,147,0.13)";
+                              if(a === 0 || b === 0) return "rgba(138,90,24,0.12)"; return "rgba(90,107,123,0.10)"; };
+  for(var a = 0; a < 4; a++){
+    mathLabel(x, [[lab[a], "i"]], M.x0 + (a + 0.5)*M.cw, M.y0 - 14, 21, COL.brown, "center", null);
+    mathLabel(x, [[lab[a], "i"]], M.x0 - 18, M.y0 + (a + 0.5)*M.ch + 7, 21, COL.brown, "center", null);
+    for(var b = 0; b < 4; b++){
+      var cx0 = M.x0 + b*M.cw, cy0 = M.y0 + a*M.ch;
+      x.fillStyle = tint(a, b); x.fillRect(cx0 + 2, cy0 + 2, M.cw - 4, M.ch - 4);
+      var hide = !S.revealedB && (a <= 1 && b <= 1);
+      var val = hide ? "?" : (Math.abs(T[a][b]) < 5e-4 ? "0" : f3(T[a][b]));
+      textLabel(x, val, cx0 + M.cw/2, cy0 + M.ch/2 + 7, 20, Math.abs(T[a][b]) < 5e-4 && !hide ? COL.dim : COL.ink, "center", null, null, MONO);
+    }
+  }
+  // block partition lines (notes layout)
+  x.strokeStyle = COL.grey; x.lineWidth = 1.5;
+  x.beginPath(); x.moveTo(M.x0 + M.cw, M.y0); x.lineTo(M.x0 + M.cw, M.y0 + 4*M.ch);
+  x.moveTo(M.x0, M.y0 + M.ch); x.lineTo(M.x0 + 4*M.cw, M.y0 + M.ch); x.stroke();
+  // legend
+  var ly = M.y0 + 4*M.ch + 40;
+  var leg = [["rgba(15,110,147,0.30)", "energy density"], ["rgba(138,90,24,0.30)", "energy flux = momentum density"],
+             ["rgba(90,107,123,0.26)", "stress (pressure)"]];
+  for(var i = 0; i < leg.length; i++){
+    x.fillStyle = leg[i][0]; x.fillRect(M.x0, ly + i*30 - 14, 18, 18);
+    textLabel(x, leg[i][1], M.x0 + 28, ly + i*30, 17, COL.mute2, "left", null);
+  }
+}
+
+// =====================================================================================
+// Readouts and verdicts
+// =====================================================================================
+function readCount(shown){
+  var N = Ncomp();
+  el("vv").textContent = f2(S.v); el("vu").textContent = f2(S.u);
+  el("rNt").textContent = f3(N.t); el("rNx").textContent = f3(N.x);
+  el("rNN").textContent = f3(NdotN());
+  var done = S.revealedC && !S.counting, cr = crossings();
+  if(S.surf === "ruler"){
+    el("lPred").innerHTML = 'prediction &minus;<span class="ul"><i>N</i></span>&middot;<span class="ul"><i>n</i></span>&thinsp;&Delta;<i>V</i>';
+    el("lObs").innerHTML = 'observer&rsquo;s density, &minus;<span class="ul"><i>N</i></span>&middot;<span class="ul"><i>n</i></span>';
+  } else {
+    el("lPred").innerHTML = 'prediction |<span class="ul"><i>N</i></span>&middot;<span class="ul"><i>n</i></span>|&thinsp;&Delta;<i>T</i>';
+    el("lObs").innerHTML = 'observer&rsquo;s flux, |<span class="ul"><i>N</i></span>&middot;<span class="ul"><i>n</i></span>|';
+  }
+  el("rPred").textContent = done ? f2(predicted()) : "?";
+  el("rCount").textContent = (S.counting || S.revealedC) ? String(shown) : "?";
+  el("rObs").textContent = done ? f3(Math.abs(Ndotn())) : "?";
+  var vd = el("verdictC");
+  if(!done){ vd.classList.add("hidden"); return; }
+  var n = cr.pts.length, pr = predicted(), word = n < 10 ? "fewer" : (n === 10 ? "ten" : "more");
+  var head = S.predC ? (S.predC === word ? "<b>Your prediction holds.</b> " : "<b>Not this time.</b> ") : "";
+  var msg;
+  if(S.surf === "ruler"){
+    msg = n + " crossings; prediction <i>N</i><sub>&lowast;</sub>&gamma;<sub>rel</sub>&thinsp;&Delta;<i>V</i> = " + f2(pr) + " (whole-number counts can differ by one). " +
+          (Math.abs(vrel()) < 0.005 ? "Riding with the dust, you measure its rest density <i>N</i><sub>&lowast;</sub>: the lowest any observer finds."
+                                   : "The dust is Lorentz-contracted in your frame, so you count more than <i>N</i><sub>&lowast;</sub> per unit length. Ride along (<i>u</i> = <i>v</i>) for the minimum.");
+  } else {
+    msg = n + " crossings; prediction <i>N</i><sub>&lowast;</sub>&gamma;<sub>rel</sub>|<i>v</i><sub>rel</sub>|&thinsp;&Delta;<i>T</i> = " + f2(pr) +
+          ". A detector counts <b>flux</b>: it grows with the relative speed (<i>v</i><sub>rel</sub> = " + f2(vrel()) + ") and is zero if it rides with the dust.";
+  }
+  vd.innerHTML = head + msg; vd.classList.remove("hidden");
+}
+function readBoost(){
+  var v = S.bv, g = gam(v), T = Tmat(v, S.pr);
+  el("vb").textContent = S.bvT.toFixed(2); el("vp").textContent = S.pr.toFixed(3);
+  el("rg").textContent = v.toFixed(3) + ", " + g.toFixed(3);
+  el("rn").textContent = g.toFixed(3);
+  el("rtt").textContent = S.revealedB ? T[0][0].toFixed(3) : "?";
+  el("rpp").textContent = S.revealedB ? (S.pr < 0.002 ? g.toFixed(3) : "—") : "?";
+  el("rtr").textContent = traceNeg(T).toFixed(3);
+  var gT = gam(S.bvT);
+  el("askB").innerHTML = "At <i>v</i> = " + S.bvT.toFixed(2) + " the number density rises by &gamma; = " + gT.toFixed(3) +
+    ". By what factor does the dust&rsquo;s energy density <i>T</i><sup><i>tt</i></sup> rise?";
+  var vd = el("verdictB");
+  if(!S.revealedB){ vd.classList.add("hidden"); return; }
+  var fac = T[0][0], right = (S.predB === "g2");
+  var head = !S.predB ? "" : S.pr > 0.002
+    ? "<b>With pressure the factor is &gamma;<sup>2</sup>(1 + <i>p</i><i>v</i><sup>2</sup>/&rho;), none of the four; &gamma;<sup>2</sup> is the dust answer.</b> "
+    : (right ? "<b>Your prediction holds.</b> " : "<b>Not this time.</b> ");
+  var msg = "<i>T</i><sup><i>tt</i></sup> = &gamma;<sup>2</sup>(&rho; + <i>p</i><i>v</i><sup>2</sup>) = " + fac.toFixed(3) + "&rho;: one &gamma; from the contracted volume, one from each particle&rsquo;s energy &gamma;<i>m</i>. " +
+            "<i>T</i><sup><i>tx</i></sup> = <i>T</i><sup><i>xt</i></sup>; <i>T</i><sup><i>yy</i></sup> = <i>T</i><sup><i>zz</i></sup> = <i>p</i> are unchanged." +
+            (S.pr > 0.002 ? " Moving pressure adds <i>p</i>&gamma;<sup>2</sup><i>v</i><sup>2</sup> to the energy density." : " Now raise the pressure.");
+  vd.innerHTML = head + msg; vd.classList.remove("hidden");
+}
+function setModel(){
+  el("model").innerHTML = S.tab === "count"
+    ? "<b>Model:</b> special relativity, <i>c</i> = 1, one space dimension, drawn to scale (light-cone lines at 45&deg;, dashed). A long line of dust, one particle per unit rest length (<i>N</i><sub>&lowast;</sub> = 1), moves at <i>v</i>; grey lines are its worldlines. The observer moving at <i>u</i> owns a <b>ruler</b> (their line of simultaneity, proper length 10) and a <b>detector</b> (their own worldline, proper time 10). Brown dots are exact worldline&ndash;surface intersections; the prediction uses only <span class='ul'><i>N</i></span> = <i>N</i><sub>&lowast;</sub><span class='ul'><i>U</i></span> and the surface&rsquo;s unit normal <span class='ul'><i>n</i></span>."
+    : "<b>Model:</b> special relativity, <i>c</i> = 1. A perfect fluid, <i>T</i><sup><i>&alpha;&beta;</i></sup> = (&rho; + <i>p</i>)<i>U</i><sup><i>&alpha;</i></sup><i>U</i><sup><i>&beta;</i></sup> + <i>p&eta;</i><sup><i>&alpha;&beta;</i></sup>, with &rho; and <i>p</i> measured in the box&rsquo;s rest frame (dust: <i>p</i> = 0), boosted along <i>x</i>. Contraction is drawn to scale; the box&rsquo;s drift across the lane is slowed for display, and the gas particles&rsquo; jiggle is illustrative only.";
+}
+
+// =====================================================================================
+// Animation: one rAF loop, running only while something moves
+// =====================================================================================
+var raf = null, last = null;
+function anyMotion(){ return S.counting || S.boosting || S.moving; }
+function frame(now){
+  if(last === null) last = now;
+  var dt = Math.min((now - last)/1000, 0.05); last = now;
+  if(S.counting){
+    S.run += dt/RUN_DUR;
+    if(S.run >= 1){ S.run = 1; S.counting = false; S.revealedC = true; }
+  }
+  if(S.boosting){
+    S.boostT += dt/BOOST_DUR;
+    var f = Math.min(1, S.boostT), e = f*f*(3 - 2*f);
+    S.bv = S.bv0 + (S.bvT - S.bv0)*e;
+    if(f >= 1){ S.boosting = false; S.bv = S.bvT; S.revealedB = true; }
+  }
+  if(S.moving){ S.phase += dt*0.22*Math.max(0.15, S.bv)/0.8; S.jt += dt; }
+  draw();
+  if(anyMotion()) raf = requestAnimationFrame(frame); else { raf = null; last = null; }
+}
+function kick(){ if(!raf && anyMotion()){ last = null; raf = requestAnimationFrame(frame); } }
+
+function startCount(){
+  if(reduced){ S.counting = false; S.run = 1; S.revealedC = true; draw(); return; }
+  S.run = 0; S.counting = true; kick(); draw();
+}
+function resetCount(){ S.counting = false; S.run = null; S.revealedC = false; S.predC = null; markOpts("optsC", null); draw(); }
+function startBoost(){
+  if(S.boosting) return;
+  if(S.revealedB && Math.abs(S.bv - S.bvT) < 1e-9){ S.moving = !S.moving; if(reduced) S.moving = false; kick(); draw(); return; }
+  if(reduced){ S.bv = S.bvT; S.revealedB = true; S.moving = false; draw(); return; }
+  S.bv0 = S.bv; S.boostT = 0; S.boosting = true; S.moving = true; kick(); draw();
+}
+function resetBoost(){ S.boosting = false; S.moving = false; S.bv = 0; S.phase = 0; S.revealedB = false; S.predB = null; markOpts("optsB", null); draw(); }
+
+function draw(){
+  LABELS = []; CURVES = [];
+  if(S.tab === "count"){ var shown = drawCount(); readCount(shown); }
+  else { drawBoost(); readBoost(); el("verdictC").classList.add("hidden"); }
+  el("goC").textContent = S.counting ? "Counting…" : "Count";
+  el("goC").disabled = S.counting;
+  el("goB").textContent = S.boosting ? "Boosting…" : (S.revealedB && Math.abs(S.bv - S.bvT) < 1e-9 ? (S.moving ? "Pause" : "Play") : "Boost");
+  el("goB").disabled = S.boosting;
+}
+
+// =====================================================================================
+// Controls
+// =====================================================================================
+function markOpts(id, p){
+  var bs = document.querySelectorAll("#" + id + " .opt");
+  for(var i = 0; i < bs.length; i++) bs[i].classList.toggle("chosen", bs[i].getAttribute("data-p") === p);
+}
+function setTab(t){
+  S.tab = t;
+  var tabs = document.querySelectorAll("#tabs .tab");
+  for(var i = 0; i < tabs.length; i++){ var on = tabs[i].getAttribute("data-tab") === t; tabs[i].classList.toggle("active", on); tabs[i].setAttribute("aria-selected", on); }
+  var ps = document.querySelectorAll("aside .panel");
+  for(i = 0; i < ps.length; i++) ps[i].classList.toggle("hidden", ps[i].getAttribute("data-for") !== t);
+  if(t !== "boost") S.moving = false;
+  setModel(); draw();
+}
+function setSurf(s){
+  S.surf = s;
+  var b = document.querySelectorAll("#surfTabs .tab");
+  for(var i = 0; i < b.length; i++) b[i].classList.toggle("active", b[i].getAttribute("data-surf") === s);
+  if(S.counting){ S.counting = false; S.revealedC = true; }
+  draw();
+}
+function clampLM(v){ return Math.max(-LMAX, Math.min(LMAX, v)); }
+function setV(v){ S.v = clampLM(v); el("vs").value = Math.round(S.v*100); draw(); }
+function setU(u){ S.u = clampLM(u); el("us").value = Math.round(S.u*100); draw(); }
+function setShift(x, t){ S.cx = Math.max(-3, Math.min(3, x)); S.ct = Math.max(-0.6, Math.min(0.6, t)); draw(); }
+function setBoostTarget(v){ S.bvT = Math.max(0, Math.min(0.9, v)); el("bs").value = Math.round(S.bvT*100);
+  if(!S.boosting && S.revealedB){ S.bv = S.bvT; } draw(); }
+function setP(p){ S.pr = Math.max(0, Math.min(1/3, p)); el("ps").value = Math.round(S.pr*3000); draw(); }
+
+document.querySelectorAll("#tabs .tab").forEach(function(b){ b.addEventListener("click", function(){ setTab(b.getAttribute("data-tab")); }); });
+document.querySelectorAll("#surfTabs .tab").forEach(function(b){ b.addEventListener("click", function(){ setSurf(b.getAttribute("data-surf")); }); });
+el("vs").addEventListener("input", function(){ setV(+el("vs").value/100); });
+el("us").addEventListener("input", function(){ setU(+el("us").value/100); });
+el("bs").addEventListener("input", function(){ setBoostTarget(+el("bs").value/100); });
+el("ps").addEventListener("input", function(){ setP(+el("ps").value/3000); });
+el("goC").addEventListener("click", startCount);
+el("rsC").addEventListener("click", resetCount);
+el("goB").addEventListener("click", startBoost);
+el("rsB").addEventListener("click", resetBoost);
+document.querySelectorAll("#optsC .opt").forEach(function(b){ b.addEventListener("click", function(){ S.predC = b.getAttribute("data-p"); markOpts("optsC", S.predC); draw(); }); });
+document.querySelectorAll("#optsB .opt").forEach(function(b){ b.addEventListener("click", function(){ S.predB = b.getAttribute("data-p"); markOpts("optsB", S.predB); draw(); }); });
+
+// ---- direct manipulation of the surface (Count tab) ----
+function logical(c, e, W, H){
+  var r = c.getBoundingClientRect();
+  return [(e.clientX - r.left)*W/r.width, (e.clientY - r.top)*H/r.height];
+}
+var drag = null;
+cv.addEventListener("pointerdown", function(e){
+  if(S.tab !== "count" || !HANDLE_END) return;
+  var p = logical(cv, e, CW, CH);
+  if(Math.hypot(p[0] - HANDLE_END.x, p[1] - HANDLE_END.y) < 22) drag = "end";
+  else if(Math.hypot(p[0] - HANDLE_MID.x, p[1] - HANDLE_MID.y) < 22) drag = "mid";
+  if(drag){ cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; e.preventDefault(); }
+});
+cv.addEventListener("pointermove", function(e){
+  if(S.tab !== "count") return;
+  var p = logical(cv, e, CW, CH), d = D(p[0], p[1]);
+  if(drag === "end"){
+    var dx = d[0] - S.cx, dt = d[1] - S.ct;
+    if(S.surf === "ruler"){ if(Math.abs(dx) > 0.3) setU(dt/dx); }
+    else { if(Math.abs(dt) > 0.3) setU(dx/dt); }
+  } else if(drag === "mid"){ setShift(d[0], d[1]); }
+  else if(HANDLE_END){
+    var near = Math.hypot(p[0] - HANDLE_END.x, p[1] - HANDLE_END.y) < 22 || Math.hypot(p[0] - HANDLE_MID.x, p[1] - HANDLE_MID.y) < 22;
+    cv.style.cursor = near ? "grab" : "default";
+  }
+});
+function endDrag(){ if(drag){ drag = null; cv.style.cursor = "default"; } }
+cv.addEventListener("pointerup", endDrag);
+cv.addEventListener("pointercancel", endDrag);
+
+// ---- start: dust at v = 0.6, lab ruler (u = 0), count hidden until "Count" ----
+setModel();
+draw();
+
+// test hook (used by the build's headless checks; harmless in the page)
+window.__L21 = { S: S, draw: draw, setTab: setTab, setSurf: setSurf, setV: setV, setU: setU, setShift: setShift,
+                 setBoostTarget: setBoostTarget, setP: setP, startCount: startCount, resetCount: resetCount,
+                 startBoost: startBoost, resetBoost: resetBoost, crossings: crossings, predicted: predicted,
+                 Ndotn: Ndotn, vrel: vrel, Tmat: Tmat, traceNeg: traceNeg,
+                 labels: function(){ return LABELS.slice(); }, curves: function(){ return CURVES.slice(); } };
+})();
+</script>
+</body>
+</html>
