@@ -32,6 +32,7 @@ Everything is static HTML — no install, no server, no build step.
 | **Tidal Stretch and Squeeze** | 20 | Tidal deformation of a falling body, with the tidal tensor read out live. |
 | **Densities and Fluxes** | 21 | The number current through spacelike and timelike surfaces; the stress-energy tensor of a boosted fluid. |
 | **A Ring of Test Masses** | 22 | A plane gravitational wave on free masses: polarizations, detector strain, transversality. |
+| **The Inspiral Chirp** | 23 | Quadrupole-driven inspiral to ISCO, f<sub>gw</sub> = 2f<sub>orb</sub>, inclination dependence, and the Hulse–Taylor periastron shift. |
 | **Kerr Orbit Explorer** | Feature | A 3D map of a spinning black hole: timelike and null geodesics, guided scenes, and a WebXR mode for VR headsets. |
 
 More lectures and demos are added as the semester progresses (up to ~24 lectures).
@@ -40,7 +41,7 @@ More lectures and demos are added as the semester progresses (up to ~24 lectures
 
 ```
 index.html                     ← the hub (landing page + iframe launcher)
-lecture-NN-slug/index.html     ← one folder per lecture demo (01–22 so far)
+lecture-NN-slug/index.html     ← one folder per lecture demo (01–23 so far)
 kerr-orbit-explorer/index.html ← feature demo (3D, WebGL2)
 ```
 
@@ -55,11 +56,11 @@ memory and CPU stay flat.
 
    ```js
    {
-     id:'l23-slug',
+     id:'l24-slug',
      title:'My New Demo',
-     tag:'Lecture 23',
+     tag:'Lecture 24',
      accent:'#5ec8e6',
-     path:'lecture-23-slug/index.html',
+     path:'lecture-24-slug/index.html',
      blurb:'One or two sentences describing it.'
    },
    ```

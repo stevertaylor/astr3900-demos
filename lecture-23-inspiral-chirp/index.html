@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 23: The Inspiral Chirp — ASTR 3900/8090</title>
+<style>
+:root{
+  --bg:#FBFBF8; --panel:#EDF1F6; --ink:#15243C; --blue:#0F6E93; --blued:#2E6DA4;
+  --brown:#8A5A18; --grey:#5A6B7B; --mute2:#33465C; --dim:#C4CBD8; --green:#2E6F50; --red:#9E2A2B;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px 40px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin:0 0 6px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:30px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.5;color:var(--grey);margin:0}
+.tabs{display:flex;gap:8px;margin:14px 0 0}
+.tabs button{font:600 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:9px 14px;border:1px solid var(--dim);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+.tabs button:hover{border-color:var(--blued)}
+.tabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+main{display:grid;grid-template-columns:minmax(480px,1fr) 370px;gap:16px;padding-top:12px}
+@media (max-width:980px){ main{grid-template-columns:1fr} }
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.canvasWrap{background:#fff;border:1px solid var(--dim);border-radius:12px;padding:8px}
+.canvasWrap canvas{width:100%;height:auto;display:block;touch-action:none}
+#cv1{aspect-ratio:760/485}
+#cv2{aspect-ratio:760/470}
+aside{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--panel);border:1px solid var(--dim);border-radius:10px;padding:11px 15px}
+.panel h2{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 7px}
+label.sl{display:block;font-size:12.5px;margin:7px 0 2px;color:var(--mute2)}
+label.sl span.v{float:right;font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:12.5px;color:var(--blue)}
+.sub sup,.sub sub,.note sup,.note sub,.ro sup,.ro sub,.q sup,.q sub,.ans sup,.ans sub,label sup,label sub{line-height:0}
+input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0}
+.btn{font:600 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:7px 12px;border-radius:8px;border:1px solid var(--blued);background:#fff;color:var(--blued);cursor:pointer}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--blued);color:#fff}
+.btn.primary:hover{background:var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.sel{background:var(--blue);border-color:var(--blue);color:#fff}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ro{font-family:"SF Mono","Cascadia Code",Consolas,"Courier New",monospace;font-size:12.5px;line-height:1.45}
+.ro div{display:block}
+.ro b{font-weight:600;color:var(--mute2);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.ro .k{display:inline-block;width:178px;color:var(--mute2);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.note{font-size:12.5px;line-height:1.45;color:var(--grey);margin:6px 0 0}
+.ok{color:var(--green);font-weight:600}
+.q{font-size:13.5px;line-height:1.45}
+.ans{font-size:13px;line-height:1.45;margin-top:6px;color:var(--mute2);display:none}
+.ans.show{display:block}
+.qtabs{display:inline-block;margin-left:6px}
+.qtabs button{background:#fff;border:1px solid var(--dim);border-radius:6px;font:600 12px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:2px 8px;margin-left:3px;cursor:pointer;color:var(--ink)}
+.qtabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.hidden{display:none}
+footer{margin-top:24px;padding:14px 0 0;border-top:1px solid var(--dim);
+       font-size:11.5px;color:var(--grey);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ASTR 3900/8090 · Lecture 23</div>
+    <h1>The Inspiral Chirp</h1>
+    <div class="sub">An equal-mass binary radiating by the quadrupole formula: watch the orbit shrink, the ring of test masses respond, and the frequency run away.</div>
+  </header>
+  <div class="tabs" role="tablist">
+    <button id="tabA" class="active" role="tab">Inspiral</button>
+    <button id="tabB" role="tab">Hulse–Taylor clock</button>
+  </div>
+
+  <!-- ===================================================== TAB A -->
+  <main id="paneA">
+    <div class="left">
+      <div class="canvasWrap"><canvas id="cv1"></canvas></div>
+      <div class="panel">
+        <h2 style="display:inline">Predict, then run</h2>
+        <span class="qtabs"><button data-q="1" class="active">Q1</button><button data-q="2">Q2</button><button data-q="3">Q3</button></span>
+        <div id="q1" class="qb">
+          <div class="q">In one orbit, how many times does the ring stretch along <i>x</i>? Pick, then press <b>Run one orbit</b>.</div>
+          <div class="row" style="margin-top:5px"><button class="btn opt" data-q="1" data-v="1">once</button><button class="btn opt" data-q="1" data-v="2">twice</button><button class="btn opt" data-q="1" data-v="4">four times</button>
+            <button class="btn primary" id="oneOrbit">Run one orbit</button></div>
+          <div class="ans" id="a1"></div>
+        </div>
+        <div id="q2" class="qb hidden">
+          <div class="q">As the binary radiates, does the orbital period grow or shrink, and does <i>f</i><sub>gw</sub> rise steadily or run away at the end? Pick, then press <b>Play</b> and let it reach the end.</div>
+          <div class="row" style="margin-top:5px"><button class="btn opt" data-q="2" data-v="grow">grows</button><button class="btn opt" data-q="2" data-v="steady">shrinks steadily</button><button class="btn opt" data-q="2" data-v="run">shrinks, runs away</button></div>
+          <div class="ans" id="a2"></div>
+        </div>
+        <div id="q3" class="qb hidden">
+          <div class="q">Which observer receives more energy flux per unit solid angle, face-on (<i>ι</i> = 0°) or edge-on (<i>ι</i> = 90°), and by what factor? Pick, then drag <i>ι</i> across its range.</div>
+          <div class="row" style="margin-top:5px"><button class="btn opt" data-q="3" data-v="1">same</button><button class="btn opt" data-q="3" data-v="2">face-on, 2×</button><button class="btn opt" data-q="3" data-v="8">face-on, 8×</button><button class="btn opt" data-q="3" data-v="e">edge-on</button></div>
+          <div class="ans" id="a3"></div>
+        </div>
+      </div>
+      <div class="panel" id="modelA">
+        <div class="note" style="margin:0"><b>Model.</b> Equal masses <i>M</i>, circular orbit, each at radius <i>R</i>; quadrupole-formula energy loss, d<i>f</i><sub>orb</sub>/d<i>t</i> ∝ <i>f</i><sub>orb</sub><sup>11/3</sup>, ω<sup>2</sup> = <i>GM</i>/4<i>R</i><sup>3</sup>; amplitude 8ω<sup>2</sup><i>GMR</i><sup>2</sup>/(<i>c</i><sup>4</sup><i>r</i>), times (1 + cos<sup>2</sup>ι)/2 for <i>h</i><sub>+</sub> and cos ι for <i>h</i><sub>×</sub>. Starts at <i>f</i><sub>gw</sub> = 20 Hz and stops at the innermost stable circular orbit, where this model ends (no merger). Time is slowed by the factor shown; the ring is exaggerated (20% of its radius = the run's largest face-on strain).</div>
+      </div>
+    </div>
+    <aside>
+      <div class="panel">
+        <h2>Binary <span class="note" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px">(preset masses in M<sub>⊙</sub>, each body)</span></h2>
+        <div class="row"><button class="btn preset" data-m="1.4">NS+NS 1.4</button><button class="btn preset" data-m="10">BH+BH 10</button><button class="btn preset sel" data-m="30">BH+BH 30</button></div>
+        <label class="sl">Mass of each body, <i>M</i><span class="v" id="vM"></span></label>
+        <input type="range" id="sM" min="0" max="1000" step="1">
+        <label class="sl">Inclination <i>ι</i> (0° = face-on; or drag the left panel)<span class="v" id="vI"></span></label>
+        <input type="range" id="sI" min="0" max="90" step="1">
+        <label class="sl">Distance <i>r</i><span class="v" id="vR"></span></label>
+        <input type="range" id="sR" min="0" max="1000" step="1">
+      </div>
+      <div class="panel">
+        <h2>Run</h2>
+        <div class="row"><button class="btn primary" id="play">Play</button><button class="btn" id="reset">Reset</button><button class="btn" id="sound">Hear it (real time)</button></div>
+        <label class="sl">Slow motion (screen seconds per binary second)<span class="v" id="vS"></span></label>
+        <input type="range" id="sS" min="0" max="1000" step="1">
+        <div class="note" id="tnote">Drag along the strain plot to move in time.</div>
+      </div>
+      <div class="panel">
+        <div class="ro" id="ro"></div>
+        <h2 style="margin:8px 0 3px">Checks</h2>
+        <div class="ro" id="checks"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ===================================================== TAB B -->
+  <main id="paneB" class="hidden">
+    <div class="left">
+      <div class="canvasWrap"><canvas id="cv2"></canvas></div>
+      <div class="panel">
+        <h2>Predict, then run</h2>
+        <div class="q">Use this lecture's d<i>P</i>/d<i>t</i> (circular orbit) with B1913+16's masses and period. What cumulative shift of periastron time does it predict by 2005?</div>
+        <div class="row" style="margin-top:5px"><button class="btn optb" data-v="0.4">about −0.4 s</button><button class="btn optb" data-v="4">about −4 s</button><button class="btn optb" data-v="40">about −40 s</button>
+          <button class="btn primary" id="runB">Run 1975 → 2025</button></div>
+        <div class="ans" id="aB"></div>
+      </div>
+    </div>
+    <aside>
+      <div class="panel">
+        <h2>The pulsar B1913+16</h2>
+        <div class="ro" id="roB1"></div>
+        <label class="sl">Eccentricity <i>e</i> used for the eccentric curve<span class="v" id="vE"></span></label>
+        <input type="range" id="sE" min="0" max="85" step="1">
+        <div class="row" style="margin-top:6px"><button class="btn" id="eReal">e = 0.617 (measured)</button><button class="btn" id="showGR" disabled>Add the eccentricity factor</button></div>
+      </div>
+      <div class="panel">
+        <h2>Readouts</h2>
+        <div class="ro" id="roB2"></div>
+      </div>
+      <div class="panel">
+        <h2>Model</h2>
+        <div class="note" style="margin:0">Circular: this lecture's d<i>P</i>/d<i>t</i> = −(96/5)π 4<sup>1/3</sup>(2π<i>M</i>/<i>P</i>)<sup>5/3</sup>, with the two unequal masses replaced by the equal-mass <i>M</i> that gives the same chirp mass. Eccentric: multiplied by <i>f</i>(<i>e</i>) = (1 + 73<i>e</i><sup>2</sup>/24 + 37<i>e</i><sup>4</sup>/96)(1 − <i>e</i><sup>2</sup>)<sup>−7/2</sup> (Peters &amp; Mathews 1963; not derived in the lecture). Shift of periastron time Δ<i>T</i> = ½(<i>Ṗ</i>/<i>P</i><sub>b</sub>)<i>t</i><sup>2</sup> from 1974.8. Masses and <i>P</i><sub>b</sub> from Weisberg, Nice &amp; Taylor (2010). No data points are drawn: the published timing follows the GR curve to about 0.2%.</div>
+      </div>
+    </aside>
+  </main>
+
+
+  <footer>
+    <span>S. Taylor · Vanderbilt University</span>
+    <span>ASTR 3900/8090 · Lecture 23</span>
+  </footer>
+</div>
+<script>
+(function(){
+"use strict";
+// ------------------------------------------------------------------ constants (SI)
+const TSUN = 4.925490947e-6;        // G Msun / c^3  [s]
+const MPC_S = 3.0856775814913673e22 / 2.99792458e8;   // 1 Mpc in light-seconds
+const C = 2.99792458e8;
+const LUM = 3.628e52;                // c^5/G [W]
+const FGW0 = 20.0;                   // start: f_gw = 20 Hz
+const F0 = FGW0 / 2;                 // orbital
+const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const INK='#15243C', BLUE='#0F6E93', BLUED='#2E6DA4', BROWN='#8A5A18', GREY='#5A6B7B', DIM='#C4CBD8',
+      PANEL='#EDF1F6', GREEN='#2E6F50', MUTE2='#33465C';
+
+// ------------------------------------------------------------------ canvas setup (DPR)
+function setup(cv, W, H){
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  return ctx;
+}
+const W1 = 760, H1 = 485, W2 = 760, H2 = 470;
+const cv1 = document.getElementById('cv1'), cv2 = document.getElementById('cv2');
+let ctx1 = setup(cv1, W1, H1), ctx2 = setup(cv2, W2, H2);
+
+// ------------------------------------------------------------------ physics (this lecture's equations)
+const S = { M: 30, iota: 30, rMpc: 400, t: 0, playing: false, slow: 30, oneOrbitT: Infinity,
+            orbitsRun: 0, stretches: 0, oneOrbitTarget: null, lastPhi: null, lastStretchSign: null,
+            reachedEnd: false, ans: {}, minIotaSeen: 90, maxIotaSeen: 0 };
+function model(Msun){
+  const Ms = Msun * TSUN;                                   // G M / c^3  [s]
+  const K = 96/5*Math.PI*Math.cbrt(4)*Math.pow(2*Math.PI*Ms, 5/3);
+  const fIsco = 1/(2*Math.PI*Ms*Math.sqrt(864));            // orbital f at separation 6 G(2M)/c^2
+  const tIsco = 3/(8*K)*(Math.pow(F0,-8/3) - Math.pow(fIsco,-8/3));
+  return {Ms, K, fIsco, tIsco};
+}
+let P = model(S.M);
+function fOrb(t){ return Math.pow(Math.pow(F0,-8/3) - 8/3*P.K*t, -3/8); }
+function tAtPhi(phi){ // inverse of phiOrb: the time at which the orbital phase reaches phi
+  const fm53 = Math.pow(F0,-5/3) - 5*P.K*phi/(6*Math.PI); if (fm53 <= 0) return Infinity;
+  const f = Math.pow(fm53, -3/5); return 3/(8*P.K)*(Math.pow(F0,-8/3) - Math.pow(f,-8/3)); }
+function phiOrb(t){ const f = fOrb(t); return 6*Math.PI/(5*P.K)*(Math.pow(F0,-5/3) - Math.pow(f,-5/3)); }
+function state(t){
+  const f = fOrb(t), w = 2*Math.PI*f;
+  const R = Math.cbrt(P.Ms/(4*w*w));                        // [s] (times c for metres)
+  const r = S.rMpc*MPC_S;
+  const A = 8*w*w*P.Ms*R*R/r;                               // amplitude of h-bar (face-on)
+  const ci = Math.cos(S.iota*Math.PI/180);
+  const phi = phiOrb(t);
+  const hp = -A*(1+ci*ci)/2*Math.cos(2*phi), hx = -A*ci*Math.sin(2*phi);
+  return {f, w, R, A, phi, hp, hx, ci};
+}
+function Lgw_geom(f){ // (128/5) 4^{1/3} (pi M f)^{10/3}, dimensionless
+  return 128/5*Math.cbrt(4)*Math.pow(Math.PI*P.Ms*f, 10/3);
+}
+function Enewt(f){ // -(1/4) M (4 pi M f)^{2/3}, in units of seconds (G=c=1)
+  return -0.25*P.Ms*Math.pow(4*Math.PI*P.Ms*f, 2/3);
+}
+function fmt(x, d){ return (Math.abs(x) >= 1e4 || (Math.abs(x) < 1e-2 && x !== 0)) ? x.toExponential(d) : x.toFixed(d); }
+function sci(x, d){ const e = Math.floor(Math.log10(Math.abs(x))); const m = x/Math.pow(10,e); return {m: m.toFixed(d), e}; }
+function sciHTML(x, d){ const s = sci(x, d); return `${s.m}×10<sup>${s.e}</sup>`.replace(/-/g, '−'); }
+const mn = s => String(s).replace(/-/g, '−');
+
+// largest face-on strain amplitude of the run (at ISCO): fixes the drawing scale for every inclination
+function hMaxRun(){ return state(P.tIsco*0.999999).A; }
+
+// ------------------------------------------------------------------ sliders
+const sM = document.getElementById('sM'), sI = document.getElementById('sI'),
+      sR = document.getElementById('sR'), sS = document.getElementById('sS');
+const lg = (v, a, b) => Math.pow(10, Math.log10(a) + v/1000*(Math.log10(b)-Math.log10(a)));
+const ilg = (x, a, b) => Math.round(1000*(Math.log10(x)-Math.log10(a))/(Math.log10(b)-Math.log10(a)));
+function defaultSlow(){ return Math.min(1000, Math.max(1, 1.6*fOrb(S.t))); }   // first orbit ~1.6 s on screen
+function syncSliders(){
+  sM.value = ilg(S.M, 1, 50); sI.value = S.iota; sR.value = ilg(S.rMpc, 10, 2000); sS.value = ilg(S.slow, 1, 1000);
+  document.getElementById('vM').innerHTML = `${S.M.toFixed(S.M<10?2:1)} M<sub>⊙</sub>`;
+  document.getElementById('vI').textContent = `${S.iota.toFixed(0)}°`;
+  document.getElementById('vR').textContent = `${S.rMpc.toFixed(0)} Mpc`;
+  document.getElementById('vS').textContent = `×${S.slow.toFixed(S.slow<10?1:0)}`;
+}
+function newBinary(M){
+  S.M = M; P = model(M); S.t = 0; S.playing = false; S.reachedEnd = false;
+  S.slow = defaultSlow(); resetCounters(); syncSliders(); updatePlayBtn(); drawA();
+}
+sM.addEventListener('input', () => { document.querySelectorAll('.preset').forEach(b=>b.classList.remove('sel'));
+  newBinary(lg(+sM.value, 1, 50)); });
+sI.addEventListener('input', () => { S.iota = +sI.value; trackIota(); syncSliders(); drawA(); });
+sR.addEventListener('input', () => { S.rMpc = lg(+sR.value, 10, 2000); syncSliders(); drawA(); });
+sS.addEventListener('input', () => { S.slow = lg(+sS.value, 1, 1000); syncSliders(); drawA(); });
+document.querySelectorAll('.preset').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.preset').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+  newBinary(+b.dataset.m);
+  if (+b.dataset.m < 5) { S.t = Math.max(0, P.tIsco - 3.0); S.slow = defaultSlow(); syncSliders(); drawA(); }
+}));
+function trackIota(){ S.minIotaSeen = Math.min(S.minIotaSeen, S.iota); S.maxIotaSeen = Math.max(S.maxIotaSeen, S.iota); maybeReveal3(); }
+
+// ------------------------------------------------------------------ counters (stretch events vs orbits)
+function resetCounters(){ S.orbitsRun = 0; S.stretches = 0; S.lastPhi = phiOrb(S.t); S.lastStretchSign = null; }
+function advance(dtSim){
+  // sub-step so no stretch event or orbit crossing is missed
+  const t1 = Math.min(P.tIsco, S.t + dtSim, S.oneOrbitTarget !== null ? S.oneOrbitT : Infinity);
+  const n = Math.max(1, Math.ceil((phiOrb(t1) - phiOrb(S.t))/(2*Math.PI)*64));
+  for (let k = 1; k <= n; k++){
+    const tk = S.t + (t1 - S.t)*k/n, phi = phiOrb(tk);
+    // stretch along x: the ring's x-extent is maximal when h+ reaches a positive maximum,
+    // i.e. when d(h+)/dt changes sign from + to - with h+ > 0. Track sign of -cos(2 phi) derivative.
+    const ds = Math.sign(Math.sin(2*phi));            // d/dphi of -cos(2phi) = 2 sin(2phi)
+    if (S.lastStretchSign !== null && S.lastStretchSign > 0 && ds <= 0 && -Math.cos(2*phi) > 0) S.stretches++;
+    S.lastStretchSign = ds;
+    S.orbitsRun += (phi - S.lastPhi)/(2*Math.PI); S.lastPhi = phi;
+    if (k === n) S.t = t1;
+  }
+  if (S.t >= P.tIsco){ S.playing = false; S.reachedEnd = true; maybeReveal2(); updatePlayBtn(); }
+  if (S.oneOrbitTarget !== null && S.t >= S.oneOrbitT - 1e-15){ S.orbitsRun = 1;
+    S.playing = false; S.oneOrbitTarget = null; updatePlayBtn(); reveal1();
+  }
+}
+
+// ------------------------------------------------------------------ animation loop
+let raf = null, lastTs = null, stepAcc = 0;
+function loop(ts){
+  if (!S.playing){ raf = null; lastTs = null; return; }
+  if (lastTs === null) lastTs = ts;
+  let dt = Math.min(0.05, (ts - lastTs)/1000); lastTs = ts;
+  if (reduced){                     // discrete steps of 1/8 orbit every 0.4 s, no smooth motion
+    stepAcc += dt; if (stepAcc < 0.4){ raf = requestAnimationFrame(loop); return; }
+    stepAcc = 0; const f = fOrb(S.t); advance(0.125/f);
+  } else advance(dt/S.slow);
+  drawA();
+  raf = requestAnimationFrame(loop);
+}
+function start(){ if (S.t >= P.tIsco) return; S.playing = true; updatePlayBtn(); if (!raf) raf = requestAnimationFrame(loop); }
+function updatePlayBtn(){ document.getElementById('play').textContent = S.playing ? 'Pause' : 'Play'; }
+document.getElementById('play').addEventListener('click', () => {
+  if (S.playing){ S.playing = false; updatePlayBtn(); return; }
+  if (S.t >= P.tIsco){ S.t = 0; S.reachedEnd = false; }
+  resetCounters(); start();
+});
+document.getElementById('reset').addEventListener('click', () => {
+  S.playing = false; S.t = 0; S.reachedEnd = false; S.slow = defaultSlow(); resetCounters(); syncSliders(); updatePlayBtn(); drawA();
+});
+document.getElementById('oneOrbit').addEventListener('click', () => {
+  if (S.t >= P.tIsco - 1/fOrb(S.t)) { S.t = 0; }
+  S.slow = defaultSlow(); syncSliders(); resetCounters(); S.oneOrbitTarget = 1;
+  S.oneOrbitT = Math.min(P.tIsco, tAtPhi(phiOrb(S.t) + 2*Math.PI)); start();
+});
+
+// ------------------------------------------------------------------ sound: the strain at its true frequency
+let audioCtx = null;
+document.getElementById('sound').addEventListener('click', () => {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const buf = chirpBuffer(audioCtx.sampleRate);
+    const src = audioCtx.createBufferSource(); src.buffer = buf; src.connect(audioCtx.destination); src.start();
+  } catch(e){ document.getElementById('tnote').textContent = 'Sound is not available in this browser.'; }
+});
+function chirpBuffer(sr){
+  // from the cursor time (or the last 6 s if the remaining signal is longer) to ISCO, real time
+  const tStart = Math.max(0, P.tIsco - 6.0), dur = P.tIsco - tStart;
+  document.getElementById('tnote').innerHTML = `Playing ${dur.toFixed(2)} s in real time, <i>f</i><sub>gw</sub> ${(2*fOrb(tStart)).toFixed(0)} → ${(2*P.fIsco).toFixed(0)} Hz` +
+    (2*P.fIsco < 150 ? ' (low: use headphones)' : '') + '.';
+  const n = Math.max(1, Math.floor(dur*sr)), b = audioCtx.createBuffer(1, n + Math.floor(0.05*sr), sr);
+  const d = b.getChannelData(0); const fEnd = fOrb(P.tIsco*0.999999);
+  for (let i = 0; i < n; i++){
+    const t = tStart + i/sr, f = fOrb(t), ph = phiOrb(t);
+    const env = Math.pow(f/fEnd, 2/3);                      // h ∝ f^{2/3}
+    const fadeIn = Math.min(1, i/(0.02*sr)), fadeOut = Math.min(1, (n - i)/(0.015*sr));
+    d[i] = 0.8*env*fadeIn*fadeOut*Math.cos(2*ph);
+  }
+  return b;
+}
+// expose for headless tests
+window.__L23 = { S, model: () => P, fOrb, phiOrb, tAtPhi, state, Lgw_geom, Enewt, chirpBuffer, newBinary, drawA, advance,
+                 setIota: v => { S.iota = v; trackIota(); syncSliders(); drawA(); } };
+
+// ------------------------------------------------------------------ canvas text helpers
+function txt(ctx, s, x, y, o){
+  o = o || {};
+  ctx.font = `${o.italic?'italic ':''}${o.bold?'600 ':''}${o.size||14}px ${o.serif?'Georgia, "Times New Roman", serif':'-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}`;
+  ctx.fillStyle = o.color || INK; ctx.textAlign = o.align || 'left'; ctx.textBaseline = o.base || 'alphabetic';
+  if (o.bg){ const w = ctx.measureText(s).width, h = (o.size||14);
+    const x0 = o.align==='center' ? x - w/2 : (o.align==='right' ? x - w : x);
+    ctx.save(); ctx.fillStyle = o.bg; ctx.fillRect(x0-3, y-h*0.85, w+6, h*1.15); ctx.restore(); ctx.fillStyle = o.color || INK; }
+  ctx.fillText(s, x, y); return ctx.measureText(s).width;
+}
+// variable with subscript: italic base, upright-sans subscript
+function vsub(ctx, base, sub, x, y, o){
+  o = o || {}; const size = o.size || 15;
+  const w = txt(ctx, base, x, y, {italic:true, serif:true, size, color:o.color});
+  const w2 = txt(ctx, sub, x + w + 1, y + size*0.28, {size: size*0.72, color:o.color});
+  return w + w2 + 1;
+}
+
+// ------------------------------------------------------------------ draw tab A
+const PA = {x:0, y:0, w:380, h:255}, PB = {x:380, y:0, w:380, h:255}, PF = {x:62, y:262, w:676, h:76}, PH = {x:62, y:356, w:676, h:80};
+function drawA(){
+  const c = ctx1; c.clearRect(0, 0, W1, H1);
+  const st = state(S.t);
+  // ---- panel A: binary as seen by the observer
+  txt(c, 'Binary, as the observer sees it', 16, 24, {size:15, bold:true, color:MUTE2});
+  const cx = 190, cy = 142;
+  const Rkm = st.R*C/1e3, R0 = Math.cbrt(P.Ms/(4*Math.pow(2*Math.PI*F0,2)))*C/1e3;
+  let zoom = 1; while (Rkm*zoom < R0*0.45) zoom *= 2;
+  const rpx = 96*Rkm*zoom/R0, ci = st.ci;
+  c.strokeStyle = DIM; c.lineWidth = 1.2; c.beginPath(); c.ellipse(cx, cy, rpx, Math.max(0.5, rpx*ci), 0, 0, 2*Math.PI); c.stroke();
+  const orbitsPerScreenSec = st.f/S.slow;
+  const blurred = orbitsPerScreenSec > 3 && S.playing;
+  if (blurred){
+    c.strokeStyle = 'rgba(21,36,60,0.35)'; c.lineWidth = 9; c.beginPath(); c.ellipse(cx, cy, rpx, Math.max(0.5, rpx*ci), 0, 0, 2*Math.PI); c.stroke();
+  } else {
+    // mass 1 at angle phi; observer looks down from inclination iota: x stays, y foreshortened by cos(iota)
+    const p1 = [cx + rpx*Math.cos(st.phi), cy - rpx*ci*Math.sin(st.phi)], p2 = [2*cx - p1[0], 2*cy - p1[1]];
+    c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); c.moveTo(p1[0], p1[1]); c.lineTo(p2[0], p2[1]); c.stroke();
+    for (const p of [p1, p2]){ c.fillStyle = INK; c.beginPath(); c.arc(p[0], p[1], 9, 0, 2*Math.PI); c.fill(); }
+  }
+  c.fillStyle = GREY; c.beginPath(); c.arc(cx, cy, 2.5, 0, 2*Math.PI); c.fill();
+  // axes hint and labels
+  txt(c, `ι = ${S.iota.toFixed(0)}°`, 16, 246, {size:14, color:MUTE2});
+  txt(c, zoom > 1 ? `zoom ×${zoom}` : 'zoom ×1', 364, 246, {size:13, color:GREY, align:'right'});
+  // scale bar: 100 km (or 1000 km) at current zoom
+  let barKm = 100; while (96*barKm*zoom/R0 > 110) barKm /= 10; while (96*barKm*zoom/R0 < 25) barKm *= 10;
+  const bpx = 96*barKm*zoom/R0;
+  c.strokeStyle = GREY; c.lineWidth = 1.5; c.beginPath(); c.moveTo(364-bpx, 226); c.lineTo(364, 226); c.stroke();
+  c.beginPath(); c.moveTo(364-bpx, 221); c.lineTo(364-bpx, 231); c.moveTo(364, 221); c.lineTo(364, 231); c.stroke();
+  txt(c, `${barKm >= 1 ? barKm.toFixed(0) : barKm} km`, 364 - bpx/2, 216, {size:12.5, color:GREY, align:'center'});
+  if (blurred) txt(c, 'orbit too fast to draw: shown blurred', cx, 46, {size:13, color:BROWN, align:'center'});
+  // ---- panel B: ring of test masses
+  txt(c, 'Ring of free test masses at the observer', 396, 24, {size:15, bold:true, color:MUTE2});
+  const rx = 570, ry = 140, rr = 66;
+  const hm = hMaxRun(), sc = 0.4/ Math.max(hm, 1e-40);   // largest face-on strain of the run -> 20% of radius (½h·sc = 0.20)
+  c.strokeStyle = DIM; c.lineWidth = 1; c.setLineDash([4,4]); c.beginPath(); c.arc(rx, ry, rr, 0, 2*Math.PI); c.stroke(); c.setLineDash([]);
+  // x, y axes of the ring (transverse plane)
+  c.strokeStyle = DIM; c.beginPath(); c.moveTo(rx-rr-22, ry); c.lineTo(rx+rr+22, ry); c.moveTo(rx, ry-rr-19); c.lineTo(rx, ry+rr+19); c.stroke();
+  txt(c, 'x', rx+rr+28, ry+5, {italic:true, serif:true, size:15, color:GREY});
+  txt(c, 'y', rx, ry-rr-24, {italic:true, serif:true, size:15, color:GREY, align:'center'});
+  const hp = st.hp*sc, hx = st.hx*sc;
+  c.fillStyle = BLUE;
+  for (let k = 0; k < 16; k++){
+    const a = 2*Math.PI*k/16, x = Math.cos(a), y = Math.sin(a);
+    const X = x + 0.5*(hp*x + hx*y), Y = y + 0.5*(hx*x - hp*y);
+    c.beginPath(); c.arc(rx + rr*X, ry - rr*Y, 5, 0, 2*Math.PI); c.fill();
+  }
+  txt(c, 'exaggerated: 20% of radius = largest face-on strain of the run', 570, 248, {size:12.5, color:GREY, align:'center'});
+  // ---- panel F: f_gw(t)
+  drawTrack(c, st);
+  // ---- readouts
+  const sep = 2*st.R*C/1e3, v = st.w*st.R, Lw = Lgw_geom(st.f)*LUM;
+  const tLeft = P.tIsco - S.t;
+  document.getElementById('ro').innerHTML =
+    `<div><span class="k">orbital frequency, <i>f</i><sub>orb</sub></span>${st.f.toFixed(2)} Hz</div>` +
+    `<div><span class="k">GW frequency, <i>f</i><sub>gw</sub></span>${(2*st.f).toFixed(2)} Hz</div>` +
+    `<div><span class="k">orbital period, <i>P</i></span>${(1e3/st.f).toFixed(2)} ms</div>` +
+    `<div><span class="k">separation, 2<i>R</i></span>${sep.toFixed(0)} km</div>` +
+    `<div><span class="k">orbital speed, <i>v</i>/<i>c</i></span>${v.toFixed(3)}</div>` +
+    `<div><span class="k">strain, |<i>h</i><sub>+</sub>|, |<i>h</i><sub>×</sub>| (peak)</span>${sciHTML(st.A*(1+st.ci*st.ci)/2,1)}, ${sciHTML(Math.max(st.A*st.ci,1e-99),1)}</div>` +
+    `<div><span class="k">luminosity, <i>L</i><sub>gw</sub></span>${sciHTML(Lw,2)} W</div>` +
+    `<div><span class="k">time left to ISCO</span>${tLeft >= 1 ? tLeft.toFixed(2)+' s' : (tLeft*1e3).toFixed(1)+' ms'}</div>`;
+  // ---- checks
+  const f = st.f, dtf = Math.max(1e-9, Math.min(P.tIsco - S.t, S.t, 1e-4/f));
+  let bal = '—';
+  if (S.t > 1e-7 && P.tIsco - S.t > 1e-7){
+    const dE = (Enewt(fOrb(S.t + dtf)) - Enewt(fOrb(S.t - dtf)))/(2*dtf);
+    bal = (-dE/Lgw_geom(f)).toFixed(6);
+  }
+  const flux = r => ((1+r*r)*(1+r*r)/4 + r*r);
+  const ratio = S.orbitsRun > 0.5 ? (S.stretches/S.orbitsRun) : null;
+  document.getElementById('checks').innerHTML =
+    `<div><span class="k">stretches along <i>x</i> ÷ orbits</span>${S.stretches} ÷ ${S.orbitsRun.toFixed(2)}${ratio!==null ? ' = '+ratio.toFixed(2) : ''}</div>` +
+    `<div><span class="k">−d<i>E</i><sub>Newton</sub>/d<i>t</i> ÷ <i>L</i><sub>gw</sub></span>${bal}${bal!=='—' && Math.abs(+bal-1)<1e-4 ? ' <span class="ok">✓</span>' : ''}</div>` +
+    `<div><span class="k">flux here ÷ flux edge-on</span>${(flux(st.ci)/flux(0)).toFixed(2)}</div>`;
+}
+function niceTicks(a, b, n){ const span = b - a, step0 = Math.pow(10, Math.floor(Math.log10(span/n)));
+  const step = [1,2,5,10].map(m=>m*step0).find(s => span/s <= n) || step0*10; const out = [];
+  for (let v = Math.ceil(a/step)*step; v <= b + 1e-12; v += step) out.push(+v.toFixed(10)); return out; }
+function drawTrack(c, st){
+  const T = P.tIsco, x0 = PF.x, x1 = PF.x + PF.w, tx = t => x0 + (x1 - x0)*t/T;
+  // f_gw(t)
+  const fmax = 2*P.fIsco, fmin = FGW0, yF = f => PF.y + PF.h - PF.h*(Math.log(f/fmin)/Math.log(fmax/fmin));
+  c.strokeStyle = DIM; c.lineWidth = 1; c.strokeRect(x0, PF.y, PF.w, PF.h);
+  c.strokeStyle = BROWN; c.lineWidth = 2; c.beginPath();
+  for (let i = 0; i <= 400; i++){ const t = T*i/400*(1 - 1e-9); const y = yF(2*fOrb(t)); i ? c.lineTo(tx(t), y) : c.moveTo(tx(t), y); }
+  c.stroke();
+  vsub(c, 'f', 'gw', x0 + 8, PF.y + 20, {size:16, color:BROWN});
+  txt(c, `${fmin.toFixed(0)} Hz`, x0 - 6, PF.y + PF.h, {size:12, color:GREY, align:'right'});
+  txt(c, `${fmax >= 100 ? fmax.toFixed(0) : fmax.toFixed(1)} Hz`, x0 - 6, PF.y + 12, {size:12, color:GREY, align:'right'});
+  txt(c, '(log scale)', x0 + 34, PF.y + 19, {size:12, color:GREY});
+  // strain h+ (blue) and hx (brown), with envelope if cycles unresolved
+  c.strokeStyle = DIM; c.strokeRect(x0, PH.y, PH.w, PH.h);
+  const hm = hMaxRun()*1.08, yH = h => PH.y + PH.h/2 - (PH.h/2)*h/hm;
+  const cyclesPerPx = (phiOrb(T*(1-1e-9))/Math.PI)/PH.w;
+  const ci = st.ci;
+  if (cyclesPerPx > 0.35){
+    c.fillStyle = 'rgba(15,110,147,0.30)'; c.beginPath();
+    for (let i = 0; i <= 400; i++){ const t = T*i/400*(1-1e-9); const s = state(t); i ? c.lineTo(tx(t), yH(s.A*(1+ci*ci)/2)) : c.moveTo(tx(t), yH(s.A*(1+ci*ci)/2)); }
+    for (let i = 400; i >= 0; i--){ const t = T*i/400*(1-1e-9); const s = state(t); c.lineTo(tx(t), yH(-s.A*(1+ci*ci)/2)); }
+    c.closePath(); c.fill();
+    txt(c, 'cycles too dense to resolve: envelope of h', x0 + 8, PH.y + PH.h - 8, {size:12, color:GREY});
+  } else {
+    for (const [col, fn] of [[BROWN, s => s.hx], [BLUE, s => s.hp]]){
+      c.strokeStyle = col; c.lineWidth = col === BLUE ? 1.8 : 1.3; c.beginPath();
+      const N = 1600;
+      for (let i = 0; i <= N; i++){ const t = T*i/N*(1-1e-9); const s = state(t); i ? c.lineTo(tx(t), yH(fn(s))) : c.moveTo(tx(t), yH(fn(s))); }
+      c.stroke();
+    }
+  }
+  vsub(c, 'h', '+', 22, PH.y + 28, {size:16, color:BLUE});
+  vsub(c, 'h', '×', 22, PH.y + 52, {size:16, color:BROWN});
+  // time axis
+  const tk = niceTicks(0, T, 6);
+  for (const v of tk){ const X = tx(v); c.strokeStyle = GREY; c.beginPath(); c.moveTo(X, PH.y + PH.h); c.lineTo(X, PH.y + PH.h + 5); c.stroke();
+    if (X < x1 - 70) txt(c, (-(T - v)).toFixed(T < 2 ? 2 : (T < 20 ? 1 : 0)), X, PH.y + PH.h + 19, {size:12, color:GREY, align:'center'}); }
+  c.strokeStyle = GREY; c.beginPath(); c.moveTo(x1, PH.y + PH.h); c.lineTo(x1, PH.y + PH.h + 5); c.stroke();
+  txt(c, '0 = ISCO', x1, PH.y + PH.h + 19, {size:12, color:GREY, align:'right'});
+  txt(c, 'time before ISCO (s)   ·   drag here to move in time', x0 + PH.w/2, PH.y + PH.h + 34, {size:12.5, color:MUTE2, align:'center'});
+  // cursor
+  const X = tx(S.t);
+  c.strokeStyle = INK; c.lineWidth = 1.5; c.beginPath(); c.moveTo(X, PF.y); c.lineTo(X, PH.y + PH.h); c.stroke();
+  c.fillStyle = INK; c.beginPath(); c.arc(X, PH.y + PH.h, 4.5, 0, 2*Math.PI); c.fill();
+}
+// drag on the strain/frequency panels to scrub time; drag on the binary panel to tilt
+function logical(ev, cv, W, H){ const r = cv.getBoundingClientRect(); return [(ev.clientX - r.left)*W/r.width, (ev.clientY - r.top)*H/r.height]; }
+let drag = null;
+cv1.addEventListener('pointerdown', ev => {
+  const [x, y] = logical(ev, cv1, W1, H1);
+  if (y > PF.y - 10 && x >= PF.x - 4 && x <= PF.x + PF.w + 4) drag = 'time';
+  else if (x < 380 && y < 255) drag = {kind:'tilt', y0:y, i0:S.iota};
+  if (drag){ cv1.setPointerCapture(ev.pointerId); move(ev); }
+});
+cv1.addEventListener('pointermove', ev => {
+  const [x, y] = logical(ev, cv1, W1, H1);
+  cv1.style.cursor = (y > PF.y - 10 || (x < 380 && y < 255)) ? 'grab' : 'default';
+  if (drag) move(ev);
+});
+cv1.addEventListener('pointerup', () => { drag = null; });
+cv1.addEventListener('pointercancel', () => { drag = null; });
+function move(ev){
+  const [x, y] = logical(ev, cv1, W1, H1);
+  if (drag === 'time'){ S.playing = false; updatePlayBtn();
+    S.t = Math.min(P.tIsco, Math.max(0, (x - PF.x)/PF.w*P.tIsco)); resetCounters(); drawA(); }
+  else if (drag && drag.kind === 'tilt'){ S.iota = Math.min(90, Math.max(0, Math.round(drag.i0 + (y - drag.y0)*0.5))); trackIota(); syncSliders(); drawA(); }
+}
+
+// ------------------------------------------------------------------ predictions (tab A)
+document.querySelectorAll('.qtabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.qtabs button').forEach(x => x.classList.remove('active')); b.classList.add('active');
+  document.querySelectorAll('.qb').forEach(q => q.classList.add('hidden'));
+  document.getElementById('q' + b.dataset.q).classList.remove('hidden');
+}));
+document.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => {
+  const q = b.dataset.q; document.querySelectorAll(`.opt[data-q="${q}"]`).forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel'); S.ans[q] = b.dataset.v;
+  if (q === '2' && S.reachedEnd) maybeReveal2();
+  if (q === '3'){ S.minIotaSeen = S.iota; S.maxIotaSeen = S.iota; }
+}));
+function reveal1(){
+  const a = document.getElementById('a1'); const pick = S.ans['1'];
+  a.innerHTML = `<b>Twice.</b> ${S.stretches} stretches along <i>x</i> in ${S.orbitsRun.toFixed(2)} orbit: <i>f</i><sub>gw</sub> = 2<i>f</i><sub>orb</sub>. ` +
+    `After half a turn the two equal masses have swapped places and the mass distribution looks the same, so the quadrupole moment repeats twice per orbit.` +
+    (pick ? (pick === '2' ? ' Your prediction was right.' : ' Your prediction was ' + (pick === '1' ? 'once' : 'four times') + '.') : '');
+  a.classList.add('show');
+}
+function maybeReveal2(){
+  if (!S.ans['2']) return;
+  const a = document.getElementById('a2');
+  a.innerHTML = `<b>Shrinks, and runs away.</b> Radiation removes energy, <i>E</i> = −<i>M</i><sup>2</sup>/4<i>R</i> becomes more negative, so <i>R</i> shrinks and <i>f</i><sub>orb</sub> rises. ` +
+    `Because d<i>f</i>/d<i>t</i> ∝ <i>f</i><sup>11/3</sup>, the higher the frequency the faster it climbs: look at the end of the frequency track.` +
+    (S.ans['2'] === 'run' ? ' Your prediction was right.' : '');
+  a.classList.add('show');
+}
+function maybeReveal3(){
+  if (!S.ans['3'] || S.minIotaSeen > 5 || S.maxIotaSeen < 85) return;
+  const a = document.getElementById('a3');
+  a.innerHTML = `<b>Face-on, 8×.</b> Face-on, <i>h</i><sub>+</sub> and <i>h</i><sub>×</sub> have equal amplitude (the ring's stretch rotates: circular polarization). ` +
+    `Edge-on, <i>h</i><sub>×</sub> = 0 and <i>h</i><sub>+</sub> is halved (the ring only stretches and squeezes along fixed axes: linear polarization), so the flux, ∝ <i>h</i><sub>+</sub><sup>2</sup> + <i>h</i><sub>×</sub><sup>2</sup>, is 8 times smaller.` +
+    (S.ans['3'] === '8' ? ' Your prediction was right.' : '');
+  a.classList.add('show');
+}
+
+// ------------------------------------------------------------------ TAB B: Hulse–Taylor clock
+const HT = { Pb: 0.322997448918*86400, e: 0.6171334, mp: 1.4398, mc: 1.3886, PdotPub: -2.40242e-12, t0: 1974.8,
+             eUse: 0.6171334, year: 1974.8, playing: false, showCirc: false, showGR: false, pick: null };
+const Mchirp = Math.pow(HT.mp*HT.mc, 0.6)/Math.pow(HT.mp + HT.mc, 0.2);
+const Meq = Math.pow(2, 0.2)*Mchirp;                        // equal-mass M with the same chirp mass
+function fe(e){ return (1 + 73/24*e*e + 37/96*e*e*e*e)/Math.pow(1 - e*e, 3.5); }
+function PdotCirc(){ const M = Meq*TSUN; return -96/5*Math.PI*Math.cbrt(4)*Math.pow(2*Math.PI*M/HT.Pb, 5/3); }
+function shift(Pdot, yr){ const t = (yr - HT.t0)*365.25*86400; return 0.5*Pdot/HT.Pb*t*t; }
+window.__L23.HT = HT; window.__L23.fe = fe; window.__L23.PdotCirc = PdotCirc; window.__L23.shift = shift;
+const sE = document.getElementById('sE');
+function syncB(){
+  sE.value = Math.round(HT.eUse*100); document.getElementById('vE').textContent = HT.eUse.toFixed(3);
+  document.getElementById('roB1').innerHTML =
+    `<div><span class="k">masses</span>${HT.mp.toFixed(4)}, ${HT.mc.toFixed(4)} M<sub>⊙</sub></div>` +
+    `<div><span class="k">equal-mass equivalent <i>M</i></span>${Meq.toFixed(4)} M<sub>⊙</sub></div>` +
+    `<div><span class="k">orbital period, <i>P</i><sub>b</sub></span>${(HT.Pb/3600).toFixed(3)} h</div>` +
+    `<div><span class="k">measured eccentricity</span>${HT.e.toFixed(3)}</div>`;
+  const pc = PdotCirc(), pg = pc*fe(HT.eUse);
+  const yr = HT.year;
+  document.getElementById('roB2').innerHTML =
+    `<div><span class="k">year</span>${yr.toFixed(1)}</div>` +
+    `<div><span class="k">d<i>P</i>/d<i>t</i>, circular formula</span>${sciHTML(pc,3)}</div>` +
+    `<div><span class="k"><i>f</i>(<i>e</i>) at <i>e</i> = ${HT.eUse.toFixed(3)}</span>${HT.showGR ? fe(HT.eUse).toFixed(2) : 'hidden'}</div>` +
+    `<div><span class="k">d<i>P</i>/d<i>t</i> × <i>f</i>(<i>e</i>)</span>${HT.showGR ? sciHTML(pg,3) : 'hidden'}</div>` +
+    `<div><span class="k">published GR value</span>${HT.showGR ? sciHTML(HT.PdotPub,4) : 'hidden'}</div>` +
+    `<div><span class="k">shift: circular / with <i>f</i>(<i>e</i>)</span>${HT.showCirc ? mn(shift(pc,yr).toFixed(2))+' s' : '—'} / ${HT.showGR ? mn(shift(pg,yr).toFixed(1))+' s' : '—'}</div>`;
+}
+sE.addEventListener('input', () => { HT.eUse = +sE.value/100; syncB(); drawB(); });
+document.getElementById('eReal').addEventListener('click', () => { HT.eUse = HT.e; syncB(); drawB(); });
+document.getElementById('showGR').addEventListener('click', () => { HT.showGR = true; HT.eUse = HT.e; syncB(); drawB();
+  const a = document.getElementById('aB');
+  a.innerHTML += ` <b>With the eccentricity factor</b> <i>f</i>(0.617) = ${fe(HT.e).toFixed(2)}, the prediction reaches ${mn(shift(PdotCirc()*fe(HT.e), 2005).toFixed(0))} s by 2005, and d<i>P</i>/d<i>t</i> = ${sciHTML(PdotCirc()*fe(HT.e),3)} against the published GR value ${sciHTML(HT.PdotPub,4)}. ` +
+    `An eccentric orbit radiates far more strongly near periastron, which is also why emission circularizes binaries. Drag <i>e</i> to 0 to recover the lecture's circular result.`;
+});
+document.querySelectorAll('.optb').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.optb').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); HT.pick = b.dataset.v; }));
+let rafB = null, lastB = null;
+document.getElementById('runB').addEventListener('click', () => {
+  HT.showCirc = true; HT.year = HT.t0; HT.playing = true; lastB = null;
+  if (reduced){ HT.year = 2025; HT.playing = false; finishB(); syncB(); drawB(); return; }
+  if (!rafB) rafB = requestAnimationFrame(loopB);
+});
+function loopB(ts){
+  if (!HT.playing){ rafB = null; return; }
+  if (lastB === null) lastB = ts;
+  const dt = Math.min(0.05, (ts - lastB)/1000); lastB = ts;
+  HT.year = Math.min(2025, HT.year + dt*8);              // 8 years per second (stated on the plot)
+  if (HT.year >= 2025){ HT.playing = false; finishB(); }
+  syncB(); drawB(); rafB = HT.playing ? requestAnimationFrame(loopB) : null;
+}
+function finishB(){
+  const s05 = shift(PdotCirc(), 2005);
+  const a = document.getElementById('aB');
+  a.innerHTML = `<b>The circular formula gives ${mn(s05.toFixed(1))} s by 2005.</b> The measured shift is about −40 s, an order of magnitude more.` +
+    (HT.pick ? (HT.pick === '4' ? ' Your prediction matched the circular formula.' : ' Your pick was about −' + HT.pick + ' s.') : '') +
+    ' Something is missing: press <b>Add the eccentricity factor</b>.';
+  a.classList.add('show'); document.getElementById('showGR').disabled = false;
+}
+const PB2 = {x:78, y:26, w:652, h:378};
+function drawB(){
+  const c = ctx2; c.clearRect(0, 0, W2, H2);
+  const yr0 = 1975, yr1 = 2025, ymin = -115, ymax = 5;
+  const X = yr => PB2.x + PB2.w*(yr - yr0)/(yr1 - yr0), Y = v => PB2.y + PB2.h*(ymax - v)/(ymax - ymin);
+  c.fillStyle = PANEL; c.fillRect(PB2.x, PB2.y, PB2.w, PB2.h);
+  c.strokeStyle = GREY; c.lineWidth = 1; c.strokeRect(PB2.x, PB2.y, PB2.w, PB2.h);
+  for (let v = 0; v >= -110; v -= 20){ c.strokeStyle = '#d9dfe8'; c.beginPath(); c.moveTo(PB2.x, Y(v)); c.lineTo(PB2.x + PB2.w, Y(v)); c.stroke();
+    txt(c, v === 0 ? '0' : '−' + (-v), PB2.x - 8, Y(v) + 4, {size:13, color:GREY, align:'right'}); }
+  for (let y = 1975; y <= 2025; y += 10){ c.strokeStyle = GREY; c.beginPath(); c.moveTo(X(y), PB2.y + PB2.h); c.lineTo(X(y), PB2.y + PB2.h + 5); c.stroke();
+    txt(c, String(y), X(y), PB2.y + PB2.h + 20, {size:13, color:GREY, align:'center'}); }
+  c.save(); c.translate(18, PB2.y + PB2.h/2); c.rotate(-Math.PI/2);
+  txt(c, 'cumulative shift of periastron time (s)', 0, 0, {size:13.5, color:INK, align:'center'}); c.restore();
+  txt(c, 'year  ·  8 years of orbit per second of animation', PB2.x + PB2.w/2, PB2.y + PB2.h + 40, {size:12.5, color:MUTE2, align:'center'});
+  // 2005 marker
+  c.strokeStyle = DIM; c.setLineDash([4,4]); c.beginPath(); c.moveTo(X(2005), PB2.y); c.lineTo(X(2005), PB2.y + PB2.h); c.stroke(); c.setLineDash([]);
+  txt(c, '2005', X(2005) + 4, PB2.y + PB2.h - 8, {size:12.5, color:GREY});
+  const yEnd = HT.showCirc ? HT.year : HT.t0;
+  c.save(); c.beginPath(); c.rect(PB2.x, PB2.y, PB2.w, PB2.h); c.clip();
+  function curve(Pdot, col, lw){
+    c.strokeStyle = col; c.lineWidth = lw; c.beginPath();
+    const n = 300; for (let i = 0; i <= n; i++){ const yr = Math.max(yr0, HT.t0) + (Math.min(yEnd, yr1) - Math.max(yr0, HT.t0))*i/n;
+      const p = [X(yr), Y(shift(Pdot, yr))]; i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }
+    c.stroke();
+  }
+  if (HT.showCirc) curve(PdotCirc(), BLUE, 2.2);
+  if (HT.showGR) curve(PdotCirc()*fe(HT.eUse), BROWN, 2.4);
+  c.restore();
+  // year cursor
+  if (HT.showCirc){ c.strokeStyle = INK; c.lineWidth = 1; c.beginPath(); c.moveTo(X(Math.min(yEnd,yr1)), PB2.y); c.lineTo(X(Math.min(yEnd,yr1)), PB2.y + PB2.h); c.stroke(); }
+  // labels: below-left of a descending curve is clear of it; above-right is clear too
+  if (HT.showCirc && yEnd > 1990){
+    const ly = Math.min(yEnd, 2023);
+    txt(c, (HT.showGR && HT.eUse < 0.02) ? 'circular-orbit formula (= GR curve at e = 0)' : 'circular-orbit formula (this lecture)', X(ly), Y(shift(PdotCirc(), ly)) + 22, {size:13, color:BLUE, align:'right', bg:PANEL});
+  }
+  if (HT.showGR){
+    const Pg = PdotCirc()*fe(HT.eUse);
+    const t60 = Math.sqrt(2*60*HT.Pb/Math.abs(Pg))/(365.25*86400) + HT.t0;
+    const ly = Math.min(t60, yEnd), lab = `× f(e), e = ${HT.eUse.toFixed(2)}  (GR, Peters & Mathews)`;
+    c.font = '13px sans-serif'; const wl = c.measureText(lab).width + 8;
+    if (ly > 1977 && HT.eUse >= 0.02){
+      if (X(ly) - 14 - wl > PB2.x + 4) txt(c, lab, X(ly) - 14, Y(shift(Pg, ly)) + 22, {size:13, color:BROWN, align:'right', bg:PANEL});
+      else txt(c, lab, X(ly) + 14, Y(shift(Pg, ly)) - 6, {size:13, color:BROWN, bg:PANEL});
+    }
+  }
+  if (!HT.showCirc) txt(c, 'Predict below, then press Run', PB2.x + PB2.w/2, PB2.y + PB2.h/2, {size:15, color:GREY, align:'center'});
+}
+
+// ------------------------------------------------------------------ tabs
+document.getElementById('tabA').addEventListener('click', () => switchTab('A'));
+document.getElementById('tabB').addEventListener('click', () => switchTab('B'));
+function switchTab(k){
+  document.getElementById('tabA').classList.toggle('active', k === 'A');
+  document.getElementById('tabB').classList.toggle('active', k === 'B');
+  document.getElementById('paneA').classList.toggle('hidden', k !== 'A');
+  document.getElementById('modelA').classList.toggle('hidden', k !== 'A');
+  document.getElementById('paneB').classList.toggle('hidden', k !== 'B');
+  if (k === 'A'){ S.playing = false; updatePlayBtn(); drawA(); } else { drawB(); }
+}
+window.__L23.switchTab = switchTab; window.__L23.drawB = drawB; window.__L23.finishB = finishB; window.__L23.syncB = syncB;
+window.addEventListener('resize', () => { ctx1 = setup(cv1, W1, H1); ctx2 = setup(cv2, W2, H2); drawA(); drawB(); });
+
+// ------------------------------------------------------------------ initial state: most informative (late inspiral)
+S.slow = defaultSlow();
+S.t = P.tIsco*0.80;
+S.lastPhi = phiOrb(S.t);
+syncSliders(); syncB(); drawA(); drawB();
+})();
+</script>
+</body>
+</html>
